@@ -12,7 +12,13 @@ public:
     void Terminate() override;
 
 private:
-    std::vector<std::pair<std::string,int>> scores;
+    //std::vector<std::pair<std::string,int>> scores;
+    struct ScoreEntry {
+        std::string name;
+        int         pts;
+        std::string timestamp;
+    };
+    std::vector<ScoreEntry> scores;
     int currentPage = 0;      // ← which page we’re on
     int itemsPerPage = 0;     // ← how many items fit per page
 

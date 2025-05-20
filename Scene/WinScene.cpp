@@ -12,6 +12,10 @@
 #include <allegro5/allegro_primitives.h>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
 
 void WinScene::Initialize() {
     ticks = 0;
@@ -116,8 +120,17 @@ void WinScene::SaveScore() {
     int score = std::max(0, 10000 - static_cast<int>(t * 100));
 
     // 3) append "Name Score" to Resource/scoreboard.txt
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm localTm;
+    localtime_s(&localTm, &now_c);
+    std::ostringstream oss;
+    oss << std::put_time(&localTm, "%Y-%m-%d %H:%M:%S");
+    std::string timeStr = oss.str();
     std::ofstream ofs("Resource/scoreboard.txt", std::ios::app);
     if (ofs.is_open()) {
-        ofs << playerName << " " << score << "\n";
+        ofs << playerName << " "
+            << score << " "
+            << timeStr << " ";
     }
 }

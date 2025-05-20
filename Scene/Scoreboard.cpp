@@ -9,17 +9,26 @@
 #include <algorithm>    // for std::min
 
 void Scoreboard::Initialize() {
-    // 1) load all scores from file
+   // 1) load all scores + timestamps from file
     scores.clear();
     {
       std::ifstream ifs("Resource/scoreboard.txt");
       if (!ifs) {
         std::cerr << "[Scoreboard] cannot open Resource/scoreboard.txt\n";
       } else {
-        std::string name;
-        int pts;
-        while (ifs >> name >> pts) {
-          scores.emplace_back(name, pts);
+        std::string line;
+        while (std::getline(ifs, line)) {
+          if (line.empty()) continue;
+          std::istringstream iss(line);
+          ScoreEntry e;
+          // read name and score
+          iss >> e.name >> e.pts;
+          // read the rest of the line as timestamp (including leading space)
+          std::getline(iss, e.timestamp);
+          // trim leading whitespace
+          if (!e.timestamp.empty() && std::isspace(e.timestamp.front()))
+            e.timestamp.erase(0, e.timestamp.find_first_not_of(" \t"));
+          scores.push_back(std::move(e));
         }
       }
     }
@@ -28,6 +37,13 @@ void Scoreboard::Initialize() {
     int w     = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h     = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w/2;
+
+    constexpr float leftMarginPct  = 0.10f;  // 10% in from left
+    constexpr float rightMarginPct = 0.90f;  // 10% in from right
+
+    const float colNameX  = w * leftMarginPct;
+    const float colScoreX = w * 0.50f;
+    const float colTimeX  = w * rightMarginPct;
 
     const int titleY        = 80;
     const int startY        = 160;
@@ -53,16 +69,34 @@ void Scoreboard::Initialize() {
     int first = currentPage * itemsPerPage;
     int last  = std::min<int>(first + itemsPerPage, scores.size());
     for (int idx = first, row = 0; idx < last; ++idx, ++row) {
-      auto &p = scores[idx];
-      std::string text = p.first + "   " + std::to_string(p.second);
+      const auto &e = scores[idx];
+      float y = startY + row * lineSpacing;
 
+      // 1) name: left-aligned (anchorX = 0)
       AddNewObject(new Engine::Label(
-        text, "pirulen.ttf", 48,
-        halfW, startY + row * lineSpacing,
+        e.name, "pirulen.ttf", 48,
+        colNameX, y,
         0,255,0,255,
-        0.5f,0.5f
+        0.0f, 0.5f   // left edge, vertical center
+      ));
+
+      // 2) score: center-aligned (anchorX = 0.5)
+      AddNewObject(new Engine::Label(
+        std::to_string(e.pts), "pirulen.ttf", 48,
+        colScoreX, y,
+        0,255,0,255,
+        0.5f, 0.5f   // horizontal center, vertical center
+      ));
+
+      // 3) timestamp: right-aligned (anchorX = 1.0)
+      AddNewObject(new Engine::Label(
+        e.timestamp, "pirulen.ttf", 24,
+        colTimeX, y,
+        0,255,0,255,
+        1.0f, 0.5f   // right edge, vertical center
       ));
     }
+
 
     // 5) bottom three buttons (same spacing logic as before)
     const int btnW   = 200, btnH = 50, margin = 20;
