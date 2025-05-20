@@ -33,6 +33,15 @@ void Scoreboard::Initialize() {
       }
     }
 
+    // ── 1.5) sort by score (desc), then by timestamp (asc) ────────────
+    std::sort(scores.begin(), scores.end(),
+      [](auto const &a, auto const &b) {
+        if (a.pts != b.pts)
+          return a.pts > b.pts;            // higher score first
+        return a.timestamp < b.timestamp;  // earlier timestamp first
+      }
+    );
+
     // 2) layout constants
     int w     = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h     = Engine::GameEngine::GetInstance().GetScreenSize().y;
