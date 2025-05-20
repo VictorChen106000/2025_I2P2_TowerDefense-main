@@ -26,6 +26,7 @@ private:
     };
     ALLEGRO_SAMPLE_ID bgmId;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
+    float  elapsedTime = 0.0f;
 
 protected:
     int lives;
@@ -44,6 +45,7 @@ public:
     int MapId;
     float ticks;
     float deathCountDown;
+    float GetElapsedTime() const { return elapsedTime; }
     // Map tiles.
     Group *TileMapGroup;
     Group *GroundEffectGroup;

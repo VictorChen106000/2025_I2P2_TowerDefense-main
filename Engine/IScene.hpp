@@ -43,6 +43,8 @@ namespace Engine {
         /// Delegate the draw event to all visible objects.
         /// </summary>
         void Draw() const override;
+        /// called whenever Allegro reports a KEY_CHAR event
+        virtual void OnKeyChar(int unicode) { }
     };
 }
 #endif   // ISCENE_HPP

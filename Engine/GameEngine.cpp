@@ -105,6 +105,11 @@ namespace Engine {
                     LOG(VERBOSE) << "Key with keycode " << event.keyboard.keycode << " up";
                     activeScene->OnKeyUp(event.keyboard.keycode);
                     break;
+                 case ALLEGRO_EVENT_KEY_CHAR:
+                    // a “typed” character (takes IME into account)
+                    LOG(VERBOSE) << "Key char: " << event.keyboard.unichar;
+                    activeScene->OnKeyChar(event.keyboard.unichar);
+                    break;
                 case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                     // Event for mouse key down.
                     LOG(VERBOSE) << "Mouse button " << event.mouse.button << " down at (" << event.mouse.x << ", " << event.mouse.y << ")";
