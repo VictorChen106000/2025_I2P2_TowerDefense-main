@@ -131,6 +131,6 @@ void WinScene::SaveScore() {
     if (ofs.is_open()) {
         ofs << playerName << " "
             << score << " "
-            << timeStr << " ";
+            << timeStr << "\n";
     }
 }
