@@ -102,14 +102,17 @@ void WinScene::OnKeyChar(int unicode) {
 }
 
 void WinScene::BackOnClick(int stage) {
-    SaveScore();
-    playerName.clear();
-    nameLabel->Text.clear();
+    if (!playerName.empty()) {
+        SaveScore();
+        playerName.clear();
+        nameLabel->Text.clear();
+    }
     // Change to select scene.
     Engine::GameEngine::GetInstance().ChangeScene("stage-select");
 }
 
 void WinScene::SaveScore() {
+    if (playerName.empty()) return;
     // 1) grab elapsed time from the play scene
     auto* ps = dynamic_cast<PlayScene*>(
         Engine::GameEngine::GetInstance().GetScene("play"));
@@ -127,7 +130,7 @@ void WinScene::SaveScore() {
     std::ostringstream oss;
     oss << std::put_time(&localTm, "%Y-%m-%d %H:%M:%S");
     std::string timeStr = oss.str();
-    std::ofstream ofs("Resource/scoreboard.txt", std::ios::app);
+    std::ofstream ofs("../Resource/scoreboard.txt", std::ios::app);
     if (ofs.is_open()) {
         ofs << playerName << " "
             << score << " "
