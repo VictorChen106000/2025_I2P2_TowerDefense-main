@@ -29,6 +29,8 @@ add_executable(2025_I2P2_TowerDefense
     Enemy/TankEnemy.hpp
     Enemy/PlaneEnemy.cpp
     Enemy/PlaneEnemy.hpp
+    Enemy/BigTankEnemy.hpp
+    Enemy/BigTankEnemy.cpp
 
     Engine/Allegro5Exception.cpp
     Engine/Allegro5Exception.hpp
@@ -113,3 +115,10 @@ ELSE()
     target_link_libraries(2025_I2P2_TowerDefense ${ALLEGRO5_LIBRARIES})
     target_link_directories(2025_I2P2_TowerDefense PUBLIC ${ALLEGRO5_LIBRARY_DIRS})
 ENDIF()
+
+add_custom_command(TARGET 2025_I2P2_TowerDefense
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/Resource"
+    "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/resource"
+)

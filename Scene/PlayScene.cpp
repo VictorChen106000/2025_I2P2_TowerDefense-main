@@ -12,6 +12,7 @@
 #include "Enemy/SoldierEnemy.hpp"
 #include "Enemy/TankEnemy.hpp"
 #include "Enemy/PlaneEnemy.hpp"
+#include "Enemy/BigTankEnemy.hpp"
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
 #include "Engine/Group.hpp"
@@ -171,6 +172,9 @@ void PlayScene::Update(float deltaTime) {
             case 3:
                 EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
                 break;
+            case 4:
+                EnemyGroup->AddNewObject(enemy = new BigTankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+                break;
             default:
                 continue;
         }
@@ -270,10 +274,10 @@ void PlayScene::OnKeyDown(int keyCode) {
 
         if (keyStrokes.size() == code.size() && std::equal(code.begin(), code.end(), keyStrokes.begin())) {
             // Cheat activated: Spawn a Plane and add 10,000 money
-            const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
-            PlaneEnemy* cheatPlane = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y);
-            EnemyGroup->AddNewObject(cheatPlane);
-            cheatPlane->UpdatePath(mapDistance);
+            // const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
+            // PlaneEnemy* cheatPlane = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y);
+            // EnemyGroup->AddNewObject(cheatPlane);
+            // cheatPlane->UpdatePath(mapDistance);
             EffectGroup->AddNewObject(new Plane());
             EarnMoney(10000);
         }        
