@@ -270,10 +270,10 @@ void PlayScene::OnKeyDown(int keyCode) {
 
         if (keyStrokes.size() == code.size() && std::equal(code.begin(), code.end(), keyStrokes.begin())) {
             // Cheat activated: Spawn a Plane and add 10,000 money
-            const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
-            PlaneEnemy* cheatPlane = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y);
-            EnemyGroup->AddNewObject(cheatPlane);
-            cheatPlane->UpdatePath(mapDistance);
+            // const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
+            // PlaneEnemy* cheatPlane = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y);
+            // EnemyGroup->AddNewObject(cheatPlane);
+            // cheatPlane->UpdatePath(mapDistance);
             EffectGroup->AddNewObject(new Plane());
             EarnMoney(10000);
         }        
