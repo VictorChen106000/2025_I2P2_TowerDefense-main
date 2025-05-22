@@ -12,7 +12,7 @@ void Scoreboard::Initialize() {
    // 1) load all scores + timestamps from file
     scores.clear();
     {
-      std::ifstream ifs("../Resource/scoreboard.txt");
+      std::ifstream ifs("Resource/scoreboard.txt");
       if (!ifs) {
         std::cerr << "[Scoreboard] cannot open Resource/scoreboard.txt\n";
       } else {
