@@ -22,6 +22,7 @@
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/TurretButton.hpp"
+#include "Shovel/ShovelButton.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "UI/Component/Label.hpp"
@@ -231,30 +232,39 @@ void PlayScene::OnMouseMove(int mx, int my) {
 }
 void PlayScene::OnMouseUp(int button, int mx, int my) {
     IScene::OnMouseUp(button, mx, my);
-    if (shovelMode && (button & 1)) {
-        int gx = mx / BlockSize, gy = my / BlockSize;
-        for (auto &obj : TowerGroup->GetObjects()) {
-            Turret* t = dynamic_cast<Turret*>(obj);
-            if (!t) continue;
-            int tx = int(t->Position.x / BlockSize),
-                ty = int(t->Position.y / BlockSize);
+    const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
+    const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
+    if (shovelMode && (button & 1) && mx >= 0 && mx <  mapPixelWidth && my >= 0 && my <  mapPixelHeight)
+    {
+        // 1) grid coords
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+
+        // 2) find the turret in that cell
+        for (auto obj : TowerGroup->GetObjects()) {
+            auto turret = dynamic_cast<Turret*>(obj);
+            if (!turret) continue;
+            int tx = int(turret->Position.x) / BlockSize;
+            int ty = int(turret->Position.y) / BlockSize;
             if (tx == gx && ty == gy) {
-                // refund 85%
-                int refund = int(std::round(t->GetPrice() * 0.85f));
+                // 3a) refund 85%
+                int refund = int(turret->GetPrice() * 0.85f);
                 EarnMoney(refund);
-                // remove turret
-                t->GetObjectIterator()->first = false;
-                TowerGroup->RemoveObject(t->GetObjectIterator());
-                mapState[gy][gx] = TILE_FLOOR;
+
+                // 3b) remove turret & clear tile
+                turret->GetObjectIterator()->first = false;
+                TowerGroup->RemoveObject(turret->GetObjectIterator());
+                mapState[gy][gx] = TILE_DIRT;
                 break;
             }
         }
-        // tear down shovel preview & reset state
+
+        // 4) tear down the preview
         UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
-        shovelPreview = nullptr;
-        shovelMode    = false;
+        shovelPreview    = nullptr;
+        shovelMode       = false;
         imgTarget->Visible = false;
-        return;  // skip the turret‐placement code below
+        return;
     }
     if (!imgTarget->Visible)
         return;
@@ -407,25 +417,20 @@ void PlayScene::ConstructUI() {
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 1));
     UIGroup->AddNewControlObject(btn);
 
-    auto shovelBtn = new Engine::ImageButton(
-        "play/shovel.png",       // normal image (transparent bg)
-        "play/shovel-base.png", // highlight image
-        1294, 200                // position under your other buttons
-    );
+    // ShovelButton
+    auto shovelBtn = new ShovelButton(1294, 200);
     shovelBtn->SetOnClickCallback([this](){
-        // enter “shovel mode”
+        // toggle shovel mode on each *click release*
         if (shovelMode) {
-            // if already in shovel mode, cancel it
             UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
             shovelMode = false;
             shovelPreview = nullptr;
-            return;
+        } else {
+            shovelMode = true;
+            shovelPreview = new Engine::Sprite("play/shovel.png", 0, 0);
+            shovelPreview->Tint = al_map_rgba(255,255,255,200);
+            UIGroup->AddNewObject(shovelPreview);
         }
-        shovelMode = true;
-        // create a cursor‐attached preview
-        shovelPreview = new Engine::Sprite("play/shovel.png", 0, 0);
-        shovelPreview->Tint = al_map_rgba(255,255,255,200);
-        UIGroup->AddNewObject(shovelPreview);
     });
     UIGroup->AddNewControlObject(shovelBtn);
 
