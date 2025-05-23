@@ -27,6 +27,8 @@ private:
     ALLEGRO_SAMPLE_ID bgmId;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
+    bool shovelMode = false;
+    Engine::Sprite* shovelPreview = nullptr;
 
 protected:
     int lives;

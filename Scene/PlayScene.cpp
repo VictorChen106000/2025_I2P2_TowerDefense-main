@@ -135,6 +135,11 @@ void PlayScene::Update(float deltaTime) {
         deathCountDown = -1;
     for (int i = 0; i < SpeedMult; i++) {
         IScene::Update(deltaTime);
+        if (shovelMode && shovelPreview) {
+            auto mpos = Engine::GameEngine::GetInstance().GetMousePosition();
+            shovelPreview->Position = mpos;
+            shovelPreview->Update(deltaTime);
+        }
         // Check if we should create new enemy.
         ticks += deltaTime;
         if (enemyWaveData.empty()) {
@@ -226,6 +231,31 @@ void PlayScene::OnMouseMove(int mx, int my) {
 }
 void PlayScene::OnMouseUp(int button, int mx, int my) {
     IScene::OnMouseUp(button, mx, my);
+    if (shovelMode && (button & 1)) {
+        int gx = mx / BlockSize, gy = my / BlockSize;
+        for (auto &obj : TowerGroup->GetObjects()) {
+            Turret* t = dynamic_cast<Turret*>(obj);
+            if (!t) continue;
+            int tx = int(t->Position.x / BlockSize),
+                ty = int(t->Position.y / BlockSize);
+            if (tx == gx && ty == gy) {
+                // refund 85%
+                int refund = int(std::round(t->GetPrice() * 0.85f));
+                EarnMoney(refund);
+                // remove turret
+                t->GetObjectIterator()->first = false;
+                TowerGroup->RemoveObject(t->GetObjectIterator());
+                mapState[gy][gx] = TILE_FLOOR;
+                break;
+            }
+        }
+        // tear down shovel preview & reset state
+        UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
+        shovelPreview = nullptr;
+        shovelMode    = false;
+        imgTarget->Visible = false;
+        return;  // skip the turret‐placement code below
+    }
     if (!imgTarget->Visible)
         return;
     const int x = mx / BlockSize;
@@ -376,6 +406,28 @@ void PlayScene::ConstructUI() {
                            Engine::Sprite("play/turret-2.png", 1370, 136 - 8, 0, 0, 0, 0), 1370, 136, LaserTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 1));
     UIGroup->AddNewControlObject(btn);
+
+    auto shovelBtn = new Engine::ImageButton(
+        "play/shovel.png",       // normal image (transparent bg)
+        "play/shovel-base.png", // highlight image
+        1294, 200                // position under your other buttons
+    );
+    shovelBtn->SetOnClickCallback([this](){
+        // enter “shovel mode”
+        if (shovelMode) {
+            // if already in shovel mode, cancel it
+            UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
+            shovelMode = false;
+            shovelPreview = nullptr;
+            return;
+        }
+        shovelMode = true;
+        // create a cursor‐attached preview
+        shovelPreview = new Engine::Sprite("play/shovel.png", 0, 0);
+        shovelPreview->Tint = al_map_rgba(255,255,255,200);
+        UIGroup->AddNewObject(shovelPreview);
+    });
+    UIGroup->AddNewControlObject(shovelBtn);
 
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
