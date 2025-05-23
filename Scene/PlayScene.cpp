@@ -443,21 +443,39 @@ void PlayScene::ConstructUI() {
 }
 
 void PlayScene::UIBtnClicked(int id) {
-    if (preview)
-        UIGroup->RemoveObject(preview->GetObjectIterator());
-    if (id == 0 && money >= MachineGunTurret::Price)
-        preview = new MachineGunTurret(0, 0);
-    else if (id == 1 && money >= LaserTurret::Price)
-        preview = new LaserTurret(0, 0);
-    if (!preview)
+    // 1) Determine if we can actually preview this turret
+    Turret* newPreview = nullptr;
+    if (id == 0 && money >= MachineGunTurret::Price) {
+        newPreview = new MachineGunTurret(0, 0);
+    }
+    else if (id == 1 && money >= LaserTurret::Price) {
+        newPreview = new LaserTurret(0, 0);
+    }
+    else {
+        // not enough money (or invalid id), so do nothing
         return;
+    }
+
+    // 2) Remove any existing preview
+    if (preview) {
+        UIGroup->RemoveObject(preview->GetObjectIterator());
+    }
+
+    // 3) Install the new preview
+    preview = newPreview;
     preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();
-    preview->Tint = al_map_rgba(255, 255, 255, 200);
-    preview->Enabled = false;
-    preview->Preview = true;
+    preview->Tint     = al_map_rgba(255, 255, 255, 200);
+    preview->Enabled  = false;
+    preview->Preview  = true;
     UIGroup->AddNewObject(preview);
-    OnMouseMove(Engine::GameEngine::GetInstance().GetMousePosition().x, Engine::GameEngine::GetInstance().GetMousePosition().y);
+
+    // Ensure the target‐tile indicator stays in sync
+    OnMouseMove(
+      Engine::GameEngine::GetInstance().GetMousePosition().x,
+      Engine::GameEngine::GetInstance().GetMousePosition().y
+    );
 }
+
 
 bool PlayScene::CheckSpaceValid(int x, int y) {
     if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight)
