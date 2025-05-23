@@ -211,11 +211,28 @@ void PlayScene::Draw() const {
     }
 }
 void PlayScene::OnMouseDown(int button, int mx, int my) {
-    if ((button & 1) && !imgTarget->Visible && preview) {
-        // Cancel turret construct.
-        UIGroup->RemoveObject(preview->GetObjectIterator());
-        preview = nullptr;
+    // Calculate whether the click is on the map area:
+    const int mapW = MapWidth * BlockSize;
+    const int mapH = MapHeight * BlockSize;
+    bool clickOnMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
+    // If it’s a left‐click outside the map *or* any right‐click, cancel both turret preview and shovel
+    if (((button & 1) && !clickOnMap) || (button & 2)) {
+        // 1) Cancel turret preview
+        if (preview) {
+            UIGroup->RemoveObject(preview->GetObjectIterator());
+            preview = nullptr;
+        }
+        // 2) Cancel shovel mode
+        if (shovelMode) {
+            if (shovelPreview) {
+                UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
+                shovelPreview = nullptr;
+            }
+            shovelMode       = false;
+            imgTarget->Visible = false;  // hide the grid highlight
+        }
     }
+    // Always forward to base for button callbacks (so your TurretButton / ShovelButton still work)
     IScene::OnMouseDown(button, mx, my);
 }
 void PlayScene::OnMouseMove(int mx, int my) {
