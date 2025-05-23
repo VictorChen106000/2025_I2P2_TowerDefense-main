@@ -435,7 +435,7 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewControlObject(btn);
 
     // ShovelButton
-    auto shovelBtn = new ShovelButton(1294, 200);
+    auto shovelBtn = new ShovelButton(1294, 210);
     shovelBtn->SetOnClickCallback([this](){
         // toggle shovel mode on each *click release*
         if (shovelMode) {
