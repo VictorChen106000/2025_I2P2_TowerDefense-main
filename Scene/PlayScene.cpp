@@ -21,6 +21,7 @@
 #include "PlayScene.hpp"
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
+#include "Turret/RocketTurret.hpp"
 #include "Turret/TurretButton.hpp"
 #include "Shovel/ShovelButton.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
@@ -211,11 +212,28 @@ void PlayScene::Draw() const {
     }
 }
 void PlayScene::OnMouseDown(int button, int mx, int my) {
-    if ((button & 1) && !imgTarget->Visible && preview) {
-        // Cancel turret construct.
-        UIGroup->RemoveObject(preview->GetObjectIterator());
-        preview = nullptr;
+    // Calculate whether the click is on the map area:
+    const int mapW = MapWidth * BlockSize;
+    const int mapH = MapHeight * BlockSize;
+    bool clickOnMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
+    // If it’s a left‐click outside the map *or* any right‐click, cancel both turret preview and shovel
+    if (((button & 1) && !clickOnMap) || (button & 2)) {
+        // 1) Cancel turret preview
+        if (preview) {
+            UIGroup->RemoveObject(preview->GetObjectIterator());
+            preview = nullptr;
+        }
+        // 2) Cancel shovel mode
+        if (shovelMode) {
+            if (shovelPreview) {
+                UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
+                shovelPreview = nullptr;
+            }
+            shovelMode       = false;
+            imgTarget->Visible = false;  // hide the grid highlight
+        }
     }
+    // Always forward to base for button callbacks (so your TurretButton / ShovelButton still work)
     IScene::OnMouseDown(button, mx, my);
 }
 void PlayScene::OnMouseMove(int mx, int my) {
@@ -328,6 +346,8 @@ void PlayScene::OnKeyDown(int keyCode) {
     } else if (keyCode == ALLEGRO_KEY_W) {
         // Hotkey for LaserTurret.
         UIBtnClicked(1);
+    } else if (keyCode == ALLEGRO_KEY_E) {
+        UIBtnClicked(2);  // hotkey E for rocket
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
@@ -434,6 +454,17 @@ void PlayScene::ConstructUI() {
     });
     UIGroup->AddNewControlObject(shovelBtn);
 
+    // RocketTurret Button
+    btn = new TurretButton(
+    "play/floor.png", "play/dirt.png",
+    Engine::Sprite("play/tower-base.png", 1446, 136, 0, 0, 0, 0),
+    Engine::Sprite("play/turret-3.png",     1446, 136, 0, 0, 0, 0),
+    1446, 136,
+    RocketTurret::Price
+    );
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 2));
+    UIGroup->AddNewControlObject(btn);
+
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int shift = 135 + 25;
@@ -451,10 +482,9 @@ void PlayScene::UIBtnClicked(int id) {
     else if (id == 1 && money >= LaserTurret::Price) {
         newPreview = new LaserTurret(0, 0);
     }
-    else {
-        // not enough money (or invalid id), so do nothing
-        return;
-    }
+    else if (id == 2 && money >= RocketTurret::Price) {
+        newPreview = new RocketTurret(0,0);
+    } else return;
 
     // 2) Remove any existing preview
     if (preview) {
