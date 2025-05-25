@@ -21,6 +21,7 @@
 #include "PlayScene.hpp"
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
+#include "Turret/RocketTurret.hpp"
 #include "Turret/TurretButton.hpp"
 #include "Shovel/ShovelButton.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
@@ -345,6 +346,8 @@ void PlayScene::OnKeyDown(int keyCode) {
     } else if (keyCode == ALLEGRO_KEY_W) {
         // Hotkey for LaserTurret.
         UIBtnClicked(1);
+    } else if (keyCode == ALLEGRO_KEY_E) {
+        UIBtnClicked(2);  // hotkey E for rocket
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
@@ -451,6 +454,17 @@ void PlayScene::ConstructUI() {
     });
     UIGroup->AddNewControlObject(shovelBtn);
 
+    // RocketTurret Button
+    btn = new TurretButton(
+    "play/floor.png", "play/dirt.png",
+    Engine::Sprite("play/tower-base.png", 1446, 136, 0, 0, 0, 0),
+    Engine::Sprite("play/turret-3.png",     1446, 136, 0, 0, 0, 0),
+    1446, 136,
+    RocketTurret::Price
+    );
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 2));
+    UIGroup->AddNewControlObject(btn);
+
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int shift = 135 + 25;
@@ -468,10 +482,9 @@ void PlayScene::UIBtnClicked(int id) {
     else if (id == 1 && money >= LaserTurret::Price) {
         newPreview = new LaserTurret(0, 0);
     }
-    else {
-        // not enough money (or invalid id), so do nothing
-        return;
-    }
+    else if (id == 2 && money >= RocketTurret::Price) {
+        newPreview = new RocketTurret(0,0);
+    } else return;
 
     // 2) Remove any existing preview
     if (preview) {
