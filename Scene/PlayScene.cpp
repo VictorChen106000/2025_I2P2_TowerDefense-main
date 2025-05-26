@@ -92,11 +92,11 @@ void PlayScene::Initialize() {
     deathBGMInstance = Engine::Resources::GetInstance().GetSampleInstance("astronomia.ogg");
     Engine::Resources::GetInstance().GetBitmap("lose/benjamin-happy.png");
     // Start BGM.
-    bgmId = AudioHelper::PlayBGM("play.ogg");
+    bgmInstance = AudioHelper::PlaySample("play.ogg", true, AudioHelper::BGMVolume);
 }
 void PlayScene::Terminate() {
     Engine::LOG(Engine::INFO)<<"Terminating play scene";
-    AudioHelper::StopBGM(bgmId);
+    AudioHelper::StopSample(bgmInstance);
     AudioHelper::StopSample(deathBGMInstance);
     deathBGMInstance = std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE>();
     IScene::Terminate();
@@ -614,10 +614,8 @@ struct PanelRect : public Engine::IObject {
   }
 };
 void PlayScene::BGMSlideOnValueChanged(float value) {
-    // immediately update the global and (if you have one) your BGM instance
     AudioHelper::BGMVolume = value;
-    // if you kept a sample‐instance for your main BGM, you can also:
-    // AudioHelper::ChangeSampleVolume(bgmInstance, value);
+    AudioHelper::ChangeSampleVolume(bgmInstance, value);
 }
 
 void PlayScene::SFXSlideOnValueChanged(float value) {
@@ -636,19 +634,25 @@ void PlayScene::ShowPauseMenu() {
     UIGroup->AddNewObject(pausePanel);
 
     // BGM label + slider
-    labelBGM = new Engine::Label("BGM:", "pirulen.ttf", 24, FX + 20, FY + 30);
+    int labelY = FY + 30;
+    labelBGM = new Engine::Label("BGM:", "pirulen.ttf", 24, FX + 20, labelY, 255,255,255,255);
     UIGroup->AddNewObject(labelBGM);
-    sliderBGM = new Slider(FX + 80, FY + 24, FW - 100, 4);
+    sliderBGM = new Slider(FX + 130, labelY + 12, FW - 160, 4);
     sliderBGM->SetValue(AudioHelper::BGMVolume);
-    sliderBGM->SetOnValueChangedCallback(std::bind(&PlayScene::BGMSlideOnValueChanged, this, std::placeholders::_1));
+    sliderBGM->SetOnValueChangedCallback(
+        std::bind(&PlayScene::BGMSlideOnValueChanged, this, std::placeholders::_1)
+    );
     UIGroup->AddNewControlObject(sliderBGM);
 
     // SFX label + slider
-    labelSFX = new Engine::Label("SFX:", "pirulen.ttf", 24, FX + 20, FY + 80);
+    int labelY2 = FY + 80;
+    labelSFX = new Engine::Label("SFX:", "pirulen.ttf", 24, FX + 20, labelY2, 255,255,255,255);
     UIGroup->AddNewObject(labelSFX);
-    sliderSFX = new Slider(FX + 80, FY + 74, FW - 100, 4);
+    sliderSFX = new Slider(FX + 130, labelY2 + 12, FW - 160, 4);
     sliderSFX->SetValue(AudioHelper::SFXVolume);
-    sliderSFX->SetOnValueChangedCallback(std::bind(&PlayScene::SFXSlideOnValueChanged, this, std::placeholders::_1));
+    sliderSFX->SetOnValueChangedCallback(
+        std::bind(&PlayScene::SFXSlideOnValueChanged, this, std::placeholders::_1)
+    );
     UIGroup->AddNewControlObject(sliderSFX);
 
     // Quit‐to‐StageSelect button
