@@ -224,6 +224,11 @@ void PlayScene::Draw() const {
     }
 }
 void PlayScene::OnMouseDown(int button, int mx, int my) {
+    if (isPaused) {
+        // still forward to IScene so your sliders & quitBtn get the click…
+        IScene::OnMouseDown(button, mx, my);
+        return;   // …but skip all the rest (turret/shovel logic)
+    }
     // Calculate whether the click is on the map area:
     const int mapW = MapWidth * BlockSize;
     const int mapH = MapHeight * BlockSize;
@@ -262,6 +267,7 @@ void PlayScene::OnMouseMove(int mx, int my) {
 }
 void PlayScene::OnMouseUp(int button, int mx, int my) {
     IScene::OnMouseUp(button, mx, my);
+    if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
     if (shovelMode && (button & 1) && mx >= 0 && mx <  mapPixelWidth && my >= 0 && my <  mapPixelHeight)
@@ -352,13 +358,13 @@ void PlayScene::OnKeyDown(int keyCode) {
             EarnMoney(10000);
         }        
     }
-    if (keyCode == ALLEGRO_KEY_Q) {
+    if (keyCode == ALLEGRO_KEY_Q && !isPaused) {
         // Hotkey for MachineGunTurret.
         UIBtnClicked(0);
-    } else if (keyCode == ALLEGRO_KEY_W) {
+    } else if (keyCode == ALLEGRO_KEY_W && !isPaused) {
         // Hotkey for LaserTurret.
         UIBtnClicked(1);
-    } else if (keyCode == ALLEGRO_KEY_E) {
+    } else if (keyCode == ALLEGRO_KEY_E && !isPaused) {
         UIBtnClicked(2);  // hotkey E for rocket
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
@@ -514,6 +520,7 @@ void PlayScene::ConstructUI() {
 }
 
 void PlayScene::UIBtnClicked(int id) {
+    if (isPaused) return;
     // 1) Determine if we can actually preview this turret
     Turret* newPreview = nullptr;
     if (id == 0 && money >= MachineGunTurret::Price) {
@@ -623,6 +630,18 @@ void PlayScene::SFXSlideOnValueChanged(float value) {
 }
 
 void PlayScene::ShowPauseMenu() {
+    if (preview) {
+        UIGroup->RemoveObject(preview->GetObjectIterator());
+        preview = nullptr;
+    }
+    if (shovelMode) {
+        shovelMode = false;
+        if (shovelPreview) {
+            UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
+            shovelPreview = nullptr;
+        }
+        imgTarget->Visible = false;
+    }
     // center a box
     int W = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int H = Engine::GameEngine::GetInstance().GetScreenSize().y;
