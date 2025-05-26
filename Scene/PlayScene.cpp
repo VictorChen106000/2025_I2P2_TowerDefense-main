@@ -59,6 +59,7 @@ void PlayScene::Initialize() {
     lives = 10;
     money = 150;
     SpeedMult = 1;
+    savedSpeedMult = 1;
     // Add groups from bottom to top.
     AddNewObject(TileMapGroup = new Group());
     AddNewObject(GroundEffectGroup = new Group());
@@ -352,7 +353,10 @@ void PlayScene::OnKeyDown(int keyCode) {
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
-        SpeedMult = keyCode - ALLEGRO_KEY_0;
+        // SpeedMult = keyCode - ALLEGRO_KEY_0;
+        int newSpeed = keyCode - ALLEGRO_KEY_0;
+        if (isPaused) savedSpeedMult = newSpeed;
+        else SpeedMult = newSpeed;
     }
 }
 void PlayScene::Hit() {
@@ -428,12 +432,19 @@ void PlayScene::ConstructUI() {
     pauseBtn = new Engine::ImageButton(
         "play/pause.png",       // out
         "play/pause.png", // in
-        1500, 8, 48, 48, 0, 0
+        1500, 8, 32, 32, 0, 0
     );
     pauseBtn->SetOnClickCallback([this](){
         // flip state
-        isPaused   = !isPaused;
-        SpeedMult  = isPaused ? 0 : 1;
+        isPaused = !isPaused;
+        if (isPaused) {
+            // going into pause → stash the current speed
+            savedSpeedMult = SpeedMult;
+            SpeedMult      = 0;
+        } else {
+            // coming out of pause → restore it
+            SpeedMult      = savedSpeedMult;
+        }
 
         // swap the two icons
         if (isPaused) {

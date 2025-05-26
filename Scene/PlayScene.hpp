@@ -31,6 +31,7 @@ private:
     bool shovelMode = false;
     Engine::Sprite* shovelPreview = nullptr;
     bool isPaused = false;
+    int savedSpeedMult = 1;
 
 protected:
     int lives;
