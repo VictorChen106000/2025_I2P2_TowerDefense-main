@@ -1,4 +1,5 @@
 #include <allegro5/base.h>
+#include <cmath>
 #include "RocketBullet.hpp"
 #include "Scene/PlayScene.hpp"
 #include "Enemy/Enemy.hpp"
@@ -8,10 +9,10 @@ RocketBullet::RocketBullet(Engine::Point position, Engine::Point forwardDirectio
     : Bullet(
         "play/bullet-3.png",      // Rocket sprite
         600.0f,                    // speed (faster than machine gun)
-        15.0f,                     // damage (higher than fire)
+        6.0f,                     // damage (higher than fire)
         position,
         forwardDirection,
-        rotation - ALLEGRO_PI/2,   // align sprite
+        rotation + ALLEGRO_PI / 2,   // align sprite
         parent
       )
 {
@@ -26,4 +27,15 @@ void RocketBullet::OnExplode(Enemy *enemy) {
             enemy->Position.x,
             enemy->Position.y
         ));
+}
+void RocketBullet::Update(float deltaTime) {
+    if (Target && Target->Visible) {
+        // compute new direction
+        Engine::Point toTarget = (Target->Position - Position).Normalize();
+        // update our velocity & rotation
+        Velocity = toTarget * speed;
+        Rotation = atan2(toTarget.y, toTarget.x) + ALLEGRO_PI / 2;
+    }
+    // now do all the normal movement, collision & removal
+    Bullet::Update(deltaTime);
 }
