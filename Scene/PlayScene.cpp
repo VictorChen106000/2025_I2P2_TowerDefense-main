@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
 #include <cmath>
 #include <fstream>
 #include <functional>
@@ -28,6 +29,7 @@
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "UI/Component/Label.hpp"
+#include "UI/Component/Slider.hpp"
 
 // TODO HACKATHON-4 (1/3): Trace how the game handles keyboard input.
 // TODO HACKATHON-4 (2/3): Find the cheat code sequence in this file.
@@ -58,8 +60,16 @@ void PlayScene::Initialize() {
     deathCountDown = -1;
     lives = 10;
     money = 150;
+    isPaused = false;
     SpeedMult = 1;
     savedSpeedMult = 1;
+    pausePanel   = nullptr;
+    quitBtn      = nullptr;
+    quitLabel    = nullptr;
+    sliderBGM    = nullptr;
+    sliderSFX    = nullptr;
+    labelBGM     = nullptr;
+    labelSFX     = nullptr;
     // Add groups from bottom to top.
     AddNewObject(TileMapGroup = new Group());
     AddNewObject(GroundEffectGroup = new Group());
@@ -333,7 +343,7 @@ void PlayScene::OnKeyDown(int keyCode) {
         if (keyStrokes.size() > code.size()) keyStrokes.pop_front();
 
         if (keyStrokes.size() == code.size() && std::equal(code.begin(), code.end(), keyStrokes.begin())) {
-            // Cheat activated: Spawn a Plane and add 10,000 money
+            // Cheat activated: Spawn a Rocket and add 10,000 money
             // const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
             // PlaneEnemy* cheatPlane = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y);
             // EnemyGroup->AddNewObject(cheatPlane);
@@ -353,7 +363,6 @@ void PlayScene::OnKeyDown(int keyCode) {
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
-        // SpeedMult = keyCode - ALLEGRO_KEY_0;
         int newSpeed = keyCode - ALLEGRO_KEY_0;
         if (isPaused) savedSpeedMult = newSpeed;
         else SpeedMult = newSpeed;
@@ -432,29 +441,23 @@ void PlayScene::ConstructUI() {
     pauseBtn = new Engine::ImageButton(
         "play/pause.png",       // out
         "play/pause.png", // in
-        1500, 8, 32, 32, 0, 0
+        1560, 8, 32, 32, 0, 0
     );
     pauseBtn->SetOnClickCallback([this](){
         // flip state
         isPaused = !isPaused;
-        if (isPaused) {
-            // going into pause → stash the current speed
-            savedSpeedMult = SpeedMult;
-            SpeedMult      = 0;
-        } else {
-            // coming out of pause → restore it
-            SpeedMult      = savedSpeedMult;
-        }
-
         // swap the two icons
         if (isPaused) {
+            savedSpeedMult = SpeedMult;
+            SpeedMult      = 0;
             // show ▶️ (play)
-            pauseBtn->SetImage("play/play.png",
-                                "play/play.png");
+            pauseBtn->SetImage("play/play.png", "play/play.png");
+            ShowPauseMenu();
         } else {
+            SpeedMult      = savedSpeedMult;
             // show ⏸️ (pause)
-            pauseBtn->SetImage("play/pause.png",
-                                "play/pause.png");
+            pauseBtn->SetImage("play/pause.png", "play/pause.png");
+            HidePauseMenu();
         }
     });
     UIGroup->AddNewControlObject(pauseBtn);
@@ -599,4 +602,89 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
         }
     }
     return map;
+}
+
+struct PanelRect : public Engine::IObject {
+  float x, y, w, h;
+  ALLEGRO_COLOR color;
+  PanelRect(float _x, float _y, float _w, float _h, ALLEGRO_COLOR c)
+    : x(_x), y(_y), w(_w), h(_h), color(c) {}
+  void Draw() const override {
+    al_draw_filled_rectangle(x, y, x + w, y + h, color);
+  }
+};
+void PlayScene::BGMSlideOnValueChanged(float value) {
+    // immediately update the global and (if you have one) your BGM instance
+    AudioHelper::BGMVolume = value;
+    // if you kept a sample‐instance for your main BGM, you can also:
+    // AudioHelper::ChangeSampleVolume(bgmInstance, value);
+}
+
+void PlayScene::SFXSlideOnValueChanged(float value) {
+    AudioHelper::SFXVolume = value;
+}
+
+void PlayScene::ShowPauseMenu() {
+    // center a box
+    int W = Engine::GameEngine::GetInstance().GetScreenSize().x;
+    int H = Engine::GameEngine::GetInstance().GetScreenSize().y;
+    int FW = 400, FH = 250;
+    int FX = (W - FW) / 2, FY = (H - FH) / 2;
+
+    // a semi-transparent black backdrop
+    pausePanel = new PanelRect(FX, FY, FW, FH, al_map_rgba(0, 0, 0, 200));
+    UIGroup->AddNewObject(pausePanel);
+
+    // BGM label + slider
+    labelBGM = new Engine::Label("BGM:", "pirulen.ttf", 24, FX + 20, FY + 30);
+    UIGroup->AddNewObject(labelBGM);
+    sliderBGM = new Slider(FX + 80, FY + 24, FW - 100, 4);
+    sliderBGM->SetValue(AudioHelper::BGMVolume);
+    sliderBGM->SetOnValueChangedCallback(std::bind(&PlayScene::BGMSlideOnValueChanged, this, std::placeholders::_1));
+    UIGroup->AddNewControlObject(sliderBGM);
+
+    // SFX label + slider
+    labelSFX = new Engine::Label("SFX:", "pirulen.ttf", 24, FX + 20, FY + 80);
+    UIGroup->AddNewObject(labelSFX);
+    sliderSFX = new Slider(FX + 80, FY + 74, FW - 100, 4);
+    sliderSFX->SetValue(AudioHelper::SFXVolume);
+    sliderSFX->SetOnValueChangedCallback(std::bind(&PlayScene::SFXSlideOnValueChanged, this, std::placeholders::_1));
+    UIGroup->AddNewControlObject(sliderSFX);
+
+    // Quit‐to‐StageSelect button
+    quitBtn = new Engine::ImageButton(
+        "stage-select/dirt.png",  // up
+        "stage-select/floor.png", // down
+        FX + FW - 140,            // x
+        FY + FH - 60,             // y
+        120, 40                   // w, h
+    );
+    quitBtn->SetOnClickCallback([this](){
+        SpeedMult = savedSpeedMult;
+        isPaused = false;
+        pauseBtn->SetImage("play/pause.png", "play/pause.png");
+        HidePauseMenu();
+        Engine::GameEngine::GetInstance().ChangeScene("stage-select");
+    });
+    UIGroup->AddNewControlObject(quitBtn);
+
+    quitLabel = new Engine::Label(
+        "Quit",              // text
+        "pirulen.ttf",       // font
+        24,                  // size
+        FX + FW - 140 + 120/2, // center x (button x + w/2)
+        FY + FH - 60  + 40/2  // center y (button y + h/2)
+    );
+    quitLabel->Anchor = Engine::Point(0.5f, 0.5f);  // pivot at its center
+    UIGroup->AddNewObject(quitLabel);
+}
+
+void PlayScene::HidePauseMenu() {
+    if (pausePanel) { UIGroup->RemoveObject(pausePanel->GetObjectIterator()); pausePanel = nullptr; }
+    if (labelBGM) { UIGroup->RemoveObject(labelBGM->GetObjectIterator());   labelBGM   = nullptr; }
+    if (sliderBGM) { UIGroup->RemoveObject(sliderBGM->GetObjectIterator());  sliderBGM  = nullptr; }
+    if (labelSFX) { UIGroup->RemoveObject(labelSFX->GetObjectIterator());   labelSFX   = nullptr; }
+    if (sliderSFX) { UIGroup->RemoveObject(sliderSFX->GetObjectIterator());  sliderSFX  = nullptr; }
+    if (quitBtn) { UIGroup->RemoveObject(quitBtn->GetObjectIterator());    quitBtn    = nullptr; }
+    if (quitLabel) { UIGroup->RemoveObject(quitLabel->GetObjectIterator()); quitLabel = nullptr;}
 }
