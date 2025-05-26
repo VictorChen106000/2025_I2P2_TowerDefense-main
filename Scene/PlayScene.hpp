@@ -8,6 +8,7 @@
 
 #include "Engine/IScene.hpp"
 #include "Engine/Point.hpp"
+#include "UI/Component/ImageButton.hpp"
 
 class Turret;
 namespace Engine {
@@ -29,6 +30,7 @@ private:
     float  elapsedTime = 0.0f;
     bool shovelMode = false;
     Engine::Sprite* shovelPreview = nullptr;
+    bool isPaused = false;
 
 protected:
     int lives;
@@ -62,6 +64,7 @@ public:
     Engine::Image *imgTarget;
     Engine::Sprite *dangerIndicator;
     Turret *preview;
+    Engine::ImageButton* pauseBtn;
     std::vector<std::vector<TileType>> mapState;
     std::vector<std::vector<int>> mapDistance;
     std::list<std::pair<int, float>> enemyWaveData;

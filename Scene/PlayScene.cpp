@@ -19,6 +19,7 @@
 #include "Engine/LOG.hpp"
 #include "Engine/Resources.hpp"
 #include "PlayScene.hpp"
+#include "UI/Component/ImageButton.hpp"
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/RocketTurret.hpp"
@@ -422,6 +423,31 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
     UIGroup->AddNewObject(UIMoney = new Engine::Label(std::string("$") + std::to_string(money), "pirulen.ttf", 24, 1294, 48));
     UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "pirulen.ttf", 24, 1294, 88));
+
+    // Pause Button (toggles SpeedMult between 0 and 1)
+    pauseBtn = new Engine::ImageButton(
+        "play/pause.png",       // out
+        "play/pause.png", // in
+        1500, 8, 48, 48, 0, 0
+    );
+    pauseBtn->SetOnClickCallback([this](){
+        // flip state
+        isPaused   = !isPaused;
+        SpeedMult  = isPaused ? 0 : 1;
+
+        // swap the two icons
+        if (isPaused) {
+            // show ▶️ (play)
+            pauseBtn->SetImage("play/play.png",
+                                "play/play.png");
+        } else {
+            // show ⏸️ (pause)
+            pauseBtn->SetImage("play/pause.png",
+                                "play/pause.png");
+        }
+    });
+    UIGroup->AddNewControlObject(pauseBtn);
+
     TurretButton *btn;
     // Button 1
     btn = new TurretButton("play/floor.png", "play/dirt.png",
