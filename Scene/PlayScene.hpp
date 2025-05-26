@@ -30,6 +30,7 @@ private:
     float  elapsedTime = 0.0f;
     bool shovelMode = false;
     Engine::Sprite* shovelPreview = nullptr;
+    bool isPaused = false;
 
 protected:
     int lives;

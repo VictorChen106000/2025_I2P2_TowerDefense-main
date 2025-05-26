@@ -425,21 +425,26 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "pirulen.ttf", 24, 1294, 88));
 
     // Pause Button (toggles SpeedMult between 0 and 1)
-    // Adjust x/y/size as you like; here we put it top-right of the sand panel:
     pauseBtn = new Engine::ImageButton(
-        "play/pause.png",      // mouse-out image
-        "play/play.png",// mouse-over image
-        1500,             // x
-        8,                // y
-        48,               // width
-        48,               // height
-        0,                // anchorX (top-left)
-        0                 // anchorY
+        "play/pause.png",       // out
+        "play/pause.png", // in
+        1500, 8, 48, 48, 0, 0
     );
     pauseBtn->SetOnClickCallback([this](){
-        // toggle pause
-        if (SpeedMult == 0) SpeedMult = 1;
-        else               SpeedMult = 0;
+        // flip state
+        isPaused   = !isPaused;
+        SpeedMult  = isPaused ? 0 : 1;
+
+        // swap the two icons
+        if (isPaused) {
+            // show ▶️ (play)
+            pauseBtn->SetImage("play/play.png",
+                                "play/play.png");
+        } else {
+            // show ⏸️ (pause)
+            pauseBtn->SetImage("play/pause.png",
+                                "play/pause.png");
+        }
     });
     UIGroup->AddNewControlObject(pauseBtn);
 

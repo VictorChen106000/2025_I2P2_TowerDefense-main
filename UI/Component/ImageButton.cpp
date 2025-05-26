@@ -35,4 +35,11 @@ namespace Engine {
         if (!mouseIn || !Enabled) bmp = imgOut;
         else bmp = imgIn;
     }
+    void ImageButton::SetImage(const std::string &outPath, const std::string &inPath) {
+        // load new images
+        imgOut = Resources::GetInstance().GetBitmap(outPath);
+        imgIn  = Resources::GetInstance().GetBitmap(inPath);
+        // immediately update the one we're drawing
+        bmp    = (mouseIn && Enabled) ? imgIn : imgOut;
+    }
 }
