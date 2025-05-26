@@ -7,7 +7,7 @@
 #include "Engine/Point.hpp"
 #include "Scene/PlayScene.hpp"
 
-const int RocketTurret::Price = 50;   
+const int RocketTurret::Price = 250;   
 
 RocketTurret::RocketTurret(float x, float y)
     : Turret(
