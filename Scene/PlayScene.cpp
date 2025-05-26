@@ -487,6 +487,7 @@ void PlayScene::ConstructUI() {
     // ShovelButton
     auto shovelBtn = new ShovelButton(1294, 210);
     shovelBtn->SetOnClickCallback([this](){
+        if (isPaused) return;
         // toggle shovel mode on each *click release*
         if (shovelMode) {
             UIGroup->RemoveObject(shovelPreview->GetObjectIterator());
