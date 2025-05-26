@@ -25,8 +25,21 @@ namespace Engine {
         }
     }
     void ImageButton::OnMouseMove(int mx, int my) {
-        mouseIn = Collider::IsPointInBitmap(Point((mx - Position.x) * GetBitmapWidth() / Size.x + Anchor.x * GetBitmapWidth(), (my - Position.y) * GetBitmapHeight() / Size.y + Anchor.y * GetBitmapHeight()), bmp);
+        // mouseIn = Collider::IsPointInBitmap(Point((mx - Position.x) * GetBitmapWidth() / Size.x + Anchor.x * GetBitmapWidth(), (my - Position.y) * GetBitmapHeight() / Size.y + Anchor.y * GetBitmapHeight()), bmp);
+        float left   = Position.x - Anchor.x * Size.x;
+        float top    = Position.y - Anchor.y * Size.y;
+        float right  = left + Size.x;
+        float bottom = top  + Size.y;
+
+        mouseIn = (mx >= left && mx <= right && my >= top && my <= bottom);
         if (!mouseIn || !Enabled) bmp = imgOut;
         else bmp = imgIn;
+    }
+    void ImageButton::SetImage(const std::string &outPath, const std::string &inPath) {
+        // load new images
+        imgOut = Resources::GetInstance().GetBitmap(outPath);
+        imgIn  = Resources::GetInstance().GetBitmap(inPath);
+        // immediately update the one we're drawing
+        bmp    = (mouseIn && Enabled) ? imgIn : imgOut;
     }
 }

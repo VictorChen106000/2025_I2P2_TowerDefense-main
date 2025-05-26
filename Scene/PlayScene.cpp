@@ -19,6 +19,7 @@
 #include "Engine/LOG.hpp"
 #include "Engine/Resources.hpp"
 #include "PlayScene.hpp"
+#include "UI/Component/ImageButton.hpp"
 #include "Turret/LaserTurret.hpp"
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/RocketTurret.hpp"
@@ -58,6 +59,7 @@ void PlayScene::Initialize() {
     lives = 10;
     money = 150;
     SpeedMult = 1;
+    savedSpeedMult = 1;
     // Add groups from bottom to top.
     AddNewObject(TileMapGroup = new Group());
     AddNewObject(GroundEffectGroup = new Group());
@@ -351,7 +353,10 @@ void PlayScene::OnKeyDown(int keyCode) {
     }
     else if (keyCode >= ALLEGRO_KEY_0 && keyCode <= ALLEGRO_KEY_9) {
         // Hotkey for Speed up.
-        SpeedMult = keyCode - ALLEGRO_KEY_0;
+        // SpeedMult = keyCode - ALLEGRO_KEY_0;
+        int newSpeed = keyCode - ALLEGRO_KEY_0;
+        if (isPaused) savedSpeedMult = newSpeed;
+        else SpeedMult = newSpeed;
     }
 }
 void PlayScene::Hit() {
@@ -422,6 +427,38 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
     UIGroup->AddNewObject(UIMoney = new Engine::Label(std::string("$") + std::to_string(money), "pirulen.ttf", 24, 1294, 48));
     UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "pirulen.ttf", 24, 1294, 88));
+
+    // Pause Button (toggles SpeedMult between 0 and 1)
+    pauseBtn = new Engine::ImageButton(
+        "play/pause.png",       // out
+        "play/pause.png", // in
+        1500, 8, 32, 32, 0, 0
+    );
+    pauseBtn->SetOnClickCallback([this](){
+        // flip state
+        isPaused = !isPaused;
+        if (isPaused) {
+            // going into pause → stash the current speed
+            savedSpeedMult = SpeedMult;
+            SpeedMult      = 0;
+        } else {
+            // coming out of pause → restore it
+            SpeedMult      = savedSpeedMult;
+        }
+
+        // swap the two icons
+        if (isPaused) {
+            // show ▶️ (play)
+            pauseBtn->SetImage("play/play.png",
+                                "play/play.png");
+        } else {
+            // show ⏸️ (pause)
+            pauseBtn->SetImage("play/pause.png",
+                                "play/pause.png");
+        }
+    });
+    UIGroup->AddNewControlObject(pauseBtn);
+
     TurretButton *btn;
     // Button 1
     btn = new TurretButton("play/floor.png", "play/dirt.png",
