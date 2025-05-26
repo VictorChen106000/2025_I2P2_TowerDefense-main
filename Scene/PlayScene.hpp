@@ -26,7 +26,7 @@ private:
         TILE_FLOOR,
         TILE_OCCUPIED,
     };
-    ALLEGRO_SAMPLE_ID bgmId;
+    std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
     bool shovelMode = false;

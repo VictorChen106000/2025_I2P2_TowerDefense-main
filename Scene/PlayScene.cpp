@@ -92,11 +92,11 @@ void PlayScene::Initialize() {
     deathBGMInstance = Engine::Resources::GetInstance().GetSampleInstance("astronomia.ogg");
     Engine::Resources::GetInstance().GetBitmap("lose/benjamin-happy.png");
     // Start BGM.
-    bgmId = AudioHelper::PlayBGM("play.ogg");
+    bgmInstance = AudioHelper::PlaySample("play.ogg", true, AudioHelper::BGMVolume);
 }
 void PlayScene::Terminate() {
     Engine::LOG(Engine::INFO)<<"Terminating play scene";
-    AudioHelper::StopBGM(bgmId);
+    AudioHelper::StopSample(bgmInstance);
     AudioHelper::StopSample(deathBGMInstance);
     deathBGMInstance = std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE>();
     IScene::Terminate();
@@ -614,10 +614,8 @@ struct PanelRect : public Engine::IObject {
   }
 };
 void PlayScene::BGMSlideOnValueChanged(float value) {
-    // immediately update the global and (if you have one) your BGM instance
     AudioHelper::BGMVolume = value;
-    // if you kept a sample‐instance for your main BGM, you can also:
-    // AudioHelper::ChangeSampleVolume(bgmInstance, value);
+    AudioHelper::ChangeSampleVolume(bgmInstance, value);
 }
 
 void PlayScene::SFXSlideOnValueChanged(float value) {
