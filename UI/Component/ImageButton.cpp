@@ -25,7 +25,13 @@ namespace Engine {
         }
     }
     void ImageButton::OnMouseMove(int mx, int my) {
-        mouseIn = Collider::IsPointInBitmap(Point((mx - Position.x) * GetBitmapWidth() / Size.x + Anchor.x * GetBitmapWidth(), (my - Position.y) * GetBitmapHeight() / Size.y + Anchor.y * GetBitmapHeight()), bmp);
+        // mouseIn = Collider::IsPointInBitmap(Point((mx - Position.x) * GetBitmapWidth() / Size.x + Anchor.x * GetBitmapWidth(), (my - Position.y) * GetBitmapHeight() / Size.y + Anchor.y * GetBitmapHeight()), bmp);
+        float left   = Position.x - Anchor.x * Size.x;
+        float top    = Position.y - Anchor.y * Size.y;
+        float right  = left + Size.x;
+        float bottom = top  + Size.y;
+
+        mouseIn = (mx >= left && mx <= right && my >= top && my <= bottom);
         if (!mouseIn || !Enabled) bmp = imgOut;
         else bmp = imgIn;
     }
