@@ -50,6 +50,7 @@ protected:
     int lives;
     int money;
     int SpeedMult;
+    int killCount;
 
 public:
     static bool DebugMode;
@@ -102,6 +103,8 @@ public:
     void UIBtnClicked(int id);
     bool CheckSpaceValid(int x, int y);
     std::vector<std::vector<int>> CalculateBFSDistance();
+    void AddKill() {++killCount;}
+    int GetKillCount() const {return killCount;}
     // void ModifyReadMapTiles();
 };
 #endif   // PLAYSCENE_HPP

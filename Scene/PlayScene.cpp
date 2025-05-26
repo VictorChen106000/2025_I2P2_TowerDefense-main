@@ -60,6 +60,7 @@ void PlayScene::Initialize() {
     deathCountDown = -1;
     lives = 10;
     money = 150;
+    killCount = 0;
     isPaused = false;
     SpeedMult = 1;
     savedSpeedMult = 1;

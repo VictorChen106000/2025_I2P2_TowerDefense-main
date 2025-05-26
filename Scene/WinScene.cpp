@@ -119,8 +119,10 @@ void WinScene::SaveScore() {
     float t = (ps ? ps->GetElapsedTime() : 0.0f);
 
     // 2) compute a simple time‐bonus score
-    //    (faster → bigger: here we start at 10,000 and subtract 100 per second)
-    int score = std::max(0, 10000 - static_cast<int>(t * 100));
+    int kills     = ps->GetKillCount();
+    int timeBonus = static_cast<int>(10000.0f / (t + 1));
+    int moneyLeft = ps->GetMoney();
+    int score     = kills * 30 + timeBonus * 1 + moneyLeft * 2; 
 
     // 3) append "Name Score" to Resource/scoreboard.txt
     auto now = std::chrono::system_clock::now();

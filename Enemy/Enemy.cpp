@@ -39,6 +39,7 @@ void Enemy::Hit(float damage) {
     hp -= damage;
     if (hp <= 0) {
         OnExplode();
+        getPlayScene()->AddKill();
         // Remove all turret's reference to target.
         for (auto &it : lockedTurrets)
             it->Target = nullptr;
