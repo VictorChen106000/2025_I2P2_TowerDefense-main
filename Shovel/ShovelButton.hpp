@@ -7,20 +7,21 @@
 #include "Engine/Point.hpp"
 
 class ShovelButton : public Engine::ImageButton {
-    Engine::Sprite  baseSpr, iconSpr;
+    Engine::Sprite  baseSpr, hoverSpr, iconSpr;
 
 public:
     ShovelButton(float x, float y)
       : ImageButton(
-          "play/shovel-base.png",  // we just use this to size our button
-          "play/shovel-base.png",  // (hovered image is ignored by us)
+          "play/shovel.png",  // we just use this to size our button
+          "play/shovel.png",  // (hovered image is ignored by us)
           x, y
         ),
-        baseSpr("play/shovel-base.png",
+        baseSpr("play/shovel.png",
                 x, y,     // position (we’ll update these each frame)
                 0, 0,     // region = full bitmap
                 0, 0      // anchor = top-left
         ),
+        hoverSpr("play/shovel-base.png", x, y, 0,0, 0,0),
         iconSpr("play/shovel.png",
                 x, y,     // position (we’ll update these each frame)
                 0, 0,     // region = full bitmap
@@ -29,6 +30,7 @@ public:
     {
         // ensure we participate in the control chain
         Enabled = true;
+        hoverSpr.Visible = false;
     }
 
     // — recalc position + hover every frame —
@@ -47,8 +49,13 @@ public:
                       && m.y >= Position.y
                       && m.y <  Position.y + h;
 
+                      baseSpr.Position  = Position;
+        hoverSpr.Position = Position;
+        iconSpr.Position.x = Position.x + (w - iconSpr.GetBitmapWidth())*0.5f;
+        iconSpr.Position.y = Position.y + (h - iconSpr.GetBitmapHeight())*0.5f;
         // hide the base when hovered
         baseSpr.Visible = !hovering;
+         hoverSpr.Visible =  hovering;
 
         // (we don’t need baseSpr.Update(dt) or iconSpr.Update(dt)
         //  because they’re static images)
@@ -56,7 +63,8 @@ public:
 
     // draw base + icon in the right order
     void Draw() const override {
-        baseSpr.Draw();
+        if (hoverSpr.Visible) hoverSpr.Draw();
+        else baseSpr.Draw();
         iconSpr.Draw();
     }
 
