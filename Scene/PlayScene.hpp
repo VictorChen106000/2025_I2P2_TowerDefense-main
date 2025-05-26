@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "UI/Component/Slider.hpp"
 #include "Engine/IScene.hpp"
 #include "Engine/Point.hpp"
 #include "UI/Component/ImageButton.hpp"
@@ -32,6 +33,18 @@ private:
     Engine::Sprite* shovelPreview = nullptr;
     bool isPaused = false;
     int savedSpeedMult = 1;
+
+    Engine::ImageButton* quitBtn = nullptr;
+    Engine::Label* quitLabel = nullptr;
+    Slider* sliderBGM = nullptr;
+    Slider* sliderSFX = nullptr;
+    Engine::Label* labelBGM = nullptr;
+    Engine::Label* labelSFX = nullptr;
+    Engine::IObject* pausePanel = nullptr;
+    void ShowPauseMenu();
+    void HidePauseMenu();
+    void BGMSlideOnValueChanged(float value);
+    void SFXSlideOnValueChanged(float value);
 
 protected:
     int lives;
