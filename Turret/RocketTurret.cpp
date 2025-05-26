@@ -20,7 +20,7 @@ RocketTurret::RocketTurret(float x, float y)
       )
 {
     // same downward shift so head aligns
-    Anchor.y += 8.0f / GetBitmapHeight();
+    Anchor.y -= 1.0f / GetBitmapHeight();
 }
 
 void RocketTurret::CreateBullet() {
