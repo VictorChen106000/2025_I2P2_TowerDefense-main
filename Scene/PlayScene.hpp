@@ -33,7 +33,6 @@ private:
     Engine::Sprite* shovelPreview = nullptr;
     bool isPaused = false;
     int savedSpeedMult = 1;
-
     Engine::ImageButton* quitBtn = nullptr;
     Engine::Label* quitLabel = nullptr;
     Slider* sliderBGM = nullptr;
@@ -41,10 +40,13 @@ private:
     Engine::Label* labelBGM = nullptr;
     Engine::Label* labelSFX = nullptr;
     Engine::IObject* pausePanel = nullptr;
+    float lastGroundSpawnTime = 0.0f;
+    const float minGroundGap = 0.8f;
     void ShowPauseMenu();
     void HidePauseMenu();
     void BGMSlideOnValueChanged(float value);
     void SFXSlideOnValueChanged(float value);
+    void SpawnEnemyOfType(int type, float extraTicks);
 
 protected:
     int lives;
@@ -64,6 +66,7 @@ public:
     float ticks;
     float deathCountDown;
     float GetElapsedTime() const { return elapsedTime; }
+    float nextAdaptiveWait = 0.0f;
     // Map tiles.
     Group *TileMapGroup;
     Group *GroundEffectGroup;
@@ -102,6 +105,8 @@ public:
     void UIBtnClicked(int id);
     bool CheckSpaceValid(int x, int y);
     std::vector<std::vector<int>> CalculateBFSDistance();
+    float CalculatePlayerPower();
+    std::pair<int, float> GenerateAdaptiveEnemy();
     // void ModifyReadMapTiles();
 };
 #endif   // PLAYSCENE_HPP
