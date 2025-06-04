@@ -24,7 +24,7 @@ std::string AccountManager::HashPassword(const std::string& plain) {
 //------------------------------------------------------------
 std::vector<AccountInfo> AccountManager::LoadAllAccounts() {
     std::vector<AccountInfo> out;
-    std::ifstream ifs("Resource/accounts.txt");
+    std::ifstream ifs("../Resource/accounts.txt");
     if (!ifs.is_open()) {
         // If the file doesn’t exist yet, return empty vector.
         return out;

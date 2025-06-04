@@ -326,7 +326,7 @@ void RegisterScene::ToggleInputFocus() {
 }
 
 std::string RegisterScene::CheckPasswordStrength(const std::string& pwd) const {
-    if (pwd.length() < 12)   return "Password must be at least 8 characters.";
+    if (pwd.length() < 8)   return "Password must be at least 8 characters.";
     bool hasLower = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::islower(c); });
     bool hasUpper = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::isupper(c); });
     bool hasDigit = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::isdigit(c); });
