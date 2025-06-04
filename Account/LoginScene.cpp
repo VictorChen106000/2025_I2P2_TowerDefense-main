@@ -350,7 +350,7 @@ void LoginScene::OnLoginClicked() {
     }
     if (AccountManager::VerifyPassword(typedUsername, typedPassword)) {
         CurrentUser = typedUsername;
-        GameEngine::GetInstance().ChangeScene("stage-select");
+        GameEngine::GetInstance().ChangeScene("start");
     } else {
         errorMessage = "Invalid username or password.";
     }

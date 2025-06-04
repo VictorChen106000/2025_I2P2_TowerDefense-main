@@ -260,8 +260,8 @@ void RegisterScene::Initialize() {
 
     // ─── 8) Create password‐eye button ─────────────────────────────────
     {
-        int eyeW = 60, eyeH = 60; // adjust size as desired
-        float eyeX = passwordBoxX + passwordBoxW + 10;
+        int eyeW = 60, eyeH = 130; // adjust size as desired
+        float eyeX = passwordBoxX + passwordBoxW + 20;
         float eyeY = passwordBoxY + (passwordBoxH / 2.0f) - (eyeH / 2.0f);
 
         passwordEyeButton = new ImageButton(
@@ -295,8 +295,8 @@ void RegisterScene::Initialize() {
 
     // ─── 9) Create confirm‐eye button ──────────────────────────────────
     {
-        int eyeW = 60, eyeH = 60; // same size for confirm eye
-        float eyeX = confirmBoxX + confirmBoxW + 10;
+        int eyeW = 60, eyeH = 130; // same size for confirm eye
+        float eyeX = confirmBoxX + confirmBoxW + 20;
         float eyeY = confirmBoxY + (confirmBoxH / 2.0f) - (eyeH / 2.0f);
 
         confirmEyeButton = new ImageButton(
