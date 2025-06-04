@@ -19,6 +19,8 @@
 #include "Point.hpp"
 #include "Resources.hpp"
 
+std::string CurrentUser = "";
+
 namespace Engine {
     void GameEngine::initAllegro5() {
         if (!al_init()) throw Allegro5Exception("failed to initialize allegro");

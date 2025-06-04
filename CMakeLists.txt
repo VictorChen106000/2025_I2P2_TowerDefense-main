@@ -13,6 +13,14 @@ file(COPY Resource DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY allegro_monolith-5.2.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(2025_I2P2_TowerDefense
+
+    Account/AccountManager.cpp
+    Account/AccountManager.hpp
+    Account/LoginScene.cpp
+    Account/LoginScene.hpp
+    Account/RegisterScene.cpp
+    Account/RegisterScene.hpp
+    
     Bullet/Bullet.cpp
     Bullet/Bullet.hpp
     Bullet/FireBullet.cpp

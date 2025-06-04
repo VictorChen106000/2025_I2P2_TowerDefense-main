@@ -6,6 +6,9 @@
 
 #include "Point.hpp"
 
+//Read CurrentUser Instead of playerName
+extern std::string CurrentUser;
+
 /// <summary>
 /// All general classes are under this namespace for clarity.
 /// </summary>
