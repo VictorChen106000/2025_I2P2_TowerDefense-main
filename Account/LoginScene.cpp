@@ -260,7 +260,7 @@ void LoginScene::Initialize() {
         //    account‐specific data, you can check if CurrentUser == "Guest".
 
         // 3) Jump to the next scene (e.g. “stage-select”)
-        GameEngine::GetInstance().ChangeScene("stage-select");
+        GameEngine::GetInstance().ChangeScene("start");
     });
     AddNewControlObject(guestButton);
 
