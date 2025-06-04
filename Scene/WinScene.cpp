@@ -128,7 +128,13 @@ void WinScene::SaveScore() {
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
     std::tm localTm;
+        #if defined(_MSC_VER)
+    // Windows (MSVC) “secure” variant:
     localtime_s(&localTm, &now_c);
+    #else
+    // macOS/Linux POSIX variant:
+    localtime_r(&now_c, &localTm);
+    #endif
     std::ostringstream oss;
     oss << std::put_time(&localTm, "%Y-%m-%d %H:%M:%S");
     std::string timeStr = oss.str();
