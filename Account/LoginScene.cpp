@@ -46,7 +46,7 @@ void LoginScene::Initialize() {
 
     // 1) Username prompt and input label:
     usernamePromptLabel = new Label(
-        "Username:", "pirulen.ttf", 24,
+        "Username:", "balatro.ttf", 48,
         halfW - 150, halfH - 40,
         255, 255, 255, 255,
         0.5f, 0.5f
@@ -70,7 +70,7 @@ void LoginScene::Initialize() {
 
     // 2) Password prompt and input label:
     passwordPromptLabel = new Label(
-        "Password:", "pirulen.ttf", 24,
+        "Password:", "balatro.ttf", 48,
         halfW - 150, halfH,
         255, 255, 255, 255,
         0.5f, 0.5f
