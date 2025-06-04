@@ -152,30 +152,35 @@ void LoginScene::Initialize() {
 
     // ─── 5) Create the eye ImageButton to the right of the password box ──
     {
-        float eyeX = passwordBoxX + passwordBoxW + 10;  
-        float eyeY = passwordBoxY + (passwordBoxH / 2) - 20; 
+        float eyeX = passwordBoxX + passwordBoxW + 20;  
+        float eyeY = passwordBoxY + (passwordBoxH / 2)-60; 
 
         eyeButton = new ImageButton(
             "closeeyewhite.png",   // “closed eye” as default
             "openeyewhite.png",    // “open eye” when pressed
             eyeX,
             eyeY,
-            40, 40        // size of the eye icon (40×40)
+            80, 130      // size of the eye icon (40×40)
         );
         // Hide the eye until the user types something:
         eyeButton->Visible = false;
 
         eyeButton->SetOnClickCallback([&]() {
             loginRevealPassword = !loginRevealPassword;
+        
             if (loginRevealPassword) {
-                // Reveal password, swap to “eye open”
-                eyeButton->SetImage("openeyewhite.png",
-                                    "openeyewhite.png");
+                // ─── “Revealed” state: out=open, in=close ───
+                eyeButton->SetImage(
+                    "openeyewhite.png",   // out image
+                    "closeeyewhite.png"   // in (hover) image
+                );
                 passwordInputLabel->Text = typedPassword;
             } else {
-                // Mask password, swap back to “eye closed”
-                eyeButton->SetImage("closeeyewhite.png",
-                                    "openeyewhite.png");
+                // ─── “Masked” state: out=close, in=open ───
+                eyeButton->SetImage(
+                    "closeeyewhite.png",  // out image
+                    "openeyewhite.png"    // in (hover) image
+                );
                 passwordInputLabel->Text = std::string(typedPassword.size(), '*');
             }
         });
