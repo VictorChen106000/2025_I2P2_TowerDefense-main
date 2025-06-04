@@ -39,99 +39,144 @@ void LoginScene::Initialize() {
     typingUsername = true;
     errorMessage.clear();
 
-    int w = GameEngine::GetInstance().GetScreenSize().x;
-    int h = GameEngine::GetInstance().GetScreenSize().y;
-    int halfW = w / 2;
-    int halfH = h / 2;
+    int w = GameEngine::GetInstance().GetScreenSize().x;   // e.g. 1600
+    int h = GameEngine::GetInstance().GetScreenSize().y;   // e.g. 832
+    int halfW = w / 2;  // 800
+    int halfH = h / 2;  // 416
 
-    // 1) Username prompt and input label:
+    //
+    // 1) Username prompt and input field
+    //
+
+    // 1a) Prompt label (still at halfW - 200, halfH - 100):
     usernamePromptLabel = new Label(
-        "Username:", "balatro.ttf", 48,
-        halfW - 150, halfH - 40,
+        "Username:",
+        "balatro.ttf",  // or whatever TTF you’re using
+        60,
+        halfW - 200,
+        halfH - 100,
         255, 255, 255, 255,
-        0.5f, 0.5f
+        0.5f, 0.5f    // centered on that point
     );
     AddNewObject(usernamePromptLabel);
 
+    // 1b) Define the clickable rectangle for “Username”:
+    //     400×60 centered at (halfW+200, halfH−100):
+    usernameBoxW = 500;
+    usernameBoxH = 80;
+    usernameBoxX = (halfW + 200) - (usernameBoxW / 2);
+    usernameBoxY = (halfH - 100) - (usernameBoxH / 2);
+
+    // 1c) Place the input‐Label **inside** that rectangle, with a little left padding:
+    //     X = usernameBoxX + 10  (10px inset)
+    //     Y = usernameBoxY + (usernameBoxH/2)  (vertical center)
     usernameInputLabel = new Label(
-        "", "pirulen.ttf", 24,
-        halfW + 20, halfH - 40,
+        "",                     // initially empty
+        "balatro.ttf",
+        60,
+        usernameBoxX + 15,      // start 10px into the box
+        usernameBoxY + (usernameBoxH / 2),
         255, 255, 255, 255,
-        0.0f, 0.5f
+        0.0f, 0.5f              // left‐aligned, vertically centered
     );
     AddNewObject(usernameInputLabel);
 
-    // Define the “clickable” rectangle around the Username field (200×30)
-    usernameBoxW = 200;
-    usernameBoxH = 30;
-    // Center that box at (halfW + 20, halfH - 40):
-    usernameBoxX = (halfW + 20) - (usernameBoxW / 2);
-    usernameBoxY = (halfH - 40) - (usernameBoxH / 2);
+    //
+    // 2) Password prompt and input field
+    //
 
-    // 2) Password prompt and input label:
+    // 2a) Prompt label at (halfW - 200, halfH + 0):
     passwordPromptLabel = new Label(
-        "Password:", "balatro.ttf", 48,
-        halfW - 150, halfH,
+        "Password:",
+        "balatro.ttf",
+        60,
+        halfW - 200,
+        halfH + 0,
         255, 255, 255, 255,
         0.5f, 0.5f
     );
     AddNewObject(passwordPromptLabel);
 
+    // 2b) Define rectangle for “Password” (also 400×60 at center (halfW+200, halfH)):
+    passwordBoxW = 500;
+    passwordBoxH = 80;
+    passwordBoxX = (halfW + 200) - (passwordBoxW / 2);
+    passwordBoxY = (halfH + 0) - (passwordBoxH / 2);
+
+    // 2c) Place input‐Label inside that rectangle (with 10px left padding):
     passwordInputLabel = new Label(
-        "", "pirulen.ttf", 24,
-        halfW + 20, halfH,
+        "",
+        "balatro.ttf",
+        60,
+        passwordBoxX + 15,
+        passwordBoxY + (passwordBoxH / 2),
         255, 255, 255, 255,
         0.0f, 0.5f
     );
     AddNewObject(passwordInputLabel);
 
-    // Bounding box for Password (same 200×30 size):
-    passwordBoxW = 200;
-    passwordBoxH = 30;
-    passwordBoxX = (halfW + 20) - (passwordBoxW / 2);
-    passwordBoxY = halfH - (passwordBoxH / 2);
+    // Bounding box for Password:
+    passwordBoxW = 500;
+    passwordBoxH = 80;
+    passwordBoxX = (halfW + 200) - (passwordBoxW / 2);
+    passwordBoxY = (halfH + 0) - (passwordBoxH / 2);
 
-    // 3) Info label (red) under fields for error messages:
+    //
+    // 3) Info label (red) under fields for error messages (40px)
+    //
     infoLabel = new Label(
-        "", "pirulen.ttf", 20,
-        halfW, halfH + 60,
-        255, 0, 0, 255,
+        "",                     // no text initially
+        "balatro.ttf",
+        40,                     // slightly smaller, 40px for error
+        halfW,                  // centered horizontally
+        halfH + 100,            // 100px below vertical center
+        255, 0, 0, 255,         // red color
         0.5f, 0.5f
     );
     AddNewObject(infoLabel);
 
-    // 4) Login button:
+    //
+    // 4) Login button (centered under the error label)
+    //
     loginButton = new ImageButton(
-        "stage-select/dirt.png",  // up‐state texture
-        "stage-select/floor.png", // down‐state texture
-        halfW - 200,
-        halfH + 100,
-        180,
-        50
+        "stage-select/dirt.png",
+        "stage-select/floor.png",
+        halfW - 150,            // button width 300, so left = halfW - 150
+        halfH + 180,            // 180px below center (i.e. 80px below error label)
+        300,                    // width
+        80                      // height
     );
     loginButton->SetOnClickCallback([this]() { OnLoginClicked(); });
     AddNewControlObject(loginButton);
     AddNewObject(new Label(
-        "Login", "pirulen.ttf", 24,
-        halfW - 200 + 90, halfH + 100 + 25,
-        0, 0, 0, 255,
+        "Login",
+        "balatro.ttf",
+        60,                     // match 60px so the button label is consistent
+        halfW,                  // center of the button
+        halfH + 180 + 40,       // halfway down the 80px height  (halfH+180 plus 40)
+        0, 0, 0, 255,           // black text
         0.5f, 0.5f
     ));
 
-    // 5) Register button:
+    //
+    // 5) Register button (to the right of the Login button)
+    //
     registerButton = new ImageButton(
         "stage-select/dirt.png",
         "stage-select/floor.png",
-        halfW + 20,
-        halfH + 100,
-        180,
-        50
+        halfW + 200,            // leaves a 50px gap between the two buttons
+        halfH + 180,
+        300,
+        80
     );
     registerButton->SetOnClickCallback([this]() { OnRegisterClicked(); });
     AddNewControlObject(registerButton);
     AddNewObject(new Label(
-        "Register", "pirulen.ttf", 24,
-        halfW + 20 + 90, halfH + 100 + 25,
+        "Register",
+        "balatro.ttf",
+        60,
+        halfW + 200 + 150,      // center of Register button (halfW+200 + half width 150)
+        halfH + 180 + 40,
         0, 0, 0, 255,
         0.5f, 0.5f
     ));
@@ -149,62 +194,53 @@ void LoginScene::Update(float dt) {
 void LoginScene::Draw() const {
     IScene::Draw();
 
-    // Optional: draw a colored rectangle around whichever field is focused
-    ALLEGRO_COLOR focusColor = typingUsername ? al_map_rgb(0, 255, 0)
-                                              : al_map_rgb(255, 0, 0);
+    // Draw a border around whichever field is focused
+    ALLEGRO_COLOR focusColor = typingUsername ? al_map_rgb(0,255,0)
+                                              : al_map_rgb(255,0,0);
 
     if (typingUsername) {
         al_draw_rectangle(
             usernameBoxX, usernameBoxY,
             usernameBoxX + usernameBoxW, usernameBoxY + usernameBoxH,
-            focusColor, 2.0f
+            focusColor, 4.0f
         );
     } else {
         al_draw_rectangle(
             passwordBoxX, passwordBoxY,
             passwordBoxX + passwordBoxW, passwordBoxY + passwordBoxH,
-            focusColor, 2.0f
+            focusColor, 4.0f
         );
     }
 }
 
 void LoginScene::OnKeyChar(int unicode) {
-    // Enter → either move focus or attempt login
+    // Enter or Tab behavior remains the same
     if (unicode == '\r') {
-        if (typingUsername) {
-            ToggleInputFocus();
-        } else {
-            OnLoginClicked();
-        }
+        if (typingUsername) ToggleInputFocus();
+        else                OnLoginClicked();
         return;
     }
-    // Tab → switch focus
     if (unicode == '\t') {
         ToggleInputFocus();
         return;
     }
-    // Backspace
     if (unicode == '\b') {
-        if (typingUsername && !typedUsername.empty()) {
+        if (typingUsername && !typedUsername.empty())
             typedUsername.pop_back();
-        } else if (!typingUsername && !typedPassword.empty()) {
+        else if (!typingUsername && !typedPassword.empty())
             typedPassword.pop_back();
-        }
     }
-    // Printable ASCII
     else if (unicode >= 32 && unicode < 127) {
         char c = static_cast<char>(unicode);
         if (typingUsername) {
-            if (typedUsername.size() < 12) {  // enforce max 12 letters
+            if (typedUsername.size() < 12)
                 typedUsername.push_back(c);
-            }
         } else {
-            if (typedPassword.size() < 20) {
+            if (typedPassword.size() < 12)
                 typedPassword.push_back(c);
-            }
         }
     }
-    // Update labels
+
     usernameInputLabel->Text = typedUsername;
     passwordInputLabel->Text = std::string(typedPassword.size(), '*');
 }
@@ -230,27 +266,23 @@ void LoginScene::OnRegisterClicked() {
     GameEngine::GetInstance().ChangeScene("register");
 }
 
-/**
- * This is the correct method name to override (called by GameEngine when mouse is pressed).
- * We check whether the click (x,y) lies inside the username or password “box” and set focus accordingly.
- */
 void LoginScene::OnMouseDown(int button, int x, int y) {
-    // 1) If the click falls inside your Username or Password box, handle focus:
-    if (button == 1) {
+    if (button == 1) {  // only left click
+        // If click inside Username box, focus Username
         if (x >= usernameBoxX && x <= usernameBoxX + usernameBoxW &&
             y >= usernameBoxY && y <= usernameBoxY + usernameBoxH)
         {
             typingUsername = true;
-            return;   // we handled it—do NOT forward to buttons
+            return;  // consumed: do not pass on to buttons
         }
+        // If click inside Password box, focus Password
         if (x >= passwordBoxX && x <= passwordBoxX + passwordBoxW &&
             y >= passwordBoxY && y <= passwordBoxY + passwordBoxH)
         {
             typingUsername = false;
-            return;   // we handled it—do NOT forward to buttons
+            return;
         }
     }
-    // 2) Otherwise (click is either a right‐click or falls outside both fields),
-    //    call the base implementation so that any ImageButton will receive it:
+    // Otherwise forward to base so buttons still get the event
     IScene::OnMouseDown(button, x, y);
 }

@@ -48,113 +48,179 @@ void RegisterScene::Initialize() {
     activeField = UsernameField;
     validationMessage.clear();
 
-    int w = GameEngine::GetInstance().GetScreenSize().x;
-    int h = GameEngine::GetInstance().GetScreenSize().y;
-    int halfW = w / 2;
-    int halfH = h / 2;
+    int w = GameEngine::GetInstance().GetScreenSize().x;  // 1600
+    int h = GameEngine::GetInstance().GetScreenSize().y;  // 832
+    int halfW = w / 2;  // 800
+    int halfH = h / 2;  // 416
 
-    // 1) Username prompt and input:
+    //
+    // 1) Username prompt + input
+    //
+
+    // 1a) Prompt label at (halfW - 300, halfH - 150):
     usernamePromptLabel = new Label(
-        "Username:", "pirulen.ttf", 24,
-        halfW - 200, halfH - 100,
+        "Username:",
+        "balatro.ttf",
+        60,
+        halfW - 300,
+        halfH - 150,
         255, 255, 255, 255,
         0.5f, 0.5f
     );
     AddNewObject(usernamePromptLabel);
 
+    // 1b) Clickable rectangle for Username:
+    //     400x60 centered at (halfW + 100, halfH - 150):
+    usernameBoxW = 500;
+    usernameBoxH = 80;
+    usernameBoxX = (halfW + 100) - (usernameBoxW / 2);
+    usernameBoxY = (halfH - 150) - (usernameBoxH / 2);
+
+    // 1c) Place the input‐Label 10px inside that box:
     usernameInputLabel = new Label(
-        "", "pirulen.ttf", 24,
-        halfW + 20, halfH - 100,
+        "",
+        "balatro.ttf",
+        60,
+        usernameBoxX + 10,
+        usernameBoxY + (usernameBoxH / 2),
         255, 255, 255, 255,
         0.0f, 0.5f
     );
     AddNewObject(usernameInputLabel);
 
-    // Bounding box for Username (200×30)
-    usernameBoxW = 200;
-    usernameBoxH = 30;
-    usernameBoxX = (halfW + 20) - (usernameBoxW / 2);
-    usernameBoxY = (halfH - 100) - (usernameBoxH / 2);
+    //
+    // 2) Password prompt + input
+    //
 
-    // 2) Password prompt and input:
+    // 2a) Prompt label at (halfW - 300, halfH - 50):
     passwordPromptLabel = new Label(
-        "Password:", "pirulen.ttf", 24,
-        halfW - 200, halfH - 50,
+        "Password:",
+        "balatro.ttf",
+        60,
+        halfW - 300,
+        halfH - 50,
         255, 255, 255, 255,
         0.5f, 0.5f
     );
     AddNewObject(passwordPromptLabel);
 
+    // 2b) Rectangle for Password at center (halfW + 100, halfH - 50):
+    passwordBoxW = 500;
+    passwordBoxH = 80;
+    passwordBoxX = (halfW + 100) - (passwordBoxW / 2);
+    passwordBoxY = (halfH - 50) - (passwordBoxH / 2);
+
+    // 2c) Input label inside that box, 10px in from left:
     passwordInputLabel = new Label(
-        "", "pirulen.ttf", 24,
-        halfW + 20, halfH - 50,
+        "",
+        "balatro.ttf",
+        60,
+        passwordBoxX + 10,
+        passwordBoxY + (passwordBoxH / 2),
         255, 255, 255, 255,
         0.0f, 0.5f
     );
     AddNewObject(passwordInputLabel);
 
-    // Bounding box for Password
-    passwordBoxW = 200;
-    passwordBoxH = 30;
-    passwordBoxX = (halfW + 20) - (passwordBoxW / 2);
-    passwordBoxY = (halfH - 50) - (passwordBoxH / 2);
+    //
+    // 3) Confirm Password prompt + input
+    //
 
-    // 3) Confirm Password prompt and input:
+    // 3a) Prompt label at (halfW - 300, halfH + 50):
     confirmPromptLabel = new Label(
-        "Confirm Password:", "pirulen.ttf", 24,
-        halfW - 200, halfH,
+        "Confirm Password:",
+        "balatro.ttf",
+        60,
+        halfW - 385,
+        halfH + 50,
         255, 255, 255, 255,
         0.5f, 0.5f
     );
     AddNewObject(confirmPromptLabel);
 
+    // 3b) Rectangle for Confirm at center (halfW + 100, halfH + 50):
+    confirmBoxW = 500;
+    confirmBoxH = 80;
+    confirmBoxX = (halfW + 100) - (confirmBoxW / 2);
+    confirmBoxY = (halfH + 50) - (confirmBoxH / 2);
+
+    // 3c) Input label 10px inside that box:
     confirmInputLabel = new Label(
-        "", "pirulen.ttf", 24,
-        halfW + 20, halfH,
+        "",
+        "balatro.ttf",
+        60,
+        confirmBoxX + 10,
+        confirmBoxY + (confirmBoxH / 2),
         255, 255, 255, 255,
         0.0f, 0.5f
     );
     AddNewObject(confirmInputLabel);
 
     // Bounding box for Confirm
-    confirmBoxW = 200;
-    confirmBoxH = 30;
-    confirmBoxX = (halfW + 20) - (confirmBoxW / 2);
-    confirmBoxY = halfH - (confirmBoxH / 2);
+    confirmBoxW = 500;
+    confirmBoxH = 80;
+    confirmBoxX = (halfW + 100) - (confirmBoxW / 2);
+    confirmBoxY = (halfH + 50) - (confirmBoxH / 2);
 
-    // 4) Validation label (red)
+    //
+    // 4) Validation label (red, 40px) under the confirm field
+    //
+
     validationLabel = new Label(
-        "", "pirulen.ttf", 20,
-        halfW, halfH + 50,
-        255, 0, 0, 255,
+        "",                     // initially empty
+        "balatro.ttf",
+        40,
+        halfW,                  // center
+        halfH + 130,            // 80 px below "Confirm Password" row
+        255, 0, 0, 255,         // red
         0.5f, 0.5f
     );
     AddNewObject(validationLabel);
 
-    // 5) Confirm button
+    //
+    // 5) Confirm button (300×80), centered under validation label
+    //
+
     confirmButton = new ImageButton(
-        "stage-select/dirt.png", "stage-select/floor.png",
-        halfW - 100, halfH + 100, 180, 50
+        "stage-select/dirt.png",
+        "stage-select/floor.png",
+        halfW - 150,            // 300px wide → left at halfW - 150
+        halfH + 200,            // 70px below validation label
+        300,                    // width
+        80                      // height
     );
     confirmButton->SetOnClickCallback([this]() { OnConfirmClicked(); });
     AddNewControlObject(confirmButton);
     AddNewObject(new Label(
-        "Confirm", "pirulen.ttf", 24,
-        halfW - 100 + 90, halfH + 100 + 25,
-        0, 0, 0, 255,
+        "Confirm",
+        "balatro.ttf",
+        60,
+        halfW,
+        halfH + 200 + 40,       // center of the button's height
+        0, 0, 0, 255,           // black
         0.5f, 0.5f
     ));
 
-    // 6) Back to Login button
+    //
+    // 6) Back to Login button (to the right of Confirm)
+    //
+
     backButton = new ImageButton(
-        "stage-select/dirt.png", "stage-select/floor.png",
-        halfW + 120, halfH + 100, 180, 50
+        "stage-select/dirt.png",
+        "stage-select/floor.png",
+        halfW + 200,            // 200px gap between the two buttons
+        halfH + 200,
+        300,
+        80
     );
     backButton->SetOnClickCallback([this]() { OnBackClicked(); });
     AddNewControlObject(backButton);
     AddNewObject(new Label(
-        "Back to Login", "pirulen.ttf", 24,
-        halfW + 120 + 90, halfH + 100 + 25,
+        "Back to Login",
+        "balatro.ttf",
+        60,
+        halfW + 200 + 150,      // center of this button
+        halfH + 200 + 40,
         0, 0, 0, 255,
         0.5f, 0.5f
     ));
@@ -172,86 +238,75 @@ void RegisterScene::Update(float dt) {
 void RegisterScene::Draw() const {
     IScene::Draw();
 
-    // Optional: draw a green border around the active field
-    ALLEGRO_COLOR focusColor = al_map_rgb(0,255,0);
+    // Highlight the active field with a 4px green border
+    ALLEGRO_COLOR focusColor = al_map_rgb(0, 255, 0);
     if (activeField == UsernameField) {
         al_draw_rectangle(
             usernameBoxX, usernameBoxY,
             usernameBoxX + usernameBoxW, usernameBoxY + usernameBoxH,
-            focusColor, 2.0f
+            focusColor, 4.0f
         );
     }
     else if (activeField == PasswordField) {
         al_draw_rectangle(
             passwordBoxX, passwordBoxY,
             passwordBoxX + passwordBoxW, passwordBoxY + passwordBoxH,
-            focusColor, 2.0f
+            focusColor, 4.0f
         );
     }
     else {
         al_draw_rectangle(
             confirmBoxX, confirmBoxY,
             confirmBoxX + confirmBoxW, confirmBoxY + confirmBoxH,
-            focusColor, 2.0f
+            focusColor, 4.0f
         );
     }
 }
 
 void RegisterScene::OnKeyChar(int unicode) {
-    // If Enter, move focus or confirm:
+    // Enter or Tab cycles or “Confirm”
     if (unicode == '\r') {
-        if (activeField == UsernameField) {
-            ToggleInputFocus();
-        }
-        else if (activeField == PasswordField) {
-            ToggleInputFocus();
-        }
-        else {
-            OnConfirmClicked();
-        }
+        if (activeField == UsernameField)       ToggleInputFocus();
+        else if (activeField == PasswordField)  ToggleInputFocus();
+        else                                    OnConfirmClicked();
         return;
     }
-    // Tab → next field
     if (unicode == '\t') {
         ToggleInputFocus();
         return;
     }
-    // Backspace:
+
+    // Backspace
     if (unicode == '\b') {
-        if (activeField == UsernameField && !typedUsername.empty()) {
+        if (activeField == UsernameField && !typedUsername.empty())
             typedUsername.pop_back();
-        }
-        else if (activeField == PasswordField && !typedPassword.empty()) {
+        else if (activeField == PasswordField && !typedPassword.empty())
             typedPassword.pop_back();
-        }
-        else if (activeField == ConfirmField && !typedConfirmPassword.empty()) {
+        else if (activeField == ConfirmField && !typedConfirmPassword.empty())
             typedConfirmPassword.pop_back();
-        }
     }
-    // Printable ASCII:
+    // Printable ASCII
     else if (unicode >= 32 && unicode < 127) {
         char c = static_cast<char>(unicode);
         if (activeField == UsernameField) {
-            if (typedUsername.size() < 12) {
+            if (typedUsername.size() < 12)
                 typedUsername.push_back(c);
-            }
         }
         else if (activeField == PasswordField) {
-            if (typedPassword.size() < 20) {
+            if (typedPassword.size() < 12)
                 typedPassword.push_back(c);
-            }
         }
         else {
-            if (typedConfirmPassword.size() < 20) {
+            if (typedConfirmPassword.size() < 12)
                 typedConfirmPassword.push_back(c);
-            }
         }
     }
+
     usernameInputLabel->Text = typedUsername;
     passwordInputLabel->Text = std::string(typedPassword.size(), '*');
-    confirmInputLabel ->Text = std::string(typedConfirmPassword.size(), '*');
+    confirmInputLabel->Text  = std::string(typedConfirmPassword.size(), '*');
 
-    // Re‐validate as typing:
+    // Revalidate if typing in password or confirm
     if (activeField == PasswordField || activeField == ConfirmField) {
         validationMessage = CheckPasswordStrength(typedPassword);
         if (validationMessage.empty()) {
@@ -271,7 +326,7 @@ void RegisterScene::ToggleInputFocus() {
 }
 
 std::string RegisterScene::CheckPasswordStrength(const std::string& pwd) const {
-    if (pwd.length() < 8)   return "Password must be at least 8 characters.";
+    if (pwd.length() < 12)   return "Password must be at least 8 characters.";
     bool hasLower = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::islower(c); });
     bool hasUpper = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::isupper(c); });
     bool hasDigit = std::any_of(pwd.begin(), pwd.end(), [](char c){ return std::isdigit(c); });
@@ -308,10 +363,6 @@ void RegisterScene::OnBackClicked() {
     GameEngine::GetInstance().ChangeScene("login");
 }
 
-/**
- * This is the correct mouse‐down signature; GameEngine calls it when the user presses the mouse.
- * We simply check if the (x,y) click falls in one of our three 200×30 boxes and set focus accordingly.
- */
 void RegisterScene::OnMouseDown(int button, int x, int y) {
     if (button == 1) {
         // Username field?
@@ -319,9 +370,8 @@ void RegisterScene::OnMouseDown(int button, int x, int y) {
             y >= usernameBoxY && y <= usernameBoxY + usernameBoxH)
         {
             activeField = UsernameField;
-            return;  // consumed: do NOT call IScene::OnMouseDown
+            return;
         }
-
         // Password field?
         if (x >= passwordBoxX && x <= passwordBoxX + passwordBoxW &&
             y >= passwordBoxY && y <= passwordBoxY + passwordBoxH)
@@ -329,7 +379,6 @@ void RegisterScene::OnMouseDown(int button, int x, int y) {
             activeField = PasswordField;
             return;
         }
-
         // Confirm field?
         if (x >= confirmBoxX && x <= confirmBoxX + confirmBoxW &&
             y >= confirmBoxY && y <= confirmBoxY + confirmBoxH)
@@ -338,8 +387,6 @@ void RegisterScene::OnMouseDown(int button, int x, int y) {
             return;
         }
     }
-
-    // Otherwise, let any ImageButton receive the click:
+    // Forward other clicks (e.g. on buttons)
     IScene::OnMouseDown(button, x, y);
 }
-
