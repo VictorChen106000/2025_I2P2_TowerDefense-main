@@ -136,6 +136,8 @@ void LoginScene::Initialize() {
     );
     AddNewObject(passwordInputLabel);
 
+    
+
     // ─── 4) Load eye icons (white PNGs) once ─────────────────────────────
     if (!openEyeBmp) {
         openEyeBmp = al_load_bitmap("images/openeyewhite.png");
@@ -237,6 +239,38 @@ void LoginScene::Initialize() {
         60,
         halfW + 200 + 150,
         halfH + 180 + 40,
+        0, 0, 0, 255,
+        0.5f, 0.5f
+    ));
+
+    guestButton = new ImageButton(
+        "stage-select/dirt.png",      // use same “out” graphic
+        "stage-select/floor.png",     // use same “in” graphic
+        halfW - 500,                  // X (choose whatever feels balanced)
+        halfH + 180,                  // Y (below Login/Register)
+        300,                          // width
+        80                            // height
+    );
+    // When clicked, go directly to the next scene as a “Guest”
+    guestButton->SetOnClickCallback([this]() {
+        // 1) Mark CurrentUser = "Guest"
+        CurrentUser = "Guest";
+
+        // 2) If you’ve got any code that should skip saving/loading or
+        //    account‐specific data, you can check if CurrentUser == "Guest".
+
+        // 3) Jump to the next scene (e.g. “stage-select”)
+        GameEngine::GetInstance().ChangeScene("stage-select");
+    });
+    AddNewControlObject(guestButton);
+
+    // 4) Optionally, add a Label on top of it:
+    AddNewObject(new Label(
+        "Play as Guest",
+        "balatro.ttf",
+        60,
+        halfW - 500 + 150,                       // center the text on the 300px‐wide button
+        halfH + 180 + 40,            // 40px down from Y to center vertically
         0, 0, 0, 255,
         0.5f, 0.5f
     ));

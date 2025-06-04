@@ -38,6 +38,7 @@ private:
 
     Engine::ImageButton* loginButton;
     Engine::ImageButton* registerButton;
+    Engine::ImageButton* guestButton;
 
     std::string errorMessage;
 
