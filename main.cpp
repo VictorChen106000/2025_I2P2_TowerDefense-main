@@ -12,12 +12,16 @@
 #include "Scene/Scoreboard.hpp"
 #include "Account/LoginScene.hpp"
 #include "Account/RegisterScene.hpp"
+#include "Account/LocalAndOnlineScene.hpp"
+#include "Account/LoginOnlineScene.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
 	Engine::GameEngine& game = Engine::GameEngine::GetInstance();
 
     // TODO HACKATHON-2 (2/3): Register Scenes here
+	game.AddNewScene("local-online",new LocalAndOnlineScene());
+	game.AddNewScene("login-online",new LoginOnlineScene());
 	game.AddNewScene("login", new LoginScene());
 	game.AddNewScene("register", new RegisterScene());
 	game.AddNewScene("start", new StartScene());
@@ -30,6 +34,6 @@ int main(int argc, char **argv) {
 	
 
     // TODO HACKATHON-1 (1/1): Change the start scene
-	game.Start("login",  60, 1600, 832);
+	game.Start("local-online",  60, 1600, 832);
 	return 0;
 }

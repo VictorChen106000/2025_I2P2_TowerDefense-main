@@ -20,6 +20,10 @@ add_executable(2025_I2P2_TowerDefense
     Account/LoginScene.hpp
     Account/RegisterScene.cpp
     Account/RegisterScene.hpp
+    Account/LocalAndOnlineScene.cpp
+    Account/LocalAndOnlineScene.hpp
+    Account/LoginOnlineScene.cpp
+    Account/LoginOnlineScene.hpp
     
     Bullet/Bullet.cpp
     Bullet/Bullet.hpp
