@@ -13,7 +13,7 @@ public:
     ShovelButton(float x, float y)
       : ImageButton(
           "play/shovel-base.png",  // we just use this to size our button
-          "play/shovel-base.png",  // (hovered image is ignored by us)
+          "play/sand.png",  // (hovered image is ignored by us)
           x, y
         ),
         baseSpr("play/shovel-base.png",
@@ -33,7 +33,7 @@ public:
 
     // — recalc position + hover every frame —
     void Update(float dt) override {
-        float w = GetBitmapWidth(), h = GetBitmapHeight();
+        float w = baseSpr.GetBitmapWidth(), h = baseSpr.GetBitmapHeight();
 
         // center both sprites on our button rectangle
         baseSpr.Position = Position;
@@ -47,9 +47,15 @@ public:
                       && m.y >= Position.y
                       && m.y <  Position.y + h;
 
+        if (hovering) {
+        printf("Hovered at mouse=(%.0f,%.0f) over Position=(%.0f,%.0f) size=(%.0f×%.0f)\n",
+                m.x, m.y,
+                Position.x, Position.y,
+                w, h);
+        }
         // hide the base when hovered
         baseSpr.Visible = !hovering;
-
+        iconSpr.Visible = true;
         // (we don’t need baseSpr.Update(dt) or iconSpr.Update(dt)
         //  because they’re static images)
     }
