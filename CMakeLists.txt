@@ -123,15 +123,30 @@ IF (WIN32)
     target_include_directories(2025_I2P2_TowerDefense PUBLIC C:/allegro/include)
     target_link_directories(2025_I2P2_TowerDefense PUBLIC C:/allegro/lib)
     target_compile_options(2025_I2P2_TowerDefense PUBLIC ${ALLEGRO5_CFLAGS_OTHER})
-    target_link_libraries(2025_I2P2_TowerDefense liballegro_monolith)
+    target_link_libraries(2025_I2P2_TowerDefense
+    PUBLIC
+      liballegro_monolith
+)
 ELSE()
     find_package(PkgConfig)
     pkg_check_modules(ALLEGRO5 REQUIRED allegro-5 allegro_main-5 allegro_font-5 allegro_dialog-5 allegro_primitives-5 allegro_image-5 allegro_ttf-5 allegro_audio-5 allegro_acodec-5)
     target_include_directories(2025_I2P2_TowerDefense PUBLIC lib)
     target_include_directories(2025_I2P2_TowerDefense PUBLIC ${ALLEGRO5_INCLUDE_DIRS})
     target_compile_options(2025_I2P2_TowerDefense PUBLIC ${ALLEGRO5_CFLAGS_OTHER})
-    target_link_libraries(2025_I2P2_TowerDefense ${ALLEGRO5_LIBRARIES})
+    target_link_libraries(2025_I2P2_TowerDefense
+    PUBLIC
+      ${ALLEGRO5_LIBRARIES})
     target_link_directories(2025_I2P2_TowerDefense PUBLIC ${ALLEGRO5_LIBRARY_DIRS})
+
+        find_package(OpenSSL REQUIRED)
+    if (OPENSSL_FOUND)
+        message(STATUS "Found OpenSSL: ${OPENSSL_VERSION}")
+        target_include_directories(2025_I2P2_TowerDefense PUBLIC ${OPENSSL_INCLUDE_DIR})
+        target_link_libraries(2025_I2P2_TowerDefense PUBLIC OpenSSL::SSL OpenSSL::Crypto)
+    else()
+        message(FATAL_ERROR "OpenSSL not found. Please install libssl-dev (Linux) or brew install openssl (macOS).")
+    endif()
+
 ENDIF()
 
 add_custom_command(TARGET 2025_I2P2_TowerDefense
