@@ -14,6 +14,7 @@
 #include "Account/RegisterScene.hpp"
 #include "Account/LocalAndOnlineScene.hpp"
 #include "Account/LoginOnlineScene.hpp"
+#include "Account/RegisterOnlineScene.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
@@ -22,6 +23,7 @@ int main(int argc, char **argv) {
     // TODO HACKATHON-2 (2/3): Register Scenes here
 	game.AddNewScene("local-online",new LocalAndOnlineScene());
 	game.AddNewScene("login-online",new LoginOnlineScene());
+	game.AddNewScene("register-online", new RegisterOnlineScene());
 	game.AddNewScene("login", new LoginScene());
 	game.AddNewScene("register", new RegisterScene());
 	game.AddNewScene("start", new StartScene());

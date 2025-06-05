@@ -463,9 +463,9 @@ void LoginOnlineScene::OnLoginClicked()
 void LoginOnlineScene::OnRegisterClicked()
 {
     // If you have a separate registration scene, you could do:
-    // GameEngine::GetInstance().ChangeScene("register-online");
+    GameEngine::GetInstance().ChangeScene("register-online");
     // For now, just show a placeholder:
-    errorMessage = "Registration not implemented.";
+    
 }
 
 void LoginOnlineScene::OnBackClicked()
