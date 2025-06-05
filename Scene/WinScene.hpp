@@ -25,7 +25,7 @@ public:
     void BackOnClick(int stage);
 
 protected:
-    void OnKeyChar(int unicode) override;
+    
     void Draw() const override;
 };
 

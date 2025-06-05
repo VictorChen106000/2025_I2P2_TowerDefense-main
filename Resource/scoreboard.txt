@@ -1,15 +1,3 @@
-XiaoMin 10
-DaNiu 30
-KaiJie 20
-XiaoMei 10
-XiaoHua 15
-MeiHua 20
-DaHua 30
-DaMei 40
-DaWang 50
-XiaoWang 60
-XiaoLiang 70
-Daniel 80
 zaw 10000 2025-05-22 11:39:37
 thet 6125 2025-05-22 11:46:36
 hein 5768 2025-05-23 11:52:00
@@ -17,3 +5,6 @@ david 6991 2025-05-23 11:54:39
 bajamin 214 2025-05-26 20:58:19
 bajamin 23747 2025-05-26 21:14:02
 demo 23970 2025-05-28 19:16:44
+Guest 20652 2025-06-05 14:56:44
+Guest 21310 2025-06-05 15:04:42
+DarynJames 21071 2025-06-05 15:06:54

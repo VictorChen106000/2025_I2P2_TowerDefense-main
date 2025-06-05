@@ -74,6 +74,15 @@ void LoginScene::Initialize() {
     int halfW = w / 2;  // 800
     int halfH = h / 2;  // 416
 
+    // AddNewObject(
+    //     new Engine::Image(
+    //         "loginbackground.png",
+    //         halfW, halfH,
+    //         w, h,
+    //         0.5f, 0.5f
+    //     )
+    // );
+
     // ─── 1) Load 60px font once (for labels & measuring) ───
     if (!loginFont) {
         loginFont = al_load_ttf_font("Resource/fonts/balatro.ttf", 60, 0);

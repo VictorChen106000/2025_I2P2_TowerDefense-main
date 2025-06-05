@@ -106,5 +106,7 @@ public:
     void AddKill() {++killCount;}
     int GetKillCount() const {return killCount;}
     // void ModifyReadMapTiles();
+
+    
 };
 #endif   // PLAYSCENE_HPP
