@@ -129,6 +129,21 @@ IF (WIN32)
     PUBLIC
       liballegro_monolith
 )
+    find_package(OpenSSL REQUIRED
+    PATHS "C:/OpenSSL-Win64" NO_DEFAULT_PATH
+    )
+    if (NOT OpenSSL_FOUND)
+    message(FATAL_ERROR "OpenSSL not found on Windows. Please install it and set OPENSSL_ROOT_DIR.")
+    endif()
+
+    target_include_directories(2025_I2P2_TowerDefense PUBLIC ${OpenSSL_INCLUDE_DIR})
+    target_link_libraries(2025_I2P2_TowerDefense
+    PUBLIC
+    liballegro_monolith
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    )
+    target_compile_definitions(2025_I2P2_TowerDefense PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
 ELSE()
     find_package(PkgConfig)
     pkg_check_modules(ALLEGRO5 REQUIRED allegro-5 allegro_main-5 allegro_font-5 allegro_dialog-5 allegro_primitives-5 allegro_image-5 allegro_ttf-5 allegro_audio-5 allegro_acodec-5)
