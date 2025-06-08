@@ -6,6 +6,7 @@
 
 class Enemy;
 class Turret;
+namespace Engine{struct Point;}
 
 class RocketBullet : public Bullet {
 public:
@@ -18,9 +19,11 @@ public:
 
     void Update(float deltaTime) override;
 
-private:
-    Enemy* _target;
-    float _turnRate;
+protected:
+
+    void OnExplode(Enemy *enemy)override;
+
+
 };
 
 #endif // ROCKETBULLET_HPP
