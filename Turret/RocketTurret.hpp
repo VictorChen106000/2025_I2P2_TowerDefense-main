@@ -4,6 +4,9 @@
 #include "Turret.hpp"
 #include <vector>
 
+class PlayScene;
+class Enemy;
+
 class RocketTurret : public Turret {
 public:
     static const int Price;
@@ -18,4 +21,4 @@ private:
     void setBulletImages();
 };
 
-#endif  // ROCKETTURRET_HPP
+#endif // ROCKETTURRET_HPP

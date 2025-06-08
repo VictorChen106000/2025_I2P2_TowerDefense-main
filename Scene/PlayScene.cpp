@@ -183,10 +183,11 @@ void PlayScene::Update(float deltaTime) {
         ticks -= current.second;
         enemyWaveData.pop_front();
         const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
-        Enemy *enemy;
+        Enemy *enemy = nullptr;
         switch (current.first) {
             case 1:
                 EnemyGroup->AddNewObject(enemy = new SoldierEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+                
                 break;
             // TODO HACKATHON-3 (2/3): Add your new enemy here.
             case 2:
@@ -806,3 +807,4 @@ void PlayScene::HidePauseMenu() {
     if (quitBtn) { UIGroup->RemoveObject(quitBtn->GetObjectIterator());    quitBtn    = nullptr; }
     if (quitLabel) { UIGroup->RemoveObject(quitLabel->GetObjectIterator()); quitLabel = nullptr;}
 }
+

@@ -4,6 +4,8 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <functional>   // for std::hash
+#include <cctype>       // for std::isspace
 
 //------------------------------------------------------------
 // HashPassword: a quick & dirty “hash” via std::hash.

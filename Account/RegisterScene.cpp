@@ -564,3 +564,5 @@ void RegisterScene::OnMouseDown(int button, int x, int y) {
     }
     IScene::OnMouseDown(button, x, y);
 }
+
+

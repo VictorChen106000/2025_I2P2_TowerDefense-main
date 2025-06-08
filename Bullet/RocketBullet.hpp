@@ -2,10 +2,10 @@
 #define ROCKETBULLET_HPP
 
 #include "Bullet.hpp"
+#include <string>
 
 class Enemy;
 class Turret;
-namespace Engine { struct Point; }
 
 class RocketBullet : public Bullet {
 public:
@@ -17,9 +17,10 @@ public:
 
 
     void Update(float deltaTime) override;
-protected:
-    // spawn explosion or effect on hit
-    void OnExplode(Enemy *enemy) override;
+
+private:
+    Enemy* _target;
+    float _turnRate;
 };
 
-#endif  // ROCKETBULLET_HPP
+#endif // ROCKETBULLET_HPP

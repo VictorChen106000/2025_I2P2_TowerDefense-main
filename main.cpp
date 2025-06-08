@@ -13,13 +13,28 @@
 #include "Account/LoginScene.hpp"
 #include "Account/RegisterScene.hpp"
 #include "Scene/ShopScene.hpp"
+#include "Account/LocalAndOnlineScene.hpp"
+#include "Account/LoginOnlineScene.hpp"
+#include "Account/RegisterOnlineScene.hpp"
+#include "Account/ScoreboardOnline.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
+
+	ScoreboardOnline::Initialize(
+		"towerdefensegame-1b01e-default-rtdb.asia-southeast1.firebasedatabase.app",
+		"AIzaSyAarObWywZJ_rQ2AlXDd6czNdnRqqSTRbo"
+	  );
+	  
 	Engine::GameEngine& game = Engine::GameEngine::GetInstance();
+
+	
 
     // TODO HACKATHON-2 (2/3): Register Scenes here
 	game.AddNewScene("shop",new ShopScene());
+	game.AddNewScene("local-online",new LocalAndOnlineScene());
+	game.AddNewScene("login-online",new LoginOnlineScene());
+	game.AddNewScene("register-online", new RegisterOnlineScene());
 	game.AddNewScene("login", new LoginScene());
 	game.AddNewScene("register", new RegisterScene());
 	game.AddNewScene("start", new StartScene());
@@ -32,6 +47,6 @@ int main(int argc, char **argv) {
 	
 
     // TODO HACKATHON-1 (1/1): Change the start scene
-	game.Start("login",  60, 1600, 832);
+	game.Start("local-online",  60, 1600, 832);
 	return 0;
 }

@@ -20,17 +20,17 @@ extern std::string CurrentUser;
 // ─────────────────────────────────────────────────────────────
 
 // 1) 60px font (loaded once for Label/measurement)
-static ALLEGRO_FONT* loginFont = nullptr;
+ALLEGRO_FONT* LoginScene::loginFont = nullptr;
 
 // 2) Reveal‐password toggle
-static bool loginRevealPassword = false;
+bool LoginScene::loginRevealPassword = false;
 
 // 3) Eye icon bitmaps (white “open”/“closed”)
-static ALLEGRO_BITMAP* openEyeBmp  = nullptr;
-static ALLEGRO_BITMAP* closeEyeBmp = nullptr;
+ALLEGRO_BITMAP* LoginScene::openEyeBmp  = nullptr;
+ALLEGRO_BITMAP* LoginScene::closeEyeBmp = nullptr;
 
 // 4) The eye ImageButton itself
-static ImageButton* eyeButton = nullptr;
+Engine::ImageButton* LoginScene::eyeButton = nullptr;
 // ─────────────────────────────────────────────────────────────
 
 LoginScene::LoginScene()
@@ -44,6 +44,7 @@ LoginScene::LoginScene()
     , infoLabel(nullptr)
     , loginButton(nullptr)
     , registerButton(nullptr)
+    , guestButton(nullptr)
     , errorMessage()
     , usernameBoxX(0)
     , usernameBoxY(0)
@@ -53,6 +54,8 @@ LoginScene::LoginScene()
     , passwordBoxY(0)
     , passwordBoxW(0)
     , passwordBoxH(0)
+    , backButton(nullptr)
+    , backLabel(nullptr)
 { }
 
 LoginScene::~LoginScene() {
@@ -82,10 +85,41 @@ void LoginScene::Initialize() {
         }
     }
 
-    // ─── 2) “Username:” prompt + input box ───────────────────────────────
+    // ─── 2) CREATE “BACK” BUTTON ─────────────────────────────────────
+    {
+        // Position the “Back” button in the top-left corner
+        int btnW = 200;
+        int btnH = 60;
+        int btnX = 50;
+        int btnY = 50;
+
+        backButton = new ImageButton(
+            "stage-select/dirt.png",   // normal/up image
+            "stage-select/floor.png",  // hover/down image
+            btnX,
+            btnY,
+            btnW,
+            btnH
+        );
+        backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        AddNewControlObject(backButton);
+
+        backLabel = new Label(
+            "Back",
+            "balatro.ttf",   // use same font as other labels
+            60,
+            btnX + (btnW / 2),
+            btnY + (btnH / 2),  // slight vertical centering tweak
+            0, 0, 0, 255,     // white text
+            0.5f, 0.5f              // anchor centered
+        );
+        AddNewObject(backLabel);
+    }
+
+    // ─── 3) “Username:” prompt + input box ───────────────────────────────
     usernamePromptLabel = new Label(
         "Username:",
-        "balatro.ttf",    // uses Resources::GetInstance().GetFont internally
+        "balatro.ttf",
         60,
         halfW - 200,
         halfH - 100,
@@ -109,7 +143,7 @@ void LoginScene::Initialize() {
     );
     AddNewObject(usernameInputLabel);
 
-    // ─── 3) “Password:” prompt + input box ───────────────────────────────
+    // ─── 4) “Password:” prompt + input box ───────────────────────────────
     passwordPromptLabel = new Label(
         "Password:",
         "balatro.ttf",
@@ -136,49 +170,47 @@ void LoginScene::Initialize() {
     );
     AddNewObject(passwordInputLabel);
 
-    
-
-    // ─── 4) Load eye icons (white PNGs) once ─────────────────────────────
+    // ─── 5) Load eye icons (white PNGs) once ─────────────────────────────
     if (!openEyeBmp) {
-        openEyeBmp = al_load_bitmap("images/openeyewhite.png");
+        openEyeBmp = al_load_bitmap("Resource/images/openeyewhite.png");
         if (!openEyeBmp) {
-            throw std::runtime_error("Failed to load openeyewhite.png");
+            throw std::runtime_error("Failed to load images/openeyewhite.png");
         }
     }
     if (!closeEyeBmp) {
-        closeEyeBmp = al_load_bitmap("images/closeeyewhite.png");
+        closeEyeBmp = al_load_bitmap("Resource/images/closeeyewhite.png");
         if (!closeEyeBmp) {
-            throw std::runtime_error("Failed to load closeeyewhite.png");
+            throw std::runtime_error("Failed to load images/closeeyewhite.png");
         }
     }
 
-    // ─── 5) Create the eye ImageButton to the right of the password box ──
+    // ─── 6) Create the eye ImageButton to the right of the password box ──
     {
-        float eyeX = passwordBoxX + passwordBoxW + 20;  
-        float eyeY = passwordBoxY + (passwordBoxH / 2)-60; 
+        float eyeX = passwordBoxX + passwordBoxW + 20;
+        float eyeY = passwordBoxY + (passwordBoxH / 2) - 60;
 
         eyeButton = new ImageButton(
             "closeeyewhite.png",   // “closed eye” as default
             "openeyewhite.png",    // “open eye” when pressed
             eyeX,
             eyeY,
-            80, 130      // size of the eye icon (40×40)
+            80, 130      // width=80, height=130 (adjust as needed)
         );
         // Hide the eye until the user types something:
         eyeButton->Visible = false;
 
         eyeButton->SetOnClickCallback([&]() {
             loginRevealPassword = !loginRevealPassword;
-        
+
             if (loginRevealPassword) {
-                // ─── “Revealed” state: out=open, in=close ───
+                // “Revealed” state: out=open, in=close
                 eyeButton->SetImage(
                     "openeyewhite.png",   // out image
                     "closeeyewhite.png"   // in (hover) image
                 );
                 passwordInputLabel->Text = typedPassword;
             } else {
-                // ─── “Masked” state: out=close, in=open ───
+                // “Masked” state: out=close, in=open
                 eyeButton->SetImage(
                     "closeeyewhite.png",  // out image
                     "openeyewhite.png"    // in (hover) image
@@ -190,7 +222,7 @@ void LoginScene::Initialize() {
         AddNewControlObject(eyeButton);
     }
 
-    // ─── 6) Info label (red) under the fields ───────────────────────────
+    // ─── 7) Info label (red) under the fields ───────────────────────────
     infoLabel = new Label(
         "",
         "balatro.ttf",
@@ -202,7 +234,7 @@ void LoginScene::Initialize() {
     );
     AddNewObject(infoLabel);
 
-    // ─── 7) Login + Register buttons (unchanged) ───────────────────────
+    // ─── 8) Login + Register buttons ───────────────────────────────────
     loginButton = new ImageButton(
         "stage-select/dirt.png",
         "stage-select/floor.png",
@@ -243,34 +275,26 @@ void LoginScene::Initialize() {
         0.5f, 0.5f
     ));
 
+    // ─── 9) “Play as Guest” button ─────────────────────────────────────
     guestButton = new ImageButton(
-        "stage-select/dirt.png",      // use same “out” graphic
-        "stage-select/floor.png",     // use same “in” graphic
-        halfW - 500,                  // X (choose whatever feels balanced)
-        halfH + 180,                  // Y (below Login/Register)
-        300,                          // width
-        80                            // height
+        "stage-select/dirt.png",
+        "stage-select/floor.png",
+        halfW - 500,
+        halfH + 180,
+        300,
+        80
     );
-    // When clicked, go directly to the next scene as a “Guest”
     guestButton->SetOnClickCallback([this]() {
-        // 1) Mark CurrentUser = "Guest"
         CurrentUser = "Guest";
-
-        // 2) If you’ve got any code that should skip saving/loading or
-        //    account‐specific data, you can check if CurrentUser == "Guest".
-
-        // 3) Jump to the next scene (e.g. “stage-select”)
-        GameEngine::GetInstance().ChangeScene("stage-select");
+        GameEngine::GetInstance().ChangeScene("start");
     });
     AddNewControlObject(guestButton);
-
-    // 4) Optionally, add a Label on top of it:
     AddNewObject(new Label(
         "Play as Guest",
         "balatro.ttf",
         60,
-        halfW - 500 + 150,                       // center the text on the 300px‐wide button
-        halfH + 180 + 40,            // 40px down from Y to center vertically
+        halfW - 500 + 150,
+        halfH + 180 + 40,
         0, 0, 0, 255,
         0.5f, 0.5f
     ));
@@ -306,7 +330,7 @@ void LoginScene::Draw() const {
 }
 
 void LoginScene::OnKeyChar(int unicode) {
-    // Handle Enter/Tab same as before:
+    // Handle Enter/Tab
     if (unicode == '\r') {
         if (typingUsername) ToggleInputFocus();
         else                OnLoginClicked();
@@ -392,6 +416,11 @@ void LoginScene::OnLoginClicked() {
 
 void LoginScene::OnRegisterClicked() {
     GameEngine::GetInstance().ChangeScene("register");
+}
+
+void LoginScene::OnBackClicked() {
+    // Go back to the LocalAndOnlineScene
+    GameEngine::GetInstance().ChangeScene("local-online");
 }
 
 void LoginScene::OnMouseDown(int button, int x, int y) {
