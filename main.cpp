@@ -12,12 +12,14 @@
 #include "Scene/Scoreboard.hpp"
 #include "Account/LoginScene.hpp"
 #include "Account/RegisterScene.hpp"
+#include "Scene/ShopScene.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
 	Engine::GameEngine& game = Engine::GameEngine::GetInstance();
 
     // TODO HACKATHON-2 (2/3): Register Scenes here
+	game.AddNewScene("shop",new ShopScene());
 	game.AddNewScene("login", new LoginScene());
 	game.AddNewScene("register", new RegisterScene());
 	game.AddNewScene("start", new StartScene());

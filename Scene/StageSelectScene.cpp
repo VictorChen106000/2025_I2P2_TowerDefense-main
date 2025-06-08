@@ -32,31 +32,39 @@ void StageSelectScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", x, y1, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::PlayOnClick, this, 1));
     AddNewControlObject(btn);
-    AddNewObject(new Engine::Label("Stage 1", "pirulen.ttf", 48, halfW, y1 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("Stage 1", "balatro.ttf", 64, halfW, y1 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
 
     int y2 = startY + 1*gap;
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", x, y2, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::PlayOnClick, this, 2));
     AddNewControlObject(btn);
-    AddNewObject(new Engine::Label("Stage 2", "pirulen.ttf", 48, halfW, y2 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("Stage 2", "balatro.ttf", 64, halfW, y2 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
 
     int y3 = startY + 2*gap;
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", x, y3, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::ScoreboardOnClick, this));
     AddNewControlObject(btn);
-    AddNewObject(new Engine::Label("Scoreboard", "pirulen.ttf", 40, halfW, y3 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("Scoreboard", "balatro.ttf", 58, halfW, y3 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
 
     int y4 = startY + 3*gap;
     btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", x, y4, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::BackOnClick, this, 0));
     AddNewControlObject(btn);
-    AddNewObject(new Engine::Label("Back", "pirulen.ttf", 48, halfW, y4 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("Back", "balatro.ttf", 64, halfW, y4 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+
+    btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", 1100, y4, btnW, btnH);
+    btn->SetOnClickCallback(std::bind(&StageSelectScene::ShopOnClick, this));
+    AddNewControlObject(btn);
+    AddNewObject(new Engine::Label("Shop", "balatro.ttf", 64, 1300, y4 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
 }
 void StageSelectScene::Terminate() {
     IScene::Terminate();
 }
 void StageSelectScene::BackOnClick(int) {
     Engine::GameEngine::GetInstance().ChangeScene("start");
+}
+void StageSelectScene::ShopOnClick() {
+    Engine::GameEngine::GetInstance().ChangeScene("shop");
 }
 void StageSelectScene::PlayOnClick(int stage) {
     PlayScene *scene = dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetScene("play"));

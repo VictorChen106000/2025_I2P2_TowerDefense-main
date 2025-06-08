@@ -82,6 +82,8 @@ add_executable(2025_I2P2_TowerDefense
     Scene/SettingsScene.hpp
     Scene/Scoreboard.hpp
     Scene/Scoreboard.cpp
+    Scene/ShopScene.cpp
+    Scene/ShopScene.hpp
 
     Turret/LaserTurret.cpp
     Turret/LaserTurret.hpp
@@ -93,6 +95,8 @@ add_executable(2025_I2P2_TowerDefense
     Turret/Turret.hpp
     Turret/TurretButton.cpp
     Turret/TurretButton.hpp
+    Turret/BombTurret.cpp
+    Turret/BombTurret.hpp
 
     Shovel/ShovelButton.hpp
 

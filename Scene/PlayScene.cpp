@@ -30,6 +30,7 @@
 #include "UI/Animation/Plane.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/Slider.hpp"
+#include "Turret/BombTurret.hpp"
 
 // TODO HACKATHON-4 (1/3): Trace how the game handles keyboard input.
 // TODO HACKATHON-4 (2/3): Find the cheat code sequence in this file.
@@ -356,31 +357,49 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         if (mapState[y][x] != TILE_OCCUPIED) {
             if (!preview)
                 return;
-            // Check if valid.
-            if (!CheckSpaceValid(x, y)) {
-                Engine::Sprite *sprite;
-                GroundEffectGroup->AddNewObject(sprite = new DirtyEffect("play/target-invalid.png", 1, x * BlockSize + BlockSize / 2, y * BlockSize + BlockSize / 2));
-                sprite->Rotation = 0;
-                return;
+            bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
+            if (isBomb) {
+                if (mapState[y][x] != TILE_DIRT) {
+                    Engine::Sprite *sprite;
+                    GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
+                        "play/target-invalid.png", 1,
+                        x * BlockSize + BlockSize / 2,
+                        y * BlockSize + BlockSize / 2));
+                    sprite->Rotation = 0;
+                    return;
+                }
+            } else {
+                if (!CheckSpaceValid(x, y)) {
+                    Engine::Sprite *sprite;
+                    GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
+                        "play/target-invalid.png", 1,
+                        x * BlockSize + BlockSize / 2,
+                        y * BlockSize + BlockSize / 2));
+                    sprite->Rotation = 0;
+                    return;
+                }
             }
-            // Purchase.
+            // Purchase
             EarnMoney(-preview->GetPrice());
-            // Remove Preview.
+            // Remove preview
             preview->GetObjectIterator()->first = false;
             UIGroup->RemoveObject(preview->GetObjectIterator());
-            // Construct real turret.
+            // Construct real turret
             preview->Position.x = x * BlockSize + BlockSize / 2;
             preview->Position.y = y * BlockSize + BlockSize / 2;
             preview->Enabled = true;
             preview->Preview = false;
             preview->Tint = al_map_rgba(255, 255, 255, 255);
             TowerGroup->AddNewObject(preview);
-            // To keep responding when paused.
+            // To keep responding when paused
             preview->Update(0);
-            // Remove Preview.
+            // For non‐bomb turrets, mark the grid occupied
+            if (!isBomb) {
+                mapState[y][x] = TILE_OCCUPIED;
+            }
+            // Reset preview pointer
             preview = nullptr;
-
-            mapState[y][x] = TILE_OCCUPIED;
+            // Update target indicator
             OnMouseMove(mx, my);
         }
     }
@@ -543,6 +562,15 @@ void PlayScene::ConstructUI() {
                            Engine::Sprite("play/tankblue1.png", 1382, 121, 0, 0, 0, 0), 1370, 136, LaserTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 1));
     UIGroup->AddNewControlObject(btn);
+    
+    btn = new TurretButton(
+        "play/blank1.png", "play/shovel-base.png",
+        Engine::Sprite("play/bomb.png", 1520, 240, 0, 0, 0, 0),
+        Engine::Sprite("play/bomb.png", 1520, 240, 0, 0, 0, 0),
+        1520, 240, BombTurret::Price);
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 4));
+    
+    UIGroup->AddNewControlObject(btn);
 
     // ShovelButton
     auto shovelBtn = new ShovelButton(1294, 210);
@@ -604,7 +632,9 @@ void PlayScene::UIBtnClicked(int id) {
     }
     else if (id == 2 && money >= RocketTurret::Price) {
         newPreview = new RocketTurret(0,0);
-    } else return;
+    } else if (id == 4 && money >= BombTurret::Price) {
+        newPreview = new BombTurret(0, 0);
+    }else return;
 
     // 2) Remove any existing preview
     if (preview) {
