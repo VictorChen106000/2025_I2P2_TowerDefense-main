@@ -17,6 +17,9 @@
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/ExplosionEffect.hpp"
 
+#include "Enemy/SoldierEnemy.hpp"
+#include "Enemy/TankEnemy.hpp"
+
 PlayScene *Enemy::getPlayScene() {
     return dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetActiveScene());
 }
@@ -38,18 +41,39 @@ Enemy::Enemy(std::string img, float x, float y, float radius, float speed, float
 void Enemy::Hit(float damage) {
     hp -= damage;
     if (hp <= 0) {
+        // 1) Explosion
         OnExplode();
-        getPlayScene()->AddKill();
-        // Remove all turret's reference to target.
-        for (auto &it : lockedTurrets)
-            it->Target = nullptr;
-        for (auto &it : lockedBullets)
-            it->Target = nullptr;
-        getPlayScene()->EarnMoney(money);
-        getPlayScene()->EnemyGroup->RemoveObject(objectIterator);
+
+        // 2) Scene bookkeeping
+        auto scene = getPlayScene();
+        scene->AddKill();
+        scene->EarnMoney(money);
+
+        // 3) Coin logic
+        if (auto s = dynamic_cast<SoldierEnemy*>(this)) {
+    // only advance the mission while we're below the goal
+    if (scene->soldierkillcount < PlayScene::KILLS_PER_COIN) {
+        scene->soldierkillcount++;
+        scene->UpdateKillBar();
+        // only give the one coin, when you *just* reached 3
+        if (scene->soldierkillcount == PlayScene::KILLS_PER_COIN) {
+            scene->EarnCoin(1);
+        }
+    }
+}
+        else if (auto t = dynamic_cast<TankEnemy*>(this)) {
+            // every tank kill → +1 coin
+            scene->EarnCoin(1);
+        }
+
+        // 4) Cleanup
+        for (auto &it : lockedTurrets) it->Target = nullptr;
+        for (auto &it : lockedBullets) it->Target = nullptr;
+        scene->EnemyGroup->RemoveObject(objectIterator);
         AudioHelper::PlayAudio("explosion.wav");
     }
 }
+
 void Enemy::UpdatePath(const std::vector<std::vector<int>> &mapDistance) {
     int x = static_cast<int>(floor(Position.x / PlayScene::BlockSize));
     int y = static_cast<int>(floor(Position.y / PlayScene::BlockSize));

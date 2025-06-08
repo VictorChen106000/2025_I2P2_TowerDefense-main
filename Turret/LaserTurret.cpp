@@ -45,12 +45,45 @@ void LaserTurret::applylevelstats() {
     ChangeImage();
 }
 void LaserTurret::CreateBullet() {
-    Engine::Point diff = Engine::Point(cos(Rotation - ALLEGRO_PI / 2), sin(Rotation - ALLEGRO_PI / 2));
-    float rotation = atan2(diff.y, diff.x);
-    Engine::Point normalized = diff.Normalize();
-    Engine::Point normal = Engine::Point(-normalized.y, normalized.x);
-    // Change bullet position to the front of the gun barrel.
-    getPlayScene()->BulletGroup->AddNewObject(new LaserBullet(Position + normalized * 36 - normal * 6, diff, rotation, this));
-    getPlayScene()->BulletGroup->AddNewObject(new LaserBullet(Position + normalized * 36 + normal * 6, diff, rotation, this));
+    // 1) Compute base firing angle & forward vector
+    float baseAngle = Rotation - ALLEGRO_PI/2;
+    Engine::Point forward(
+        std::cos(baseAngle),
+        std::sin(baseAngle)
+    );
+
+    // 2) Decide how wide the fan is at each level
+    //    Level 1: no spread  (0°)
+    //    Level 2: tight fan (e.g. 10° total)
+    //    Level 3: medium fan (e.g. 20° total)
+    float spreads[] = {
+        0.0f,
+        ALLEGRO_PI * (10.0f/180.0f),  // 10° in radians
+        ALLEGRO_PI * (20.0f/180.0f)   // 20° in radians
+    };
+
+    int lvl = getlevel();         // 1, 2 or 3
+    float totalSpread = spreads[lvl-1];
+    int   count       = lvl;      // # of bullets to fire
+
+    // 3) Spawn one bullet per evenly spaced offset
+    for (int i = 0; i < count; i++) {
+        // evenly from –totalSpread/2  …  +totalSpread/2
+        float offset = (count > 1)
+            ? -totalSpread * 0.5f + (totalSpread * i) / (count - 1)
+            : 0.0f;
+
+        float angle = baseAngle + offset;
+        Engine::Point dir  (std::cos(angle), std::sin(angle));
+        Engine::Point norm = dir.Normalize();
+
+        Engine::Point spawnPos = Position + norm * 36;
+        getPlayScene()->BulletGroup->AddNewObject(
+            new LaserBullet(spawnPos, dir, angle, this)
+        );
+    }
+
     AudioHelper::PlayAudio("laser.wav");
 }
+
+

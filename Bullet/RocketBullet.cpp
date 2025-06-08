@@ -5,11 +5,27 @@
 #include "Enemy/Enemy.hpp"
 #include "UI/Animation/DirtyEffect.hpp"  // fallback effect
 
+RocketBullet::RocketBullet(const std::string &spriteFile,
+                           Engine::Point position,
+                           Engine::Point forwardDirection,
+                           float rotation,
+                           Turret *parent)
+    : Bullet(
+        spriteFile,       // ← now parameterized
+        600.0f,
+        3.0f,
+        position,
+        forwardDirection,
+        rotation + ALLEGRO_PI / 2,
+        parent
+      )
+{ }
+
 RocketBullet::RocketBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret *parent)
     : Bullet(
         "play/bullet-3.png",      // Rocket sprite
         600.0f,                    // speed (faster than machine gun)
-        6.0f,                     // damage (higher than fire)
+        3.0f,                     // damage (higher than fire)
         position,
         forwardDirection,
         rotation + ALLEGRO_PI / 2,   // align sprite

@@ -58,6 +58,8 @@ void PlayScene::Initialize() {
     keyStrokes.clear();
     ticks = 0;
     deathCountDown = -1;
+    coins =0; // tambahan
+    soldierkillcount=0; // tambahan 
     lives = 10;
     money = 2000;
     killCount = 0;
@@ -428,10 +430,22 @@ void PlayScene::Hit() {
 int PlayScene::GetMoney() const {
     return money;
 }
+void PlayScene::EarnCoin(int c) {
+  coins += c;
+  UICoins->Text = std::to_string(coins);
+}
 void PlayScene::EarnMoney(int money) {
     this->money += money;
     UIMoney->Text = std::string("$") + std::to_string(this->money);
 }
+void PlayScene::UpdateKillBar() {
+    // make sure count never exceeds the goal
+    int count = std::min(soldierkillcount, KILLS_PER_COIN);
+    float frac = float(count) / float(KILLS_PER_COIN);
+    killBarFill->w = frac * killBarBg->w;
+    killBarLabel->Text = std::to_string(count) + "/" + std::to_string(KILLS_PER_COIN);
+}
+
 void PlayScene::ReadMap() {
     std::string filename = std::string("Resource/map") + std::to_string(MapId) + ".txt";
     // Read map file.
@@ -486,7 +500,10 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
     UIGroup->AddNewObject(UIMoney = new Engine::Label(std::string("$") + std::to_string(money), "pirulen.ttf", 24, 1294, 48));
     UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "pirulen.ttf", 24, 1294, 88));
-
+    //coin
+    UIGroup->AddNewObject(UICoinIcon = new Engine::Image("play/goldcoin3.png",1294, 350,48, 48));
+    UIGroup->AddNewObject(UICoins = new Engine::Label(std::to_string(coins),"pirulen.ttf",24,1355,360));
+    UIGroup->AddNewObject(UICoinCount = new Engine::Label("Kill 3 Enemy Soldiers","pirulen.ttf",16,1294,480));
     // Pause Button (toggles SpeedMult between 0 and 1)
     pauseBtn = new Engine::ImageButton(
         "play/pause.png",       // out
@@ -562,6 +579,17 @@ void PlayScene::ConstructUI() {
     dangerIndicator = new Engine::Sprite("play/benjamin.png", w - shift, h - shift);
     dangerIndicator->Tint.a = 0;
     UIGroup->AddNewObject(dangerIndicator);
+
+    //BARRRRRRRRRRRRRRRRRRRRRR
+    const int BAR_W = 200, BAR_H = 20;
+    const int BAR_X = 1294, BAR_Y = 500;  // just below your coins label
+    // background (grey)
+    UIGroup->AddNewObject(killBarBg   = new PanelRect(BAR_X, BAR_Y, BAR_W, BAR_H, al_map_rgba(100,100,100,255)));
+    // fill (green, start at 0 width)
+    UIGroup->AddNewObject(killBarFill = new PanelRect(BAR_X, BAR_Y, 0,     BAR_H, al_map_rgba(0,200,0,255)));
+    // text "0/3"
+    UIGroup->AddNewObject(killBarLabel = new Engine::Label("0/3", "pirulen.ttf", 20, BAR_X + BAR_W/2, BAR_Y + BAR_H/2));
+    killBarLabel->Anchor = Engine::Point(0.5f, 0.5f); 
 }
 
 void PlayScene::UIBtnClicked(int id) {
@@ -656,15 +684,7 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
     return map;
 }
 
-struct PanelRect : public Engine::IObject {
-  float x, y, w, h;
-  ALLEGRO_COLOR color;
-  PanelRect(float _x, float _y, float _w, float _h, ALLEGRO_COLOR c)
-    : x(_x), y(_y), w(_w), h(_h), color(c) {}
-  void Draw() const override {
-    al_draw_filled_rectangle(x, y, x + w, y + h, color);
-  }
-};
+
 void PlayScene::BGMSlideOnValueChanged(float value) {
     AudioHelper::BGMVolume = value;
     AudioHelper::ChangeSampleVolume(bgmInstance, value);

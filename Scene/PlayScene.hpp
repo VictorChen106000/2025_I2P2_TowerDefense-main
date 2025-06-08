@@ -6,10 +6,15 @@
 #include <utility>
 #include <vector>
 
+#include <allegro5/allegro_primitives.h>  
+#include <allegro5/color.h>
+
 #include "UI/Component/Slider.hpp"
 #include "Engine/IScene.hpp"
 #include "Engine/Point.hpp"
 #include "UI/Component/ImageButton.hpp"
+
+
 
 class Turret;
 namespace Engine {
@@ -18,6 +23,16 @@ namespace Engine {
     class Label;
     class Sprite;
 }   // namespace Engine
+
+struct PanelRect : public Engine::IObject {
+  float x, y, w, h;
+  ALLEGRO_COLOR color;
+  PanelRect(float _x, float _y, float _w, float _h, ALLEGRO_COLOR c)
+    : x(_x), y(_y), w(_w), h(_h), color(c) {}
+  void Draw() const override {
+    al_draw_filled_rectangle(x, y, x + w, y + h, color);
+  }
+};
 
 class PlayScene final : public Engine::IScene {
 private:
@@ -45,12 +60,19 @@ private:
     void HidePauseMenu();
     void BGMSlideOnValueChanged(float value);
     void SFXSlideOnValueChanged(float value);
+    //++++
 
 protected:
     int lives;
     int money;
     int SpeedMult;
     int killCount;
+    //++
+    Engine::Label* UICoins;
+    Engine::Label* UIrandom;
+    
+    
+
 
 public:
     static bool DebugMode;
@@ -106,5 +128,26 @@ public:
     void AddKill() {++killCount;}
     int GetKillCount() const {return killCount;}
     // void ModifyReadMapTiles();
+
+    //earcoin
+    void EarnCoin(int c);
+
+    int coins;
+    int soldierkillcount;
+
+    static constexpr int KILLS_PER_COIN = 3;
+
+    // UI elements:
+    PanelRect*      killBarBg     = nullptr;
+    PanelRect*      killBarFill   = nullptr;
+    Engine::Label*  killBarLabel  = nullptr;
+
+    // helper to refresh the bar
+    void UpdateKillBar();
+
+
+
+    Engine::Image* UICoinIcon   = nullptr;
+    Engine::Label* UICoinCount  = nullptr;
 };
 #endif   // PLAYSCENE_HPP

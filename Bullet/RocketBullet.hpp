@@ -11,6 +11,11 @@ class RocketBullet : public Bullet {
 public:
     // position, direction, turret owner
     RocketBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret *parent);
+
+    //tambahan buat edit bulet jadi lebi banyak
+     RocketBullet(const std::string &spriteFile,Engine::Point position,Engine::Point forwardDirection,float rotation,Turret *parent);
+
+
     void Update(float deltaTime) override;
 protected:
     // spawn explosion or effect on hit
