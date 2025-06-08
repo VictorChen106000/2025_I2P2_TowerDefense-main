@@ -4,6 +4,8 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <functional>   // for std::hash
+#include <cctype>       // for std::isspace
 
 //------------------------------------------------------------
 // HashPassword: a quick & dirty “hash” via std::hash.
@@ -108,7 +110,7 @@ bool AccountManager::RegisterNewAccount(const std::string& username, const std::
     // Get current local time as "YYYY-MM-DD HH:MM:SS"
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-#if defined(_MSC_VER)
+#if defined(_WIN32)
     std::tm localTm;
     localtime_s(&localTm, &now_c);
 #else
