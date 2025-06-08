@@ -172,13 +172,13 @@ void LoginScene::Initialize() {
 
     // ─── 5) Load eye icons (white PNGs) once ─────────────────────────────
     if (!openEyeBmp) {
-        openEyeBmp = al_load_bitmap("images/openeyewhite.png");
+        openEyeBmp = al_load_bitmap("Resource/images/openeyewhite.png");
         if (!openEyeBmp) {
             throw std::runtime_error("Failed to load images/openeyewhite.png");
         }
     }
     if (!closeEyeBmp) {
-        closeEyeBmp = al_load_bitmap("images/closeeyewhite.png");
+        closeEyeBmp = al_load_bitmap("Resource/images/closeeyewhite.png");
         if (!closeEyeBmp) {
             throw std::runtime_error("Failed to load images/closeeyewhite.png");
         }

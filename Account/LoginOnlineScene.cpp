@@ -47,60 +47,66 @@ static bool PerformFirebaseLogin(const std::string& email,
                                  const std::string& password,
                                  std::string& outError)
 {
-    // Create an HTTPS client for Firebase Identity Toolkit
+    std::cout << "[DBG] PerformFirebaseLogin(email=\"" << email << "\")\n";
+
+    // 1) Create HTTPS client
     httplib::SSLClient client("identitytoolkit.googleapis.com", 443);
-    client.set_connection_timeout(5, 0); // 5 seconds
+    client.enable_server_certificate_verification(false);
+    client.set_connection_timeout(5, 0);
+    client.set_read_timeout(5, 0);
+    std::cout << "[DBG] Timeouts: connect=5s, read=5s\n";
 
-    // Build the request path with your API key
+    // 2) Log every request/response
+    client.set_logger([](const httplib::Request &req, const httplib::Response &res) {
+        std::cout << "[HTTP] " << req.method << " " << req.path
+                  << " --> " << res.status << "\n"
+                  << "[HTTP] Response body:\n" << res.body << "\n";
+    });
+
+    // 3) Build path + JSON body
     std::string path = "/v1/accounts:signInWithPassword?key=" + std::string(FIREBASE_WEB_API_KEY);
-
-    // Create JSON body
     json body = {
-        {"email",              email},
-        {"password",           password},
-        {"returnSecureToken",  true}
+        {"email", email},
+        {"password", password},
+        {"returnSecureToken", true}
     };
+    std::cout << "[DBG] POST " << path << "\n"
+              << "[DBG] Payload: " << body.dump() << "\n";
 
-    // Perform POST
-    auto res = client.Post(path.c_str(),
-                           body.dump(),
-                           "application/json");
+    // 4) Send
+    auto res = client.Post(path.c_str(), body.dump(), "application/json");
+    std::cout << "[DBG] client.Post() returned " << (res ? "response" : "nullptr") << "\n";
     if (!res) {
-        outError = "Network error: no response.";
+        std::cerr << "[ERR] Network failure (httplib error=" 
+                  << static_cast<int>(res.error()) << ")\n";
+        outError = "Network error: could not connect.";
         return false;
     }
 
-    // If HTTP status != 200 → extract error
+    // 5) Check HTTP status
+    std::cout << "[DBG] HTTP status = " << res->status << "\n";
     if (res->status != 200) {
         try {
-            auto errJson = json::parse(res->body);
-            if (errJson.contains("error") && errJson["error"].contains("message")) {
-                outError = errJson["error"]["message"].get<std::string>();
-            } else {
-                outError = "Unknown server error.";
-            }
+            auto errJ = json::parse(res->body);
+            outError = errJ["error"]["message"].get<std::string>();
+        } catch(...) {
+            outError = "Unknown server error";
         }
-        catch (...) {
-            outError = "Malformed error response.";
-        }
+        std::cerr << "[ERR] Server returned HTTP " << res->status
+                  << ": " << outError << "\n";
         return false;
     }
 
-    // HTTP 200 → parse for idToken
-    try {
-        auto successJson = json::parse(res->body);
-        if (successJson.contains("idToken")) {
-            // Optionally: store or use successJson["idToken"] for future calls
-            return true;
-        } else {
-            outError = "Login succeeded but no idToken returned.";
-            return false;
-        }
+    // 6) Success: parse idToken
+    auto successJ = json::parse(res->body);
+    if (auto it = successJ.find("idToken"); it != successJ.end()) {
+        std::cout << "[DBG] idToken length = " << it->get<std::string>().size() << "\n";
+        return true;
     }
-    catch (...) {
-        outError = "Malformed success response.";
-        return false;
-    }
+
+    outError = "No idToken in response";
+    std::cerr << "[ERR] Login succeeded but no idToken\n";
+    return false;
 }
 
 
@@ -232,13 +238,13 @@ void LoginOnlineScene::Initialize()
 
     // ── 5) Load eye icons (show/hide password) ─────────────────────────────
     if (!openEyeBmpOnline) {
-        openEyeBmpOnline = al_load_bitmap("images/openeyewhite.png");
+        openEyeBmpOnline = al_load_bitmap("Resource/images/openeyewhite.png");
         if (!openEyeBmpOnline) {
             throw std::runtime_error("Failed to load openeyewhite.png");
         }
     }
     if (!closeEyeBmpOnline) {
-        closeEyeBmpOnline = al_load_bitmap("images/closeeyewhite.png");
+        closeEyeBmpOnline = al_load_bitmap("Resource/images/closeeyewhite.png");
         if (!closeEyeBmpOnline) {
             throw std::runtime_error("Failed to load closeeyewhite.png");
         }

@@ -40,9 +40,21 @@ static bool PerformFirebaseRegister(const std::string& email,
                                     const std::string& password,
                                     std::string& outError)
 {
+    std::cout << "[DBG] PerformFirebaseRegister(email=\"" << email << "\")\n";
     // 1) Create an SSLClient to identitytoolkit.googleapis.com:443
     httplib::SSLClient client("identitytoolkit.googleapis.com", 443);
+    client.enable_server_certificate_verification(false);
     client.set_connection_timeout(5, 0); // 5 seconds timeout
+    client.set_logger([](const httplib::Request &req, const httplib::Response &res) {
+        // Print method, full path, and status code
+        std::cout << "[HTTP] "
+                << req.method << " "
+                << req.path << " --> "
+                << res.status << "\n";
+        // Optionally, dump headers or body:
+        // for (auto &h : req.headers)  std::cout << h.first<<": "<<h.second<<"\n";
+        // std::cout << "Response body:\n" << res.body << "\n";
+    }); 
 
     // 2) Build the signUp path with your Firebase Web API key
     std::string path = "/v1/accounts:signUp?key=" + std::string(FIREBASE_WEB_API_KEY);
@@ -54,45 +66,47 @@ static bool PerformFirebaseRegister(const std::string& email,
         {"returnSecureToken", true}
     };
 
+    std::cout << "[DBG] POST " << path << "\n"
+              << "[DBG] Payload: " << body.dump() << "\n";
+
     // 4) POST the JSON to Firebase
     auto res = client.Post(path.c_str(),
                            body.dump(),
                            "application/json");
+
+     std::cout << "[DEBUG] Post() returned " << (res ? "valid response" : "nullptr (network error)") << "\n";
+
+
     if (!res) {
+        std::cerr << "[ERR] Network failure (httplib error=" 
+                  << static_cast<int>(res.error()) << ")\n";
         outError = "Network error: no response from Firebase.";
         return false;
     }
 
     // 5) If HTTP status != 200, parse out “error.message”
     if (res->status != 200) {
-        try {
-            auto errJson = json::parse(res->body);
-            if (errJson.contains("error") && errJson["error"].contains("message")) {
-                outError = errJson["error"]["message"].get<std::string>();
-            } else {
-                outError = "Unknown server error.";
-            }
+         try {
+            auto errJ = json::parse(res->body);
+            outError = errJ["error"]["message"].get<std::string>();
+        } catch(...) {
+            outError = "Unknown server error";
         }
-        catch(...) {
-            outError = "Malformed error response.";
-        }
+        std::cerr << "[ERR] Server returned HTTP " << res->status
+                  << ": " << outError << "\n";
         return false;
     }
 
     // 6) On HTTP 200, parse for “idToken” (optional check)
-    try {
-        auto successJson = json::parse(res->body);
-        if (successJson.contains("idToken")) {
-            return true;
-        } else {
-            outError = "Registration succeeded but no idToken returned.";
-            return false;
-        }
+    auto successJ = json::parse(res->body);
+    if (auto it = successJ.find("idToken"); it != successJ.end()) {
+        std::cout << "[DBG] idToken length = " << it->get<std::string>().size() << "\n";
+        return true;
     }
-    catch(...) {
-        outError = "Malformed success response.";
-        return false;
-    }
+
+    outError = "No idToken in response";
+    std::cerr << "[ERR] Login succeeded but no idToken\n";
+    return false;
 }
 
 
@@ -251,13 +265,13 @@ void RegisterOnlineScene::Initialize()
 
     // ─── “Show/Hide Password” Eye Icon (shared for both password fields) ────
     if (!openEyeBmp) {
-        openEyeBmp = al_load_bitmap("images/openeyewhite.png");
+        openEyeBmp = al_load_bitmap("Resource/images/openeyewhite.png");
         if (!openEyeBmp) {
             throw std::runtime_error("Failed to load openeyewhite.png");
         }
     }
     if (!closeEyeBmp) {
-        closeEyeBmp = al_load_bitmap("images/closeeyewhite.png");
+        closeEyeBmp = al_load_bitmap("Resource/images/closeeyewhite.png");
         if (!closeEyeBmp) {
             throw std::runtime_error("Failed to load closeeyewhite.png");
         }
