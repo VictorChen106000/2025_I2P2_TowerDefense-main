@@ -15,10 +15,19 @@
 #include "Account/LocalAndOnlineScene.hpp"
 #include "Account/LoginOnlineScene.hpp"
 #include "Account/RegisterOnlineScene.hpp"
+#include "Account/ScoreboardOnline.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
+
+	ScoreboardOnline::Initialize(
+		"towerdefensegame-1b01e-default-rtdb.asia-southeast1.firebasedatabase.app",
+		"AIzaSyAarObWywZJ_rQ2AlXDd6czNdnRqqSTRbo"
+	  );
+	  
 	Engine::GameEngine& game = Engine::GameEngine::GetInstance();
+
+	
 
     // TODO HACKATHON-2 (2/3): Register Scenes here
 	game.AddNewScene("local-online",new LocalAndOnlineScene());

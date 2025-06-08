@@ -3,6 +3,7 @@
 #include "Account/LoginOnlineScene.hpp"
 #include "Engine/GameEngine.hpp"
 #include "allegro5/allegro_primitives.h"
+#include "Account/ScoreboardOnline.hpp"
 
 // Include the single‐header HTTP+HTTPS client and JSON library:
 #include "httplib.h"    // https://github.com/yhirose/cpp-httplib (place httplib.h in your project root)
@@ -439,6 +440,22 @@ void LoginOnlineScene::ToggleInputFocus()
 
 void LoginOnlineScene::OnLoginClicked()
 {
+
+    if (typedEmail.empty() || typedPassword.empty()) {
+              infoLabel->Text = "Email and password required";
+               return;
+            }
+        
+            // Sign in via our online service (this sets idToken & localId)
+    if (ScoreboardOnline::SignIn(typedEmail, typedPassword)) {
+               CurrentUser = typedEmail;
+               GameEngine::GetInstance().ChangeScene("start");
+                return;
+            }
+        
+           // otherwise show the error
+   infoLabel->Text = "Login failed";
+        
     // Basic client‐side validation
     if (typedEmail.empty() || typedPassword.empty()) {
         errorMessage = "Email and password required.";

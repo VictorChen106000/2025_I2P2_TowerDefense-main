@@ -7,6 +7,7 @@
 #include "UI/Component/Image.hpp"
 #include "UI/Component/ImageButton.hpp"
 #include "UI/Component/Label.hpp"
+#include "Account/ScoreboardOnline.hpp"
 #include "WinScene.hpp"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -16,6 +17,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <iostream>
 
 extern std::string CurrentUser;
 
@@ -81,6 +83,13 @@ void WinScene::SaveScore() {
     int moneyLeft = ps->GetMoney();
     int score     = kills * 30 + timeBonus + moneyLeft * 2; 
 
+    if (!ScoreboardOnline::idToken.empty()) {
+          bool ok = ScoreboardOnline::UploadScore(CurrentUser, score);
+             if (!ok) {
+                 std::cerr << "[WinScene] UploadScore failed\n";
+              }
+              return;
+      }
     // 4) build timestamp string
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
