@@ -59,7 +59,7 @@ void PlayScene::Initialize() {
     ticks = 0;
     deathCountDown = -1;
     lives = 10;
-    money = 150;
+    money = 2000;
     killCount = 0;
     isPaused = false;
     SpeedMult = 1;
@@ -271,6 +271,49 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
+
+    // If the right mouse button is clicked (for upgrade)
+    if (button & 2) {  // Check if it's a right-click
+        const int x = mx / BlockSize;
+        const int y = my / BlockSize;
+
+        // Check if the clicked tile has a turret (i.e., is occupied)
+        if (mapState[y][x] == TILE_OCCUPIED) {
+            // Iterate over the TowerGroup to find the turret clicked
+            for (auto obj : TowerGroup->GetObjects()) {
+                Turret* turret = dynamic_cast<Turret*>(obj);
+                if (!turret) continue;
+
+                // Check if the mouse click was on the turret
+                int tx = int(turret->Position.x) / BlockSize;
+                int ty = int(turret->Position.y) / BlockSize;
+
+                if (tx == x && ty == y) {
+                    // If the turret can be upgraded and the player has enough money
+                    if (turret->canupdrage()) {
+                        int upgradeCost = turret->getupdragecost();
+                        if (money >= upgradeCost) {
+                            // Subtract money and upgrade the turret
+                            EarnMoney(-upgradeCost);
+                            turret->updrage();
+                            AudioHelper::PlayAudio("explosion.wav");  // Play upgrade sound
+
+                            // Optionally: show a visual upgrade effect or change sprite, etc.
+                        } else {
+                            // If the player doesn't have enough money
+                            AudioHelper::PlayAudio("explosion.wav");  // Play sound or show a message
+                        }
+                    } else {
+                        // Optionally: Play a sound or show a message if turret is already at max level
+                        AudioHelper::PlayAudio("explosion.wav");
+                    }
+                    break; // Exit loop after upgrading the turret
+                }
+            }
+        }
+    }
+
+
     if (shovelMode && (button & 1) && mx >= 0 && mx <  mapPixelWidth && my >= 0 && my <  mapPixelHeight)
     {
         // 1) grid coords
@@ -473,14 +516,14 @@ void PlayScene::ConstructUI() {
     // Button 1
     btn = new TurretButton("play/floor.png", "play/dirt.png",
                            Engine::Sprite("play/tower-base.png", 1294, 136, 0, 0, 0, 0),
-                           Engine::Sprite("play/turret-1.png", 1294, 136 - 8, 0, 0, 0, 0), 1294, 136, MachineGunTurret::Price);
+                           Engine::Sprite("play/roketred1.png", 1305, 122, 0, 0, 0, 0), 1294, 136, MachineGunTurret::Price);
     // Reference: Class Member Function Pointer and std::bind.
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 0));
     UIGroup->AddNewControlObject(btn);
     // Button 2
     btn = new TurretButton("play/floor.png", "play/dirt.png",
                            Engine::Sprite("play/tower-base.png", 1370, 136, 0, 0, 0, 0),
-                           Engine::Sprite("play/turret-2.png", 1370, 136 - 8, 0, 0, 0, 0), 1370, 136, LaserTurret::Price);
+                           Engine::Sprite("play/tankblue1.png", 1382, 121, 0, 0, 0, 0), 1370, 136, LaserTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 1));
     UIGroup->AddNewControlObject(btn);
 
@@ -506,7 +549,7 @@ void PlayScene::ConstructUI() {
     btn = new TurretButton(
     "play/floor.png", "play/dirt.png",
     Engine::Sprite("play/tower-base.png", 1446, 136, 0, 0, 0, 0),
-    Engine::Sprite("play/turret-3.png",     1446, 136, 0, 0, 0, 0),
+    Engine::Sprite("play/roketcrop1.png",     1453, 138, 0, 0, 0, 0),
     1446, 136,
     RocketTurret::Price
     );
