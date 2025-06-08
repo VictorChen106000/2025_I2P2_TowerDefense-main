@@ -473,6 +473,7 @@ void LoginOnlineScene::OnLoginClicked()
     bool success = PerformFirebaseLogin(typedEmail, typedPassword, firebaseError);
     if (success) {
         // Login succeeded: store current user (for example) and change scene
+        std::cout << "Login success!\n";
         extern std::string CurrentUser;
         CurrentUser = typedEmail;
         GameEngine::GetInstance().ChangeScene("start");
