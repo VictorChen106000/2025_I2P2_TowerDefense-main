@@ -12,7 +12,7 @@ const int RocketTurret::Price = 250;
 RocketTurret::RocketTurret(float x, float y)
     : Turret(
         "play/tower-base.png",         // base image
-        "play/turret-3.png",           // head image
+        "play/blank.png",           // head image
         x, y,
         800,                            // wider range (vs. 200)
         Price,
@@ -21,6 +21,36 @@ RocketTurret::RocketTurret(float x, float y)
 {
     // same downward shift so head aligns
     Anchor.y -= 1.0f / GetBitmapHeight();
+    maxlevel =3;
+    updrageprice ={ 75,125};
+    setlevelimages();
+    applylevelstats();
+}
+
+void RocketTurret::setlevelimages() {
+    levelImages.push_back("play/roketcrop1.png");  // Level 1 image
+    levelImages.push_back("play/roketcrop2.png");  // Level 2 image
+    levelImages.push_back("play/roketcrop3.png");  // Level 3 image
+}
+
+void RocketTurret::applylevelstats() {
+    switch (level) {
+        case 1:
+            coolDown = 1.5f;  // Initial cooldown
+            CollisionRadius = 600.0f;  // Initial range
+            break;
+        case 2:
+            coolDown = 0.5f;  // Faster reload for level 2
+            CollisionRadius = 600.0f * 1.25f;  // Increase range for level 2
+            break;
+        case 3:
+            coolDown = 0.1f;  // Even faster reload for level 3
+            CollisionRadius = 600.0f * 1.5f;  // Further increase range for level 3
+            break;
+        default:
+            break;
+    }
+    ChangeImage();
 }
 
 void RocketTurret::CreateBullet() {

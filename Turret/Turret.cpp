@@ -15,8 +15,10 @@
 PlayScene *Turret::getPlayScene() {
     return dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetActiveScene());
 }
-Turret::Turret(std::string imgBase, std::string imgTurret, float x, float y, float radius, int price, float coolDown) : Sprite(imgTurret, x, y), price(price), coolDown(coolDown), imgBase(imgBase, x, y) {
+Turret::Turret(std::string imgBase, std::string imgTurret, float x, float y, float radius, int price, float coolDown) 
+    : Sprite(imgTurret, x, y), price(price), coolDown(coolDown), imgBase(imgBase, x, y) {
     CollisionRadius = radius;
+   //  setlevelimages();  // Set the images for the turret levels
 }
 void Turret::Update(float deltaTime) {
     Sprite::Update(deltaTime);
@@ -63,6 +65,10 @@ void Turret::Update(float deltaTime) {
             rotation = ((abs(radian) - maxRotateRadian) * originRotation + maxRotateRadian * targetRotation) / radian;
         // Add 90 degrees (PI/2 radian), since we assume the image is oriented upward.
         Rotation = atan2(rotation.y, rotation.x) + ALLEGRO_PI / 2;
+        //tambahan
+
+        imgBase.Rotation = Rotation;
+
         // Shoot reload.
         reload -= deltaTime;
         if (reload <= 0) {
@@ -76,6 +82,8 @@ void Turret::Draw() const {
     if (Preview) {
         al_draw_filled_circle(Position.x, Position.y, CollisionRadius, al_map_rgba(0, 255, 0, 50));
     }
+
+
     imgBase.Draw();
     Sprite::Draw();
     if (PlayScene::DebugMode) {
@@ -86,3 +94,18 @@ void Turret::Draw() const {
 int Turret::GetPrice() const {
     return price;
 }
+
+/*
+We do not need any new code here, since CanUpgrade(), GetUpgradeCost(), Upgrade()
+were all defined inline in the header. If you prefer, you can move them here:
+
+bool Turret::CanUpgrade() const { return Level < MaxLevel; }
+int Turret::GetUpgradeCost() const { return (Level < MaxLevel ? UpgradePrices[Level-1] : 0); }
+bool Turret::Upgrade() {
+    if (!CanUpgrade()) return false;
+    Level++;
+    ApplyLevelStats();
+    return true;
+}
+int Turret::GetLevel() const { return Level; }
+*/
