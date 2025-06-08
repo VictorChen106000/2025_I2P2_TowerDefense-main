@@ -571,7 +571,7 @@ void RegisterOnlineScene::OnRegisterClicked()
         // On success, store current user and switch to “start”
         extern std::string CurrentUser;
         CurrentUser = typedEmail;
-        GameEngine::GetInstance().ChangeScene("start");
+        GameEngine::GetInstance().ChangeScene("login-online");
     }
     else {
         // Display Firebase’s error (e.g. “EMAIL_EXISTS” or “WEAK_PASSWORD”)

@@ -26,7 +26,7 @@ void Scoreboard::Initialize() {
         }
     } else {
         // local mode
-        std::ifstream ifs("../Resource/scoreboard.txt");
+        std::ifstream ifs("Resource/scoreboard.txt");
         if (!ifs) {
             std::cerr << "[Scoreboard] cannot open Resource/scoreboard.txt\n";
         } else {
