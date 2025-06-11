@@ -540,7 +540,7 @@ void PlayScene::ReadMap() {
             if (num)
                 TileMapGroup->AddNewObject(new Engine::Image("play/floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
             else
-                TileMapGroup->AddNewObject(new Engine::Image("play/dirt.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
+                TileMapGroup->AddNewObject(new Engine::Image("tile/white-floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
         }
     }
 }
