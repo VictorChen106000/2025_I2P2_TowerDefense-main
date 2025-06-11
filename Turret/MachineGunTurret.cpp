@@ -30,7 +30,7 @@ void MachineGunTurret::applylevelstats() {
     switch (level) {
         case 1:
             // Level 1 stats (already partly set by base constructor)
-            coolDown = 0.75f;         // 0.5 seconds per shot
+            coolDown = 0.05f;         // 0.5 seconds per shot
             CollisionRadius = 200.0f; // range
             // If you have a “damage” member inside FireBullet, you could pass 10 to it.
             // But in your original code, FireBullet took (position, direction, rotation, this).

@@ -11,5 +11,6 @@ private:
     void applylevelstats()override;
     void CreateBullet() override;
     void setlevelimages() override;
+    
 };
 #endif   // LASERTURRET_HPP

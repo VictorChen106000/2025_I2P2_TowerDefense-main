@@ -28,6 +28,7 @@ protected:
     std::vector<std::string>levelImages;
     virtual void applylevelstats()=0;
     virtual void setlevelimages()=0;
+    virtual Enemy* AcquireTarget();
 
 
 
