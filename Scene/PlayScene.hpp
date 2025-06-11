@@ -62,6 +62,9 @@ private:
     void SFXSlideOnValueChanged(float value);
     //++++
 
+    bool   isAiming = false;
+    Turret* aimingTurret = nullptr;
+
 protected:
     int lives;
     int money;

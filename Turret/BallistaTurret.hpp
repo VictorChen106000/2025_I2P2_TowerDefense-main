@@ -1,25 +1,23 @@
-#ifndef ROCKETTURRET_HPP
-#define ROCKETTURRET_HPP
+#ifndef BALLISTATURRET_HPP
+#define BALLISTATURRET_HPP
 
 #include "Turret.hpp"
 #include <vector>
 
-class PlayScene;
-class Enemy;
-
-class RocketTurret : public Turret {
+class BallistaTurret : public Turret {
 public:
     static const int Price;
-    RocketTurret(float x, float y);
+    BallistaTurret(float x, float y);
    //void CreateBullet() override;
+   
 private:
     void applylevelstats()override;
     void CreateBullet() override;
     void setlevelimages() override;
-
+   
 
     std::vector<std::string>bulletImages;
     void setBulletImages();
 };
 
-#endif // ROCKETTURRET_HPP
+#endif  // BallistaTurret_HPP

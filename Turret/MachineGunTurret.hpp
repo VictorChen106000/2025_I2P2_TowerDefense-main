@@ -12,5 +12,6 @@ private:
     void applylevelstats()override;
     void CreateBullet() override;
     void setlevelimages() override;
+    
 };
 #endif   // MACHINEGUNTURRET_HPP

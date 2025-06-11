@@ -94,7 +94,9 @@ void Turret::Draw() const {
 int Turret::GetPrice() const {
     return price;
 }
-
+Enemy* Turret::AcquireTarget() {
+    return nullptr;
+}
 /*
 We do not need any new code here, since CanUpgrade(), GetUpgradeCost(), Upgrade()
 were all defined inline in the header. If you prefer, you can move them here:

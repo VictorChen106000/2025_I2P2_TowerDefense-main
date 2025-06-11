@@ -25,7 +25,9 @@
 #include "Turret/MachineGunTurret.hpp"
 #include "Turret/RocketTurret.hpp"
 #include "Turret/TurretButton.hpp"
+#include "Turret/BowTurret.hpp"
 #include "Shovel/ShovelButton.hpp"
+#include "Turret/BallistaTurret.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/Plane.hpp"
 #include "UI/Component/Label.hpp"
@@ -238,6 +240,22 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
     const int mapW = MapWidth * BlockSize;
     const int mapH = MapHeight * BlockSize;
     bool clickOnMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
+    //aaaaaaaaaaaaa
+    if ((button & 1) && !isPaused) {
+        for (auto obj : TowerGroup->GetObjects()) {
+            auto bt = dynamic_cast<BowTurret*>(obj);
+            if (!bt) continue;
+            float dx = mx - bt->Position.x;
+            float dy = my - bt->Position.y;
+            const float pickRadius = 32; 
+            if (dx*dx + dy*dy < pickRadius*pickRadius) {
+                isAiming = true;
+                aimingTurret = bt;
+                return;   // consume the click
+            }
+        }
+    }
+    //aaaaaaaaaaaaaa
     // If it’s a left‐click outside the map *or* any right‐click, cancel both turret preview and shovel
     if (((button & 1) && !clickOnMap) || (button & 2)) {
         // 1) Cancel turret preview
@@ -262,6 +280,15 @@ void PlayScene::OnMouseMove(int mx, int my) {
     IScene::OnMouseMove(mx, my);
     const int x = mx / BlockSize;
     const int y = my / BlockSize;
+    //aaaaaaa
+    if (isAiming && aimingTurret) {
+        float dx = mx - aimingTurret->Position.x;
+        float dy = my - aimingTurret->Position.y;
+        // +PI/2 if your sprite is “up” at 0 radians
+        aimingTurret->Rotation = std::atan2(dy, dx) + ALLEGRO_PI/2;
+        return;
+    }
+    //aaaaaaaaa
     if (!preview || x < 0 || x >= MapWidth || y < 0 || y >= MapHeight) {
         imgTarget->Visible = false;
         return;
@@ -275,6 +302,11 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
+    if (isAiming) {
+        isAiming = false;
+        aimingTurret = nullptr;
+        return;  // prevent passing through to “place turret” logic
+    }
 
     // If the right mouse button is clicked (for upgrade)
     if (button & 2) {  // Check if it's a right-click
@@ -570,7 +602,22 @@ void PlayScene::ConstructUI() {
         Engine::Sprite("play/bomb.png", 1520, 240, 0, 0, 0, 0),
         1520, 240, BombTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 4));
-    
+    UIGroup->AddNewControlObject(btn);
+
+    btn = new TurretButton(
+        "play/floor.png", "play/dirt.png",
+        Engine::Sprite("play/tower-base.png", 1520, 136, 0, 0, 0, 0),
+        Engine::Sprite("play/tankrrr1profile.png", 1530, 134, 0, 0, 0, 0),
+        1520, 136, BombTurret::Price);
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 5));
+    UIGroup->AddNewControlObject(btn);
+
+     btn = new TurretButton(
+        "play/floor.png", "play/dirt.png",
+        Engine::Sprite("play/tower-base.png", 1446, 240, 0, 0, 0, 0),
+        Engine::Sprite("play/Ballista2.png", 1446, 240, 0, 0, 0, 0),
+        1446, 240, BombTurret::Price);
+    btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 6));
     UIGroup->AddNewControlObject(btn);
 
     // ShovelButton
@@ -635,6 +682,10 @@ void PlayScene::UIBtnClicked(int id) {
         newPreview = new RocketTurret(0,0);
     } else if (id == 4 && money >= BombTurret::Price) {
         newPreview = new BombTurret(0, 0);
+    }else if (id == 5 && money >= BallistaTurret::Price) {
+        newPreview = new BallistaTurret(0, 0);
+    }else if (id == 6 && money >= BowTurret::Price) {
+        newPreview = new BowTurret(0, 0);
     }else return;
 
     // 2) Remove any existing preview

@@ -12,6 +12,7 @@ public:
 
     // We never shoot bullets, so CreateBullet is a no-op
     void CreateBullet() override {}
+   
 
     // Each frame, check if an enemy has stepped on us
     void Update(float deltaTime) override;
