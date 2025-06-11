@@ -8,6 +8,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 #include "Enemy/Enemy.hpp"
 #include "Enemy/SoldierEnemy.hpp"
@@ -76,6 +77,9 @@ void PlayScene::Initialize() {
     sliderSFX    = nullptr;
     labelBGM     = nullptr;
     labelSFX     = nullptr;
+    elapsedTime = 0.0f;
+    nextAdaptiveWait = 1.0f;
+    lastGroundSpawnTime = 0.0f;
     // Add groups from bottom to top.
     AddNewObject(TileMapGroup = new Group());
     AddNewObject(GroundEffectGroup = new Group());
@@ -115,6 +119,7 @@ void PlayScene::Update(float deltaTime) {
         deathCountDown = -1;
     else if (deathCountDown != -1)
         SpeedMult = 1;
+
     // Calculate danger zone.
     std::vector<float> reachEndTimes;
     for (auto &it : EnemyGroup->GetObjects()) {
@@ -144,6 +149,7 @@ void PlayScene::Update(float deltaTime) {
             }
         }
     }
+
     deathCountDown = newDeathCountDown;
     if (SpeedMult == 0)
         AudioHelper::StopSample(deathBGMInstance);
@@ -160,58 +166,63 @@ void PlayScene::Update(float deltaTime) {
             shovelPreview->Position = mpos;
             shovelPreview->Update(deltaTime);
         }
+        
         // Check if we should create new enemy.
         ticks += deltaTime;
-        if (enemyWaveData.empty()) {
-            if (EnemyGroup->GetObjects().empty()) {
-                // Free resources.
-                // delete TileMapGroup;
-                // delete GroundEffectGroup;
-                // delete DebugIndicatorGroup;
-                // delete TowerGroup;
-                // delete EnemyGroup;
-                // delete BulletGroup;
-                // delete EffectGroup;
-                // delete UIGroup;
-                // delete imgTarget;
-                // Win.
-                Engine::GameEngine::GetInstance().ChangeScene("win");
+        if (!enemyWaveData.empty()) {
+            auto current = enemyWaveData.front();
+            if (ticks >= current.second) {
+                ticks -= current.second;
+                enemyWaveData.pop_front();
+                SpawnEnemyOfType(current.first, ticks);
             }
-            continue;
-        }
-        auto current = enemyWaveData.front();
-        if (ticks < current.second)
-            continue;
-        ticks -= current.second;
-        enemyWaveData.pop_front();
-        const Engine::Point SpawnCoordinate = Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2, SpawnGridPoint.y * BlockSize + BlockSize / 2);
-        Enemy *enemy = nullptr;
-        switch (current.first) {
-            case 1:
-                EnemyGroup->AddNewObject(enemy = new SoldierEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+        } else {
+            if (ticks >= nextAdaptiveWait) {
+                ticks -= nextAdaptiveWait;
+
+                // === BEGIN DEBUG PRINT ===
+                //  1) Recompute power/time/D/wait in local variables so we can see them:
+                int dbgCount   = static_cast<int>(TowerGroup->GetObjects().size());       // number of towers
+                float dbgDPS   = CalculatePlayerPower();                                  // sum DPS
+                const float α  = 0.5f;             // tuner for tower count
+                const float β  = 1.0f;             // tuner for total DPS
+                const float γ  = 0.2f;             // tuner for time
+                float dbgD     = α * float(dbgCount) + β * dbgDPS + γ * elapsedTime;      // new difficulty score
+                auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
+
+                printf(
+                    "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  → type=%d  wait=%.2f  alive=%zu\n",
+                    dbgCount,
+                    dbgDPS,
+                    elapsedTime,
+                    dbgD,
+                    dbgType,
+                    dbgWait,
+                    EnemyGroup->GetObjects().size()
+                );
+                // === END DEBUG PRINT ===
                 
-                break;
-            // TODO HACKATHON-3 (2/3): Add your new enemy here.
-            case 2:
-                EnemyGroup->AddNewObject(enemy = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-                break;
-            case 3:
-                EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-                break;
-            case 4:
-                EnemyGroup->AddNewObject(enemy = new BigTankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-                break;
-            default:
-                continue;
+                bool isGround = (dbgType == 1 || dbgType == 3 || dbgType == 4);
+                float timeSinceLast = elapsedTime - lastGroundSpawnTime;
+                if (isGround && timeSinceLast < minGroundGap) {
+                    float leftover = (minGroundGap - timeSinceLast);
+                    nextAdaptiveWait = dbgWait + leftover;
+                } else {
+                    if (isGround) lastGroundSpawnTime = elapsedTime;
+                    nextAdaptiveWait = dbgWait;
+                    SpawnEnemyOfType(dbgType, ticks);
+                }
+            }
         }
-        enemy->UpdatePath(mapDistance);
-        // Compensate the time lost.
-        enemy->Update(ticks);
-    }
-    if (preview) {
-        preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();
-        // To keep responding when paused.
-        preview->Update(deltaTime);
+
+        if (enemyWaveData.empty() && EnemyGroup->GetObjects().empty()) {
+            Engine::GameEngine::GetInstance().ChangeScene("win");
+        }
+        if (preview) {
+            preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();
+            // To keep responding when paused.
+            preview->Update(deltaTime);
+        }
     }
 }
 void PlayScene::Draw() const {
@@ -859,3 +870,109 @@ void PlayScene::HidePauseMenu() {
     if (quitLabel) { UIGroup->RemoveObject(quitLabel->GetObjectIterator()); quitLabel = nullptr;}
 }
 
+float PlayScene::CalculatePlayerPower() {
+    float totalDPS = 0.0f;
+    for (auto &obj : TowerGroup->GetObjects()) {
+        Turret *t = dynamic_cast<Turret *>(obj);
+        if (!t) continue;
+        totalDPS += t->GetDPS();
+    }
+    return totalDPS;
+}
+
+std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
+    // 1) Count how many towers are placed:
+    int towerCount = static_cast<int>(TowerGroup->GetObjects().size());
+
+    // 2) Sum up all turret DPS:
+    float totalDPS = CalculatePlayerPower();
+
+    // 3) Combine (towerCount, totalDPS, elapsedTime) into a single difficulty score D:
+    //
+    //   – Let α tune “importance of tower‐count” (e.g. each tower → 0.5 difficulty points)
+    //   – Let β tune “importance of total DPS”    (e.g. each 1 DPS → 1 difficulty point)
+    //   – Let γ tune “importance of time”         (to slowly ramp even if no turrets)
+    //
+    const float α = 0.5f;       // each tower adds 0.5 difficulty
+    const float β = 1.0f;       // each DPS point adds 1 difficulty
+    const float γ = 0.2f;       // each second adds 0.2 difficulty
+    float D = α * float(towerCount) + β * totalDPS + γ * elapsedTime;
+
+    int   type;
+    float wait;
+
+    // ─── Phase 1: D < 5 → only Soldiers, spawn every 2.0 → 1.5 s ─────────────
+    if (D < 5.0f) {
+        type = 1; // Soldier
+        wait = 2.0f - 0.1f * D;        // linearly 2.0 → 1.5 as D goes 0→5
+        wait = std::clamp(wait, 1.5f, 2.0f);
+    }
+    // ─── Phase 2: 5 ≤ D < 12 → mix Soldiers & Tanks, spawn 1.5 → 1.0 s ─────────
+    else if (D < 12.0f) {
+        // As D climbs 5→12, tankChance goes 20%→60%
+        int tankChance = static_cast<int>(20 + (D - 5.0f) * (40.0f / 7.0f));
+        if ((rand() % 100) < tankChance) {
+            type = 3; // Tank
+        } else {
+            type = 1; // Soldier
+        }
+        wait = 1.5f - 0.0714286f * (D - 5.0f);  // 1.5 → 1.0 as D goes 5→12
+        wait = std::clamp(wait, 1.0f, 1.5f);
+    }
+    // ─── Phase 3: D ≥ 12 → Tanks/Planes/BigTanks, spawn 1.0 → 0.6 s ────────────
+    else {
+        static float lastBigTankTime = 0.0f;
+        int r = rand() % 100;
+        if (r < 40) {
+            type = 3; // Tank (40%)
+        }
+        else if (r < 65) {
+            type = 2; // Plane (25%)
+        }
+        else {
+            // 35% chance for BigTank, but only once every 20 seconds
+            if ((elapsedTime - lastBigTankTime) >= 20.0f) {
+                type = 4; // BigTank
+                lastBigTankTime = elapsedTime;
+            } else {
+                type = 3; // fallback to Tank
+            }
+        }
+        float rawWait = 1.0f - 0.025f * (D - 12.0f);  // 1.0 → 0.6 as D goes 12→28
+        wait = std::clamp(rawWait, 0.6f, 1.0f);
+    }
+
+    // ─── Prevent overcrowding: if ≥ 8 enemies alive, add +1s delay ────────────
+    if ((int)EnemyGroup->GetObjects().size() >= 8) {
+        wait += 1.0f;
+    }
+
+    return { type, wait };
+}
+
+
+void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
+    const Engine::Point SpawnCoordinate =
+        Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2,
+                      SpawnGridPoint.y * BlockSize + BlockSize / 2);
+
+    Enemy *enemy = nullptr;
+    switch (type) {
+        case 1:
+            EnemyGroup->AddNewObject(enemy = new SoldierEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 2:
+            EnemyGroup->AddNewObject(enemy = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 3:
+            EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 4:
+            EnemyGroup->AddNewObject(enemy = new BigTankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        default:
+            return;
+    }
+    enemy->UpdatePath(mapDistance);
+    enemy->Update(extraTicks);
+}

@@ -35,7 +35,7 @@ public:
 
     // — recalc position + hover every frame —
     void Update(float dt) override {
-        float w = GetBitmapWidth(), h = GetBitmapHeight();
+        float w = baseSpr.GetBitmapWidth(), h = baseSpr.GetBitmapHeight();
 
         // center both sprites on our button rectangle
         baseSpr.Position = Position;

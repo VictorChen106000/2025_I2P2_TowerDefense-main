@@ -43,6 +43,7 @@ public:
     void Update(float deltaTime) override;
     void Draw() const override;
     int GetPrice() const;
+    virtual float GetDPS() const { return 1.0f / coolDown; }
 
     // tambahan turret
 
