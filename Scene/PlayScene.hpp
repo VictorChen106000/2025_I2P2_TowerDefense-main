@@ -36,11 +36,22 @@ struct PanelRect : public Engine::IObject {
 
 class PlayScene final : public Engine::IScene {
 private:
-    enum TileType {
-        TILE_DIRT,
-        TILE_FLOOR,
-        TILE_OCCUPIED,
-    };
+  enum TileType {
+    TILE_DIRT = 0,           // '0'
+    TILE_FLOOR = 1,          // '1'
+    TILE_CORNER_BOT_LEFT,    // '2'
+    TILE_CORNER_TOP_LEFT,    // '3'
+    TILE_CORNER_TOP_RIGHT,   // '4'
+    TILE_CORNER1,            // '5'
+    TILE_CORNER2,            // '6'
+    TILE_PLATFORM,           // '7'
+    TILE_TILE011,            // '8'
+    TILE_WALL1,              // '9'
+    TILE_WALL2,              // 'A' / 'a'
+    TILE_WALL3,              // 'B' / 'b'
+    TILE_WHITE_FLOOR,        // 'C' / 'c'
+    TILE_OCCUPIED            // your existing occupied‐tile flag
+  };
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;

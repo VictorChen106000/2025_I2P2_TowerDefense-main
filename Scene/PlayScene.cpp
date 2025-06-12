@@ -403,7 +403,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                 return;
             bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
             if (isBomb) {
-                if (mapState[y][x] != TILE_DIRT) {
+                if (mapState[y][x] != TILE_DIRT && mapState[y][x] != TILE_WHITE_FLOOR) {
                     Engine::Sprite *sprite;
                     GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
                         "play/target-invalid.png", 1,
@@ -513,12 +513,23 @@ void PlayScene::ReadMap() {
     std::string filename = std::string("Resource/map") + std::to_string(MapId) + ".txt";
     // Read map file.
     char c;
-    std::vector<bool> mapData;
+    std::vector<TileType> mapData;
     std::ifstream fin(filename);
     while (fin >> c) {
         switch (c) {
-            case '0': mapData.push_back(false); break;
-            case '1': mapData.push_back(true); break;
+            case '2': mapData.push_back(TILE_DIRT);           break;
+            case '1': mapData.push_back(TILE_FLOOR);          break;
+            case 'C': mapData.push_back(TILE_CORNER_BOT_LEFT);break;
+            case '3': mapData.push_back(TILE_CORNER_TOP_LEFT);break;
+            case '4': mapData.push_back(TILE_CORNER_TOP_RIGHT);break;
+            case '5': mapData.push_back(TILE_CORNER1);        break;
+            case '6': mapData.push_back(TILE_CORNER2);        break;
+            case '7': mapData.push_back(TILE_PLATFORM);       break;
+            case '8': mapData.push_back(TILE_TILE011);        break;
+            case '9': mapData.push_back(TILE_WALL1);          break;
+            case 'A': case 'a': mapData.push_back(TILE_WALL2);break;
+            case 'B': case 'b': mapData.push_back(TILE_WALL3);break;
+            case '0': case 'c': mapData.push_back(TILE_WHITE_FLOOR); break;
             case '\n':
             case '\r':
                 if (static_cast<int>(mapData.size()) / MapWidth != 0)
@@ -533,16 +544,35 @@ void PlayScene::ReadMap() {
         throw std::ios_base::failure("Map data is corrupted.");
     // Store map in 2d array.
     mapState = std::vector<std::vector<TileType>>(MapHeight, std::vector<TileType>(MapWidth));
-    for (int i = 0; i < MapHeight; i++) {
-        for (int j = 0; j < MapWidth; j++) {
-            const int num = mapData[i * MapWidth + j];
-            mapState[i][j] = num ? TILE_FLOOR : TILE_DIRT;
-            if (num)
-                TileMapGroup->AddNewObject(new Engine::Image("play/floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
-            else
-                TileMapGroup->AddNewObject(new Engine::Image("play/dirt.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
-        }
+    // after you've read mapData into a std::vector<TileType> of size MapWidth*MapHeight…
+for (int i = 0; i < MapHeight; i++) {
+    for (int j = 0; j < MapWidth; j++) {
+      TileType t = mapData[i * MapWidth + j];
+      mapState[i][j] = t;
+      switch (t) {
+        case TILE_DIRT:
+          TileMapGroup->AddNewObject(new Engine::Image("play/dirt.png",
+            j*BlockSize, i*BlockSize, BlockSize, BlockSize));
+          break;
+        case TILE_FLOOR:
+          TileMapGroup->AddNewObject(new Engine::Image("play/floor.png",
+            j*BlockSize, i*BlockSize, BlockSize, BlockSize));
+          break;
+        case TILE_CORNER_BOT_LEFT:
+          TileMapGroup->AddNewObject(new Engine::Image("tile/corner-bot-left.png",
+            j*BlockSize, i*BlockSize, BlockSize, BlockSize));
+          break;
+        // …and so on for all your other TILE_XXX cases …
+        case TILE_WHITE_FLOOR:
+          TileMapGroup->AddNewObject(new Engine::Image("tile/white-floor.png",
+            j*BlockSize, i*BlockSize, BlockSize, BlockSize));
+          break;
+        default:
+          break;
+      }
     }
+  }
+  
 }
 void PlayScene::ReadEnemyWave() {
     std::string filename = std::string("Resource/enemy") + std::to_string(MapId) + ".txt";
@@ -557,7 +587,7 @@ void PlayScene::ReadEnemyWave() {
     fin.close();
 }
 void PlayScene::ConstructUI() {
-    // Background
+    // DASHBOARD
     UIGroup->AddNewObject(new Engine::Image("play/sand.png", 1280, 0, 320, 832));
     // Text
     UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
@@ -747,13 +777,20 @@ bool PlayScene::CheckSpaceValid(int x, int y) {
         dynamic_cast<Enemy *>(it)->UpdatePath(mapDistance);
     return true;
 }
+
+
 std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
+
+    static auto isWalkable = [](TileType t){
+        return t == TILE_DIRT
+            || t == TILE_WHITE_FLOOR;   // add any other “walkable” types here
+    };
     // Reverse BFS to find path.
-    std::vector<std::vector<int>> map(MapHeight, std::vector<int>(std::vector<int>(MapWidth, -1)));
+    std::vector<std::vector<int>> map(MapHeight, std::vector<int>(MapWidth, -1));
     std::queue<Engine::Point> que;
     // Push end point.
     // BFS from end point.
-    if (mapState[MapHeight - 1][MapWidth - 1] != TILE_DIRT)
+    if (!isWalkable(mapState[MapHeight - 1][MapWidth - 1]))
         return map;
     que.push(Engine::Point(MapWidth - 1, MapHeight - 1));
     map[MapHeight - 1][MapWidth - 1] = 0;
@@ -768,7 +805,7 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
             int ny = p.y + dir.y;
             if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight)
                 continue;
-            if (mapState[ny][nx] != TILE_DIRT || map[ny][nx] != -1)
+            if (!isWalkable(mapState[ny][nx]) || map[ny][nx] != -1)
                 continue;
             map[ny][nx] = map[p.y][p.x] + 1;
             que.push(Engine::Point(nx, ny));
