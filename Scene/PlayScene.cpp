@@ -41,6 +41,34 @@
 // TODO HACKATHON-5 (1/4): There's a bug in this file, which crashes the game when you win. Try to find it.
 // TODO HACKATHON-5 (2/4): The "LIFE" label are not updated when you lose a life. Try to fix it.
 
+bool PlayScene::IsWalkable(TileType t)const{
+    return t == TILE_WHITE_FLOOR;
+}
+
+bool PlayScene::HasTurretAt(int row, int col) const {
+    // scan your TowerGroup for any turret whose grid‐coords match
+    for (auto obj : TowerGroup->GetObjects()) {
+        auto turret = dynamic_cast<Turret*>(obj);
+        if (!turret) continue;
+        int tx = int(turret->Position.x) / BlockSize;
+        int ty = int(turret->Position.y) / BlockSize;
+        if (ty == row && tx == col)
+            return true;
+    }
+    return false;
+}
+
+bool PlayScene::CanPlaceTurretHere(int row, int col) const {
+    // (If you switched to dynamic width/height, replace MapWidth/MapHeight
+    // with your locals.  Otherwise this guards the bounds.)
+    if (row < 0 || row >= MapHeight || col < 0 || col >= MapWidth)
+        return false;
+
+    return mapState[row][col] == TILE_WHITE_FLOOR
+        && !HasTurretAt(row, col);  
+    // —or test mapState[row][col] != TILE_OCCUPIED if that’s your flag.
+}
+
 bool PlayScene::DebugMode = false;
 const std::vector<Engine::Point> PlayScene::directions = { Engine::Point(-1, 0), Engine::Point(0, -1), Engine::Point(1, 0), Engine::Point(0, 1) };
 const int PlayScene::MapWidth = 20, PlayScene::MapHeight = 13;
@@ -402,27 +430,16 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
             if (!preview)
                 return;
             bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
-            if (isBomb) {
-                if (mapState[y][x] != TILE_DIRT) {
-                    Engine::Sprite *sprite;
-                    GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
-                        "play/target-invalid.png", 1,
-                        x * BlockSize + BlockSize / 2,
-                        y * BlockSize + BlockSize / 2));
-                    sprite->Rotation = 0;
-                    return;
-                }
-            } else {
-                if (!CheckSpaceValid(x, y)) {
-                    Engine::Sprite *sprite;
-                    GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
-                        "play/target-invalid.png", 1,
-                        x * BlockSize + BlockSize / 2,
-                        y * BlockSize + BlockSize / 2));
-                    sprite->Rotation = 0;
-                    return;
-                }
+            if (!CanPlaceTurretHere(y, x)) {
+                // all-in-one invalid effect
+                GroundEffectGroup->AddNewObject(
+                  new DirtyEffect("play/target-invalid.png", 1,
+                                  x*BlockSize+BlockSize/2,
+                                  y*BlockSize+BlockSize/2)
+                );
+                return;
             }
+            
             // Purchase
             EarnMoney(-preview->GetPrice());
             // Remove preview
@@ -509,22 +526,34 @@ void PlayScene::UpdateKillBar() {
     killBarLabel->Text = std::to_string(count) + "/" + std::to_string(KILLS_PER_COIN);
 }
 
+
+
 void PlayScene::ReadMap() {
     std::string filename = std::string("Resource/map") + std::to_string(MapId) + ".txt";
     // Read map file.
     char c;
-    std::vector<bool> mapData;
+    std::vector<int> mapData;
     std::ifstream fin(filename);
     while (fin >> c) {
         switch (c) {
-            case '0': mapData.push_back(false); break;
-            case '1': mapData.push_back(true); break;
-            case '\n':
-            case '\r':
-                if (static_cast<int>(mapData.size()) / MapWidth != 0)
+            case '0': mapData.push_back(0); break;  // dirt
+            case '1': mapData.push_back(1); break;  // white-floor
+            // ─── Add these cases ───────────────────
+            case '2': mapData.push_back(2);  break; // blue-floor
+            case '3': mapData.push_back(3);  break; // corner1
+            case '4': mapData.push_back(4);  break; // corner2
+            case '5': mapData.push_back(5);  break; // corner3
+            case '6': mapData.push_back(6);  break; // corner4
+            case '7': mapData.push_back(7);  break; // platform
+            case '8': mapData.push_back(8);  break; // wall1
+            case '9': mapData.push_back(9);  break; // wall2
+            case 'A': mapData.push_back(10); break; // wall3 (use 'A' or another symbol)
+            case '\n': case '\r':
+                if ((int)mapData.size() % MapWidth != 0)
                     throw std::ios_base::failure("Map data is corrupted.");
                 break;
-            default: throw std::ios_base::failure("Map data is corrupted.");
+            default:
+                throw std::ios_base::failure("Unknown tile code in map.");
         }
     }
     fin.close();
@@ -536,11 +565,28 @@ void PlayScene::ReadMap() {
     for (int i = 0; i < MapHeight; i++) {
         for (int j = 0; j < MapWidth; j++) {
             const int num = mapData[i * MapWidth + j];
-            mapState[i][j] = num ? TILE_FLOOR : TILE_DIRT;
-            if (num)
-                TileMapGroup->AddNewObject(new Engine::Image("tile/white-floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
-            else
-                TileMapGroup->AddNewObject(new Engine::Image("play/floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
+            int code = mapData[i * MapWidth + j];
+            TileType t;
+            std::string path;
+            switch (code) {
+                case 0:  t = TILE_DIRT;        path = "play/dirt.png";         break;
+                case 1:  t = TILE_WHITE_FLOOR; path = "tile/white-floor.png";  break;
+                case 2:  t = TILE_BLUE_FLOOR;  path = "tile/blue-floor.png";   break;
+                case 3:  t = TILE_CORNER1;     path = "tile/corner1.png";      break;
+                case 4:  t = TILE_CORNER2;     path = "tile/corner2.png";      break;
+                case 5:  t = TILE_CORNER3;     path = "tile/corner3.png";      break;
+                case 6:  t = TILE_CORNER4;     path = "tile/corner4.png";      break;
+                case 7:  t = TILE_PLATFORM;    path = "tile/platform.png";     break;
+                case 8:  t = TILE_WALL1;       path = "tile/wall1.png";        break;
+                case 9:  t = TILE_WALL2;       path = "tile/wall2.png";        break;
+                case 10: t = TILE_WALL3;       path = "tile/wall3.png";        break;
+                default: throw std::ios_base::failure("Invalid tile code");
+            }
+            mapState[i][j] = t;
+            TileMapGroup->AddNewObject(
+                new Engine::Image(path, j * BlockSize, i * BlockSize, BlockSize, BlockSize)
+            );
+
         }
     }
 }
@@ -768,7 +814,7 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
             int ny = p.y + dir.y;
             if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight)
                 continue;
-            if (mapState[ny][nx] != TILE_DIRT || map[ny][nx] != -1)
+                if (!IsWalkable(mapState[ny][nx]) || map[ny][nx] != -1)
                 continue;
             map[ny][nx] = map[p.y][p.x] + 1;
             que.push(Engine::Point(nx, ny));

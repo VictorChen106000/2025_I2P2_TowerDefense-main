@@ -34,13 +34,51 @@ struct PanelRect : public Engine::IObject {
   }
 };
 
+// a tiny helper for culling
+struct Rect {
+  float x, y, w, h;
+  bool Intersects(const Rect& o) const {
+      // no overlap if one is wholly to the left/right or above/below
+      return !(x + w  <= o.x   ||   // this is left of o
+               o.x + o.w <= x   ||   // this is right of o
+               y + h  <= o.y   ||   // this is above o
+               o.y + o.h <= y);     // this is below o
+  }
+};
+
+
 class PlayScene final : public Engine::IScene {
 private:
     enum TileType {
         TILE_DIRT,
         TILE_FLOOR,
         TILE_OCCUPIED,
+
+        TILE_BLUE_FLOOR,  // blue-floor.png
+        TILE_WHITE_FLOOR, // white-floor.png (optional: you can swap this with TILE_FLOOR)
+        TILE_CORNER1,     // corner1.png
+        TILE_CORNER2,     // corner2.png
+        TILE_CORNER3,     // corner3.png
+        TILE_CORNER4,     // corner4.png
+        TILE_PLATFORM,    // platform.png
+        TILE_WALL1,       // wall1.png
+        TILE_WALL2,       // wall2.png
+        TILE_WALL3        // wall3.png
     };
+
+    bool IsWalkable(TileType t) const;
+    bool CanPlaceTurretHere(int row, int col) const;
+    bool HasTurretAt(int row, int col) const;
+
+     // recompute this each frame from your cam
+     Engine::Point cameraOffset{ 0, 0 };   // in pixels
+     Engine::Point screenSize;             // fill in Initialize()
+     Rect  viewRect;               // computed each frame
+ 
+     void UpdateCamera();                  // pan & zoom
+     void UpdateViewRect();                // recompute viewRect from cameraOffset & screenSize
+     void DrawVisibleTiles() const; 
+
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
