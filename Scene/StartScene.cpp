@@ -69,7 +69,7 @@ void StartScene::Initialize() {
 
     // Conditional Logout/Back Button
     bool fromOnline = (prevScene == "login-online");
-    prevScene.clear();
+    // prevScene.clear();
     const char* text = fromOnline ? "Logout" : "Back";
     // Y = halfH*5/2 - 300  (same vertical spacing)
     auto* btnLogout = new Engine::ImageButton(
@@ -78,11 +78,14 @@ void StartScene::Initialize() {
         halfW - 200, halfH * 5 / 2 - 350,
         400, 100
     );
-    btnLogout->SetOnClickCallback([fromOnline](){
-        if (fromOnline) 
+    btnLogout->SetOnClickCallback([this, fromOnline](){
+        prevScene.clear();
+        if (fromOnline) {
             Engine::GameEngine::GetInstance().ChangeScene("login-online");
-        else
+        }
+        else {
             Engine::GameEngine::GetInstance().ChangeScene("login");
+        }
     });
     AddNewControlObject(btnLogout);
     // label centered on that button
