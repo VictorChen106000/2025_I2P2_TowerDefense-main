@@ -45,15 +45,15 @@ void RocketTurret::setlevelimages() {
 void RocketTurret::applylevelstats() {
     switch (level) {
         case 1:
-            coolDown = 1.5f;  // Initial cooldown
+            coolDown = 2.0f;  // Initial cooldown
             CollisionRadius = 600.0f;  // Initial range
             break;
         case 2:
-            coolDown = 0.5f;  // Faster reload for level 2
+            coolDown = 0.75f;  // Faster reload for level 2
             CollisionRadius = 600.0f * 1.25f;  // Increase range for level 2
             break;
         case 3:
-            coolDown = 0.2f;  // Even faster reload for level 3
+            coolDown = 0.25f;  // Even faster reload for level 3
             CollisionRadius = 600.0f * 1.5f;  // Further increase range for level 3
             break;
         default:

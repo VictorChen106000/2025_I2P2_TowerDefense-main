@@ -694,7 +694,7 @@ void PlayScene::ConstructUI() {
         "play/floor.png", "play/dirt.png",
         Engine::Sprite("play/tower-base.png", 1520, 136, 0, 0, 0, 0),
         Engine::Sprite("play/tankrrr1profile.png", 1530, 134, 0, 0, 0, 0),
-        1520, 136, BombTurret::Price);
+        1520, 136, BallistaTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 5));
     UIGroup->AddNewControlObject(btn);
 
@@ -702,7 +702,7 @@ void PlayScene::ConstructUI() {
         "play/floor.png", "play/dirt.png",
         Engine::Sprite("play/tower-base.png", 1446, 240, 0, 0, 0, 0),
         Engine::Sprite("play/Ballista2.png", 1446, 240, 0, 0, 0, 0),
-        1446, 240, BombTurret::Price);
+        1446, 240, BowTurret::Price);
     btn->SetOnClickCallback(std::bind(&PlayScene::UIBtnClicked, this, 6));
     UIGroup->AddNewControlObject(btn);
 
