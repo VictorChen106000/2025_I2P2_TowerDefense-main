@@ -17,6 +17,7 @@
 #include "Account/LoginOnlineScene.hpp"
 #include "Account/RegisterOnlineScene.hpp"
 #include "Account/ScoreboardOnline.hpp"
+#include "Scene/ModeSelectionScene.hpp"
 
 int main(int argc, char **argv) {
 	Engine::LOG::SetConfig(true);
@@ -24,7 +25,7 @@ int main(int argc, char **argv) {
 	ScoreboardOnline::Initialize(
 		"towerdefensegame-1b01e-default-rtdb.asia-southeast1.firebasedatabase.app",
 		"AIzaSyAarObWywZJ_rQ2AlXDd6czNdnRqqSTRbo"
-	  );
+	);
 	  
 	Engine::GameEngine& game = Engine::GameEngine::GetInstance();
 
@@ -44,9 +45,11 @@ int main(int argc, char **argv) {
 	game.AddNewScene("lose", new LoseScene());
 	game.AddNewScene("win", new WinScene());
 	game.AddNewScene("scoreboard", new Scoreboard());
+	game.AddNewScene("mode-selection", new ModeSelectionScene());
 	
 
     // TODO HACKATHON-1 (1/1): Change the start scene
 	game.Start("local-online",  60, 1600, 832);
+	// game.Start("mode-selection",  60, 1600, 832);
 	return 0;
 }

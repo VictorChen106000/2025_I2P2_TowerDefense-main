@@ -92,6 +92,11 @@ void PlayScene::Initialize() {
     AddNewControlObject(UIGroup = new Group());
     ReadMap();
     ReadEnemyWave();
+    staticWaveCount = int(enemyWaveData.size());
+    currentWave = 1;
+    adaptiveSpawnCount = 0;
+    if (GetMode() == Mode::Normal) maxWaves = 3;
+    else maxWaves = INT_MAX;
     mapDistance = CalculateBFSDistance();
     ConstructUI();
     imgTarget = new Engine::Image("play/target.png", 0, 0);
@@ -169,55 +174,118 @@ void PlayScene::Update(float deltaTime) {
         
         // Check if we should create new enemy.
         ticks += deltaTime;
+
+        // ─── 1) Static file spawns (Wave 1) ──────────────────────────────────
         if (!enemyWaveData.empty()) {
-            auto current = enemyWaveData.front();
-            if (ticks >= current.second) {
-                ticks -= current.second;
+            auto [type, wait] = enemyWaveData.front();
+            if (ticks >= wait) {
+                ticks -= wait;
                 enemyWaveData.pop_front();
-                SpawnEnemyOfType(current.first, ticks);
+                SpawnEnemyOfType(type, ticks);
+
+                // count toward adaptive‐burst when on Wave 2+:
+                if (currentWave >= 2)
+                    ++adaptiveSpawnCount;
             }
-        } else {
-            if (ticks >= nextAdaptiveWait) {
-                ticks -= nextAdaptiveWait;
+        }
+        else {
+            // ─── 2) Transition off static Wave 1 ──────────────────────────────
+            if (currentWave == 1) {
+                currentWave        = 2;
+                adaptiveSpawnCount = 0;
+                ticks              = 0;
+                nextAdaptiveWait   = 0;
+            }
 
-                // === BEGIN DEBUG PRINT ===
-                //  1) Recompute power/time/D/wait in local variables so we can see them:
-                int dbgCount   = static_cast<int>(TowerGroup->GetObjects().size());       // number of towers
-                float dbgDPS   = CalculatePlayerPower();                                  // sum DPS
-                const float α  = 0.5f;             // tuner for tower count
-                const float β  = 1.0f;             // tuner for total DPS
-                const float γ  = 0.2f;             // tuner for time
-                float dbgD     = α * float(dbgCount) + β * dbgDPS + γ * elapsedTime;      // new difficulty score
-                auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
+            // ─── 3a) NORMAL MODE: exactly 3 waves ─────────────────────────────
+            if (GetMode() == Mode::Normal) {
+                // 3a.i) if still under spawn‐limit this wave, do adaptive spawn
+                if (currentWave <= maxWaves && adaptiveSpawnCount < staticWaveCount) {
+                    if (ticks >= nextAdaptiveWait) {
+                        ticks -= nextAdaptiveWait;
 
-                printf(
-                    "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  → type=%d  wait=%.2f  alive=%zu\n",
-                    dbgCount,
-                    dbgDPS,
-                    elapsedTime,
-                    dbgD,
-                    dbgType,
-                    dbgWait,
-                    EnemyGroup->GetObjects().size()
-                );
-                // === END DEBUG PRINT ===
-                
-                bool isGround = (dbgType == 1 || dbgType == 3 || dbgType == 4);
-                float timeSinceLast = elapsedTime - lastGroundSpawnTime;
-                if (isGround && timeSinceLast < minGroundGap) {
-                    float leftover = (minGroundGap - timeSinceLast);
-                    nextAdaptiveWait = dbgWait + leftover;
-                } else {
-                    if (isGround) lastGroundSpawnTime = elapsedTime;
-                    nextAdaptiveWait = dbgWait;
-                    SpawnEnemyOfType(dbgType, ticks);
+                        // === BEGIN DEBUG + SEPARATION from old logic ===
+                        int dbgCount = static_cast<int>(TowerGroup->GetObjects().size());
+                        float dbgDPS = CalculatePlayerPower();
+                        const float α = 0.5f, β = 1.0f, γ = 0.2f;
+                        float dbgD   = α*dbgCount + β*dbgDPS + γ*elapsedTime;
+                        auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
+
+                        printf(
+                        "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  type=%d  wait=%.2f  alive=%zu  wave=%d\n",
+                        dbgCount, dbgDPS, elapsedTime, dbgD, dbgType, dbgWait,
+                        EnemyGroup->GetObjects().size(), currentWave
+                        );
+
+                        bool isGround       = (dbgType==1||dbgType==3||dbgType==4);
+                        float timeSinceLast = elapsedTime - lastGroundSpawnTime;
+                        if (isGround && timeSinceLast < minGroundGap) {
+                            float leftover = (minGroundGap - timeSinceLast);
+                            nextAdaptiveWait = dbgWait + leftover;
+                        } else {
+                            if (isGround) lastGroundSpawnTime = elapsedTime;
+                            nextAdaptiveWait = dbgWait;
+                            SpawnEnemyOfType(dbgType, ticks);
+                        }
+                        // === END DEBUG + SEPARATION from old logic ===
+
+                        ++adaptiveSpawnCount;
+                    }
+                }
+                // 3a.ii) finished this wave’s spawns → wait for all to die, then bump wave
+                else if (adaptiveSpawnCount >= staticWaveCount
+                        && EnemyGroup->GetObjects().empty())
+                {
+                    ++currentWave;
+                    adaptiveSpawnCount = 0;
+                    ticks              = 0;
+                    nextAdaptiveWait   = 0;
+                }
+            }
+
+            // ─── 3b) SURVIVAL MODE: endless adaptive ────────────────────────────
+            else {
+                // always spawn, identical logic to above debug+separation
+                if (ticks >= nextAdaptiveWait) {
+                    ticks -= nextAdaptiveWait;
+
+                    // === BEGIN DEBUG + SEPARATION from old logic ===
+                    int dbgCount = static_cast<int>(TowerGroup->GetObjects().size());
+                    float dbgDPS = CalculatePlayerPower();
+                    const float α = 0.5f, β = 1.0f, γ = 0.2f;
+                    float dbgD   = α*dbgCount + β*dbgDPS + γ*elapsedTime;
+                    auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
+
+                    printf(
+                    "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  type=%d  wait=%.2f  alive=%zu  wave=%d\n",
+                    dbgCount, dbgDPS, elapsedTime, dbgD, dbgType, dbgWait,
+                    EnemyGroup->GetObjects().size(), currentWave
+                    );
+
+                    bool isGround       = (dbgType==1||dbgType==3||dbgType==4);
+                    float timeSinceLast = elapsedTime - lastGroundSpawnTime;
+                    if (isGround && timeSinceLast < minGroundGap) {
+                        float leftover = (minGroundGap - timeSinceLast);
+                        nextAdaptiveWait = dbgWait + leftover;
+                    } else {
+                        if (isGround) lastGroundSpawnTime = elapsedTime;
+                        nextAdaptiveWait = dbgWait;
+                        SpawnEnemyOfType(dbgType, ticks);
+                    }
+                    // === END DEBUG + SEPARATION from old logic ===
                 }
             }
         }
 
-        if (enemyWaveData.empty() && EnemyGroup->GetObjects().empty()) {
+        // ─── 4) WIN check (Normal only after 3 waves) ─────────────────────────
+        if (GetMode() == Mode::Normal
+            && currentWave > maxWaves
+            && enemyWaveData.empty()
+            && EnemyGroup->GetObjects().empty())
+        {
             Engine::GameEngine::GetInstance().ChangeScene("win");
         }
+
         if (preview) {
             preview->Position = Engine::GameEngine::GetInstance().GetMousePosition();
             // To keep responding when paused.

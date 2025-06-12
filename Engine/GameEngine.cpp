@@ -11,7 +11,6 @@
 #include <string>
 #include <utility>
 #include "Engine/AudioHelper.hpp"
-
 #include "Allegro5Exception.hpp"
 #include "GameEngine.hpp"
 #include "IScene.hpp"

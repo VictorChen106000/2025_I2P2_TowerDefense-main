@@ -5,16 +5,12 @@
 #include <memory>
 #include <utility>
 #include <vector>
-
 #include <allegro5/allegro_primitives.h>  
 #include <allegro5/color.h>
-
 #include "UI/Component/Slider.hpp"
 #include "Engine/IScene.hpp"
 #include "Engine/Point.hpp"
 #include "UI/Component/ImageButton.hpp"
-
-
 
 class Turret;
 namespace Engine {
@@ -35,12 +31,17 @@ struct PanelRect : public Engine::IObject {
 };
 
 class PlayScene final : public Engine::IScene {
+public:
+  enum class Mode { Normal = 1, Survival = 2 };
+  void SetMode(Mode m) { currentMode = m; }
+  Mode GetMode() const   { return currentMode; }
 private:
     enum TileType {
         TILE_DIRT,
         TILE_FLOOR,
         TILE_OCCUPIED,
     };
+    Mode currentMode = Mode::Normal;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
@@ -66,6 +67,11 @@ private:
 
     bool   isAiming = false;
     Turret* aimingTurret = nullptr;
+
+    int staticWaveCount = 0;
+    int currentWave = 0;
+    int adaptiveSpawnCount = 0;
+    int maxWaves = 0;
 
 protected:
     int lives;
@@ -152,9 +158,6 @@ public:
 
     // helper to refresh the bar
     void UpdateKillBar();
-
-
-
     Engine::Image* UICoinIcon   = nullptr;
     Engine::Label* UICoinCount  = nullptr;
 };

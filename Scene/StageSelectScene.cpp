@@ -2,7 +2,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
 #include "Engine/Point.hpp"
@@ -12,6 +11,7 @@
 #include "UI/Component/ImageButton.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/Slider.hpp"
+#include "Scene/ModeSelectionScene.hpp"
 #include <iostream>
 using namespace std;
 
@@ -67,9 +67,14 @@ void StageSelectScene::ShopOnClick() {
     Engine::GameEngine::GetInstance().ChangeScene("shop");
 }
 void StageSelectScene::PlayOnClick(int stage) {
-    PlayScene *scene = dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetScene("play"));
-    scene->MapId = stage;
-    Engine::GameEngine::GetInstance().ChangeScene("play");
+    // PlayScene *scene = dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetScene("play"));
+    // scene->MapId = stage;
+    // Engine::GameEngine::GetInstance().ChangeScene("play");
+     // 1) record which map they chose
+    auto *modeScene = dynamic_cast<ModeSelectionScene*>(Engine::GameEngine::GetInstance().GetScene("mode-selection"));
+    modeScene->SetNextStage(stage);
+    // 2) show mode menu
+    Engine::GameEngine::GetInstance().ChangeScene("mode-selection");
 }
 void StageSelectScene::ScoreboardOnClick() {
     Engine::GameEngine::GetInstance().ChangeScene("scoreboard");

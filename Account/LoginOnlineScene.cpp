@@ -4,6 +4,7 @@
 #include "Engine/GameEngine.hpp"
 #include "allegro5/allegro_primitives.h"
 #include "Account/ScoreboardOnline.hpp"
+#include "Scene/StartScene.h"
 
 // Include the single‐header HTTP+HTTPS client and JSON library:
 #include "httplib.h"    // https://github.com/yhirose/cpp-httplib (place httplib.h in your project root)
@@ -177,10 +178,11 @@ void LoginOnlineScene::Initialize()
 
         backLabel = new Label(
             "Back",
-            "balatro.ttf", 36,
+            "balatro.ttf", 
+            60,
             btnX + (btnW / 2),
             btnY + (btnH / 2) + 5,
-            255, 255, 255, 255,
+            0, 0, 0, 255,
             0.5f, 0.5f
         );
         AddNewObject(backLabel);
@@ -454,10 +456,15 @@ void LoginOnlineScene::OnLoginClicked()
         
             // Sign in via our online service (this sets idToken & localId)
     if (ScoreboardOnline::SignIn(typedEmail, typedPassword)) {
-               CurrentUser = typedEmail;
-               GameEngine::GetInstance().ChangeScene("start");
-                return;
+        CurrentUser = typedEmail;
+        if (auto* s = dynamic_cast<StartScene*>(
+        Engine::GameEngine::GetInstance().GetScene("start")))
+            {
+                s->SetPreviousScene("login-online");
             }
+            GameEngine::GetInstance().ChangeScene("start");
+            return;
+    }
         
            // otherwise show the error
    infoLabel->Text = "Login failed";
