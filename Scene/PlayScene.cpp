@@ -13,8 +13,15 @@
 #include "Enemy/Enemy.hpp"
 #include "Enemy/SoldierEnemy.hpp"
 #include "Enemy/TankEnemy.hpp"
+#include "Enemy/WolfEnemy.hpp"
 #include "Enemy/PlaneEnemy.hpp"
 #include "Enemy/BigTankEnemy.hpp"
+#include "Enemy/SlimeEnemy.hpp"
+#include "Enemy/GolemEnemy.hpp"
+#include "Enemy/FlyEnemy.hpp"
+#include "Enemy/BatEnemy.hpp"
+#include "Enemy/DemonEnemy.hpp"
+
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
 #include "Engine/Group.hpp"
@@ -545,7 +552,7 @@ void PlayScene::ReadMap() {
     }
 }
 void PlayScene::ReadEnemyWave() {
-    std::string filename = std::string("Resource/enemy") + std::to_string(MapId) + ".txt";
+    std::string filename = std::string("./Resource/enemy") + std::to_string(MapId) + ".txt";
     // Read enemy file.
     float type, wait, repeat;
     enemyWaveData.clear();
@@ -959,16 +966,22 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
     Enemy *enemy = nullptr;
     switch (type) {
         case 1:
-            EnemyGroup->AddNewObject(enemy = new SoldierEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new SlimeEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 2:
-            EnemyGroup->AddNewObject(enemy = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new GolemEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 3:
-            EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new FlyEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 4:
-            EnemyGroup->AddNewObject(enemy = new BigTankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new DemonEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;  
+        case 5:
+            EnemyGroup->AddNewObject(enemy = new WolfEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 6:
+            EnemyGroup->AddNewObject(enemy = new BatEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         default:
             return;
