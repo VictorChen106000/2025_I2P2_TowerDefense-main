@@ -13,6 +13,60 @@
 using namespace Engine;
 using json = nlohmann::json;
 
+// ─── static helpers for text‐fields ─────────────────────────────────
+static void handleTextInput(LoginOnlineScene::TextField& f,
+                            int keycode, int unicode,
+                            ALLEGRO_FONT* font, float padding)
+{
+    if (unicode >= 32 && unicode < 127) {
+        f.text.insert(f.caretIndex, 1, static_cast<char>(unicode));
+        f.caretIndex++;
+    }
+    else if (keycode == ALLEGRO_KEY_BACKSPACE && f.caretIndex > 0) {
+        f.text.erase(f.caretIndex - 1, 1);
+        f.caretIndex--;
+    }
+
+    float visibleW = f.w - 2*padding;
+    float caretPos = al_get_text_width(font, f.text.substr(0, f.caretIndex).c_str());
+    float fullW    = al_get_text_width(font, f.text.c_str());
+
+    if (caretPos < f.scrollX) {
+        f.scrollX = caretPos;
+    } else if (caretPos > f.scrollX + visibleW) {
+        f.scrollX = caretPos - visibleW;
+    }
+    if (f.caretIndex == f.text.size() && fullW > visibleW) {
+        f.scrollX = fullW - visibleW;
+    }
+    f.scrollX = std::max(0.0f, std::min(f.scrollX, fullW - visibleW));
+}
+
+static void drawTextField(const LoginOnlineScene::TextField& f,
+                          ALLEGRO_FONT* font, float padding,
+                          bool isPassword = false)
+{
+    al_set_clipping_rectangle(f.x, f.y, f.w, f.h);
+
+    std::string disp = isPassword
+        ? std::string(f.text.size(), '*')
+        : f.text;
+
+    al_draw_text(font, al_map_rgb(255,255,255),
+                 f.x + padding - f.scrollX,
+                 f.y + (f.h - al_get_font_line_height(font)) * 0.5f,
+                 0, disp.c_str());
+
+    if (fmod(al_get_time(), 1.0) < 0.5) {
+        float cp = al_get_text_width(font, disp.substr(0, f.caretIndex).c_str());
+        float cx = f.x + padding - f.scrollX + cp;
+        al_draw_line(cx, f.y + 2, cx, f.y + f.h - 2,
+                     al_map_rgb(255,255,255), 1.0f);
+    }
+
+    al_reset_clipping_rectangle();
+}
+
 // ──────────────────────────────────────────────────────────────────────────
 // File‐scope statics for the scene:
 ALLEGRO_FONT*   LoginOnlineScene::onlineFont            = nullptr;
@@ -120,9 +174,9 @@ LoginOnlineScene::LoginOnlineScene()
     , typedPassword()
     , typingEmail(true)
     , emailPromptLabel(nullptr)
-    , emailInputLabel(nullptr)
+    // , emailInputLabel(nullptr)
     , passwordPromptLabel(nullptr)
-    , passwordInputLabel(nullptr)
+    // , passwordInputLabel(nullptr)
     , infoLabel(nullptr)
     , loginButton(nullptr)
     , registerButton(nullptr)
@@ -131,8 +185,7 @@ LoginOnlineScene::LoginOnlineScene()
     , emailBoxX(0), emailBoxY(0), emailBoxW(0), emailBoxH(0)
     , passwordBoxX(0), passwordBoxY(0), passwordBoxW(0), passwordBoxH(0)
     , errorMessage()
-{
-}
+{}
 
 LoginOnlineScene::~LoginOnlineScene()
 {
@@ -203,15 +256,16 @@ void LoginOnlineScene::Initialize()
     emailBoxX = (halfW + 200) - (emailBoxW / 2);
     emailBoxY = (halfH - 140) - (emailBoxH / 2);
 
-    emailInputLabel = new Label(
-        "",
-        "balatro.ttf", 60,
-        emailBoxX + 15,
-        emailBoxY + (emailBoxH / 2),
-        255, 255, 255, 255,
-        0.0f, 0.5f
-    );
-    AddNewObject(emailInputLabel);
+    // initialize overflow‐aware text field
+    emailField = {
+        emailBoxX,
+        emailBoxY,
+        emailBoxW,
+        emailBoxH,
+        "",      // start with empty text
+        0,       // caret at position 0
+        0.0f     // scroll offset
+    };
 
     // ── 4) “Password:” Prompt & Input Box ─────────────────────────────────
     passwordPromptLabel = new Label(
@@ -228,15 +282,16 @@ void LoginOnlineScene::Initialize()
     passwordBoxX = (halfW + 200) - (passwordBoxW / 2);
     passwordBoxY = (halfH - 40) - (passwordBoxH / 2);
 
-    passwordInputLabel = new Label(
-        "",
-        "balatro.ttf", 60,
-        passwordBoxX + 15,
-        passwordBoxY + (passwordBoxH / 2),
-        255, 255, 255, 255,
-        0.0f, 0.5f
-    );
-    AddNewObject(passwordInputLabel);
+    // initialize overflow‐aware text field
+    passwordField = {
+        passwordBoxX,
+        passwordBoxY,
+        passwordBoxW,
+        passwordBoxH,
+        "",      // start with empty text
+        0,       // caret at position 0
+        0.0f     // scroll offset
+    };
 
     // ── 5) Load eye icons (show/hide password) ─────────────────────────────
     if (!openEyeBmpOnline) {
@@ -262,15 +317,12 @@ void LoginOnlineScene::Initialize()
             80, 130
         );
         eyeButtonOnline->Visible = false;
-        eyeButtonOnline->SetOnClickCallback([&]() {
+        eyeButtonOnline->SetOnClickCallback([&](){
             loginRevealPasswordOnline = !loginRevealPasswordOnline;
-            if (loginRevealPasswordOnline) {
-                eyeButtonOnline->SetImage("openeyewhite.png", "closeeyewhite.png");
-                passwordInputLabel->Text = typedPassword;
-            } else {
-                eyeButtonOnline->SetImage("closeeyewhite.png", "openeyewhite.png");
-                passwordInputLabel->Text = std::string(typedPassword.size(), '*');
-            }
+            if (loginRevealPasswordOnline)
+                eyeButtonOnline->SetImage("openeyewhite.png","closeeyewhite.png");
+            else
+                eyeButtonOnline->SetImage("closeeyewhite.png","openeyewhite.png");
         });
         AddNewControlObject(eyeButtonOnline);
     }
@@ -341,39 +393,29 @@ void LoginOnlineScene::Update(float dt)
 
 void LoginOnlineScene::Draw() const
 {
-    IScene::Draw();
+     IScene::Draw();
 
-    // Draw a colored rectangle around the currently focused input box
-    ALLEGRO_COLOR focusColor = typingEmail ? al_map_rgb(0, 255, 0)
-                                           : al_map_rgb(255, 0, 0);
-
-    int w     = GameEngine::GetInstance().GetScreenSize().x;
-    int h     = GameEngine::GetInstance().GetScreenSize().y;
-    int halfW = w / 2;
-    int halfH = h / 2;
-
-    // Recompute box positions (same as Initialize)
-    int eW = 600, eH = 80;
-    int eX = (halfW + 200) - (eW / 2);
-    int eY = (halfH - 140) - (eH / 2);
-
-    int pW = 600, pH = 80;
-    int pX = (halfW + 200) - (pW / 2);
-    int pY = (halfH - 40)  - (pH / 2);
+    ALLEGRO_COLOR focusColor = typingEmail
+        ? al_map_rgb(0,255,0)
+        : al_map_rgb(255,0,0);
 
     if (typingEmail) {
         al_draw_rectangle(
-            eX, eY,
-            eX + eW, eY + eH,
+            emailBoxX, emailBoxY,
+            emailBoxX + emailBoxW, emailBoxY + emailBoxH,
             focusColor, 4.0f
         );
     } else {
         al_draw_rectangle(
-            pX, pY,
-            pX + pW, pY + pH,
+            passwordBoxX, passwordBoxY,
+            passwordBoxX + passwordBoxW, passwordBoxY + passwordBoxH,
             focusColor, 4.0f
         );
     }
+
+    // draw the overflow‐aware fields
+    drawTextField(emailField,    onlineFont, 15.0f, /*isPassword=*/false);
+    drawTextField(passwordField, onlineFont, 15.0f, /*isPassword=*/!loginRevealPasswordOnline);
 }
 
 void LoginOnlineScene::OnKeyChar(int unicode)
@@ -389,55 +431,24 @@ void LoginOnlineScene::OnKeyChar(int unicode)
         return;
     }
 
-    // Handle Backspace
-    if (unicode == '\b') {
-        if (typingEmail && !typedEmail.empty()) {
-            typedEmail.pop_back();
-        } else if (!typingEmail && !typedPassword.empty()) {
-            typedPassword.pop_back();
-        }
-    }
-    // Handle printable ASCII characters
-    else if (unicode >= 32 && unicode < 127) {
-        char c = static_cast<char>(unicode);
-        if (typingEmail) {
-            if (typedEmail.size() < 64) {
-                typedEmail.push_back(c);
-            }
-        } else {
-            if (typedPassword.size() < 64) {
-                typedPassword.push_back(c);
-            }
-        }
+    int kc = (unicode == '\b') ? ALLEGRO_KEY_BACKSPACE : 0;
+    if (typingEmail) {
+        handleTextInput(emailField, kc, unicode, onlineFont, 15.0f);
+        typedEmail = emailField.text;
+    } else {
+        handleTextInput(passwordField, kc, unicode, onlineFont, 15.0f);
+        typedPassword = passwordField.text;
     }
 
-    // 1) Update the email label with typedEmail
-    emailInputLabel->Text = typedEmail;
-
-    // 2) Show/hide eye icon if password is nonempty
+    // show/hide eye icon
     if (!typedPassword.empty()) {
         if (!eyeButtonOnline->Visible) {
             eyeButtonOnline->Visible = true;
             loginRevealPasswordOnline = false;
-            eyeButtonOnline->SetImage("closeeyewhite.png",
-                                      "openeyewhite.png");
         }
     } else {
-        if (eyeButtonOnline->Visible) {
-            eyeButtonOnline->Visible = false;
-            loginRevealPasswordOnline = false;
-        }
-    }
-
-    // 3) Update password label text (masked or revealed)
-    if (loginRevealPasswordOnline) {
-        passwordInputLabel->Text = typedPassword;
-    } else {
-        passwordInputLabel->Text = std::string(typedPassword.size(), '*');
-        if (eyeButtonOnline->Visible) {
-            eyeButtonOnline->SetImage("closeeyewhite.png",
-                                      "openeyewhite.png");
-        }
+        eyeButtonOnline->Visible = false;
+        loginRevealPasswordOnline = false;
     }
 }
 
