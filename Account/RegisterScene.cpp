@@ -246,13 +246,13 @@ void RegisterScene::Initialize() {
 
     // ─── 7) Load eye icons once ────────────────────────────────────────
     if (!openEyeBmp) {
-        openEyeBmp = al_load_bitmap("images/openeyewhite.png");
+        openEyeBmp = al_load_bitmap("Resource/images/openeyewhite.png");
         if (!openEyeBmp) {
             throw std::runtime_error("Failed to load openeyewhite.png");
         }
     }
     if (!closeEyeBmp) {
-        closeEyeBmp = al_load_bitmap("images/closeeyewhite.png");
+        closeEyeBmp = al_load_bitmap("Resource/images/closeeyewhite.png");
         if (!closeEyeBmp) {
             throw std::runtime_error("Failed to load closeeyewhite.png");
         }
