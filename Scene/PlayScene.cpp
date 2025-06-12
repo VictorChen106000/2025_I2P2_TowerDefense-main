@@ -529,6 +529,7 @@ void PlayScene::ReadMap() {
             case '9': mapData.push_back(TILE_WALL1);          break;
             case 'A': case 'a': mapData.push_back(TILE_WALL2);break;
             case 'B': case 'b': mapData.push_back(TILE_WALL3);break;
+            case 'D': case 'd' : mapData.push_back(TILE_BLUE_FLOOR);break;
             case '0': case 'c': mapData.push_back(TILE_WHITE_FLOOR); break;
             case '\n':
             case '\r':
@@ -564,6 +565,10 @@ for (int i = 0; i < MapHeight; i++) {
           break;
         // …and so on for all your other TILE_XXX cases …
         case TILE_WHITE_FLOOR:
+          TileMapGroup->AddNewObject(new Engine::Image("tile/white-floor.png",
+            j*BlockSize, i*BlockSize, BlockSize, BlockSize));
+          break;
+        case TILE_BLUE_FLOOR:
           TileMapGroup->AddNewObject(new Engine::Image("tile/white-floor.png",
             j*BlockSize, i*BlockSize, BlockSize, BlockSize));
           break;

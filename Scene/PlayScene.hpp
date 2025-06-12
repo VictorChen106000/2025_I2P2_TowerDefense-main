@@ -49,8 +49,10 @@ private:
     TILE_WALL1,              // '9'
     TILE_WALL2,              // 'A' / 'a'
     TILE_WALL3,              // 'B' / 'b'
-    TILE_WHITE_FLOOR,        // 'C' / 'c'
-    TILE_OCCUPIED            // your existing occupied‐tile flag
+    TILE_WHITE_FLOOR,   
+    TILE_BLUE_FLOOR,     // 'C' / 'c'
+    TILE_OCCUPIED
+               // your existing occupied‐tile flag
   };
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
