@@ -39,8 +39,9 @@ namespace Engine {
         float bottom = top  + Size.y;
 
         mouseIn = (mx >= left && mx <= right && my >= top && my <= bottom);
-        if (!mouseIn || !Enabled) bmp = imgOut;
-        else bmp = imgIn;
+        bmp = imgOut;
+        // if (!mouseIn || !Enabled) bmp = imgOut;
+        // else bmp = imgIn;
     }
     void ImageButton::SetImage(const std::string &outPath, const std::string &inPath) {
         // load new images
@@ -54,17 +55,24 @@ namespace Engine {
     {
         // ALLEGRO_BITMAP* rawBmp = bmp.get();
         // 1) compute breathing scale (± amplitude) around 1.0
-        float scale = 1.0f;
+        float baseScale = 1.0f;
         if (m_breatheEnabled) {
             double t = al_get_time();  
             // sine oscillates –1…1, so scale goes 1–A … 1+A
-            scale += m_breatheAmplitude
+            baseScale += m_breatheAmplitude
                    * std::sin((2.0f * M_PI / m_breathePeriod) * float(t));
         }
 
-        // 2) figure out new size and keep it centered on the original box
-        int drawW = int(m_baseW * scale);
-        int drawH = int(m_baseH * scale);
+        
+        // 2) if hover-shrink is enabled and mouseIn, apply it
+        float finalScale = baseScale;
+        if (m_hoverEnabled && mouseIn && Enabled) {
+            finalScale *= m_hoverScale;
+        }
+
+        // 3) figure out new size and keep it centered on the original box
+        int drawW = int(m_baseW * finalScale);
+        int drawH = int(m_baseH * finalScale);
 
         // original top-left in screen coords:
         float left = Position.x - Anchor.x * m_baseW;

@@ -63,12 +63,18 @@ namespace Engine {
             m_breatheAmplitude = amplitude;
             m_breathePeriod    = period;
         }
+        void EnableHoverScale(float scale = 0.9f) {
+            m_hoverEnabled = true;
+            m_hoverScale   = scale;
+        }
 
     private:
         int   m_baseW, m_baseH;          // remember original size
         bool  m_breatheEnabled   = false;
         float m_breatheAmplitude = 0.05f; // ±5% size
         float m_breathePeriod    = 2.0f;  // 2-second loop
+        bool  m_hoverEnabled   = false;
+        float m_hoverScale     = 0.9f;  // 90% size when hovered
     };
 }
 #endif   // IMAGEBUTTON_HPP

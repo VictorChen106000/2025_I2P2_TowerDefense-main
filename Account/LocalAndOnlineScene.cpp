@@ -64,6 +64,7 @@ void LocalAndOnlineScene::Initialize() {
     );
     localButton->SetOnClickCallback(std::bind(&LocalAndOnlineScene::LocalOnClick, this));
     localButton->EnableBreathing(0.05f, 2.0f);
+    localButton ->EnableHoverScale(0.9f);
     AddNewControlObject(localButton);
 
     AddNewObject(new Label(
@@ -87,6 +88,7 @@ void LocalAndOnlineScene::Initialize() {
     );
     onlineButton->SetOnClickCallback(std::bind(&LocalAndOnlineScene::OnlineOnClick, this));
     onlineButton->EnableBreathing();
+    onlineButton ->EnableHoverScale(0.9f);
     AddNewControlObject(onlineButton);
 
     AddNewObject(new Label(
