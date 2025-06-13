@@ -58,7 +58,9 @@ private:
 
       // Platforms & special tiles
       TILE_PLATFORM,           // '7'
-      TILE_TILE011,            // '8'
+      TILE_TILE011,   
+      
+      TILE_S,// '8'
 
       // Walls
       TILE_WALL1,              // '#' or '9'

@@ -591,11 +591,11 @@ void PlayScene::ReadMap() {
             
                 case 'S':  // spawn
                     SpawnGridPoint = Engine::Point(j, i);
-                    mapData.push_back(TILE_DIRT); 
+                    mapData.push_back(TILE_S); 
                     break;
                 case 'E':  // exit
                     EndGridPoint = Engine::Point(j, i);
-                    mapData.push_back(TILE_DIRT);
+                    mapData.push_back(TILE_S);
                     break;
                 // 3) “Small” corner pieces (you’ll need to add these enums & assets)
                 case 's':  // corner-small-1.png
@@ -759,6 +759,10 @@ void PlayScene::ReadMap() {
                 case TILE_WALL3:
                     TileMapGroup->AddNewObject(
                         new Engine::Image("tile/wall3.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_S:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/S-top.png", x, y, BlockSize, BlockSize));
                     break;
             
                 // 8) (Optional) Occupied marker
@@ -983,7 +987,7 @@ bool PlayScene::CheckSpaceValid(int x, int y) {
 std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
 
     static auto isWalkable = [](TileType t){
-        return t == TILE_DIRT || t == TILE_WHITE_FLOOR;   // add any other “walkable” types here
+        return t == TILE_S || t == TILE_WHITE_FLOOR;   // add any other “walkable” types here
     };
     // Reverse BFS to find path.
     std::vector<std::vector<int>> map(MapHeight, std::vector<int>(MapWidth, -1));
