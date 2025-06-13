@@ -6,6 +6,7 @@
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
 #include "Scene/StartScene.h"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
@@ -129,6 +130,13 @@ LoginScene::~LoginScene() {
 // ─── Initialize ──────────────────────────────────────────────────
 
 void LoginScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     typedUsername.clear();
     typedPassword.clear();
     typingUsername = true;
@@ -150,9 +158,10 @@ void LoginScene::Initialize() {
     // Back button
     {
         int btnW=200, btnH=60, btnX=50, btnY=50;
-        backButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+        backButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                      btnX,btnY,btnW,btnH);
         backButton->SetOnClickCallback([&](){ OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label("Back","balatro.ttf",60,
@@ -215,32 +224,39 @@ void LoginScene::Initialize() {
     AddNewObject(infoLabel);
 
     // Login / Register / Guest
-    loginButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+    loginButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                   halfW-150,halfH+180,300,80);
     loginButton->SetOnClickCallback([&](){ OnLoginClicked(); });
+    loginButton->EnableBreathing();
     AddNewControlObject(loginButton);
     AddNewObject(new Label("Login","balatro.ttf",60,
-                           halfW,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    registerButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+    registerButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                      halfW+200,halfH+180,300,80);
     registerButton->SetOnClickCallback([&](){ OnRegisterClicked(); });
+    registerButton->EnableBreathing();
     AddNewControlObject(registerButton);
     AddNewObject(new Label("Register","balatro.ttf",60,
-                           halfW+200+150,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW+200+160,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    guestButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
-                                  halfW-500,halfH+180,300,80);
+    guestButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                  halfW-600,halfH+180,400,80);
     guestButton->SetOnClickCallback([&](){
         CurrentUser = "Guest";
         GameEngine::GetInstance().ChangeScene("start");
     });
+    guestButton->EnableBreathing();
     AddNewControlObject(guestButton);
     AddNewObject(new Label("Play as Guest","balatro.ttf",60,
-                           halfW-500+150,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW-550+150,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 }
 
 void LoginScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -250,7 +266,16 @@ void LoginScene::Update(float dt) {
 }
 
 void LoginScene::Draw() const {
-    IScene::Draw();
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     ALLEGRO_COLOR focusColor = typingUsername
       ? al_map_rgb(0,255,0)

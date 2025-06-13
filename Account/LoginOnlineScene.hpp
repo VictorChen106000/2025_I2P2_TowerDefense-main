@@ -5,6 +5,7 @@
 #include "Engine/IScene.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <string>
 #include <allegro5/allegro.h>
 
@@ -72,6 +73,7 @@ private:
     int passwordBoxX, passwordBoxY, passwordBoxW, passwordBoxH;
 
     std::string errorMessage;
+    ParallaxBackground parallax;
 };
 
 #endif // LOGIN_ONLINE_SCENE_HPP

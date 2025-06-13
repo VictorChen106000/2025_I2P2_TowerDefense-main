@@ -152,6 +152,8 @@ add_executable(2025_I2P2_TowerDefense
     UI/Animation/ExplosionEffect.hpp
     UI/Animation/Plane.cpp
     UI/Animation/Plane.hpp
+    UI/Animation/ParallaxBackground.hpp
+    UI/Animation/ParallaxBackground.cpp
 
     UI/Component/Image.cpp
     UI/Component/Image.hpp

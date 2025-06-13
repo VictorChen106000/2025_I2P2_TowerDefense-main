@@ -4,6 +4,7 @@
 #include "Engine/IScene.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <string>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
@@ -85,6 +86,7 @@ private:
     int emailBoxX,    emailBoxY,    emailBoxW,    emailBoxH;
     int passwordBoxX, passwordBoxY, passwordBoxW, passwordBoxH;
     int confirmBoxX,  confirmBoxY,  confirmBoxW,  confirmBoxH;
+    ParallaxBackground parallax;
 };
 
 #endif // REGISTER_ONLINE_SCENE_HPP

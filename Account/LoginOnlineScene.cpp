@@ -174,9 +174,7 @@ LoginOnlineScene::LoginOnlineScene()
     , typedPassword()
     , typingEmail(true)
     , emailPromptLabel(nullptr)
-    // , emailInputLabel(nullptr)
     , passwordPromptLabel(nullptr)
-    // , passwordInputLabel(nullptr)
     , infoLabel(nullptr)
     , loginButton(nullptr)
     , registerButton(nullptr)
@@ -197,6 +195,13 @@ LoginOnlineScene::~LoginOnlineScene()
 
 void LoginOnlineScene::Initialize()
 {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // Reset state
     typedEmail.clear();
     typedPassword.clear();
@@ -222,11 +227,12 @@ void LoginOnlineScene::Initialize()
     {
         int btnW = 200, btnH = 60, btnX = 50, btnY = 50;
         backButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             btnX, btnY, btnW, btnH
         );
         backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label(
@@ -234,8 +240,8 @@ void LoginOnlineScene::Initialize()
             "balatro.ttf", 
             60,
             btnX + (btnW / 2),
-            btnY + (btnH / 2) + 5,
-            0, 0, 0, 255,
+            btnY + (btnH / 2),
+            255,255,255,255,
             0.5f, 0.5f
         );
         AddNewObject(backLabel);
@@ -340,13 +346,14 @@ void LoginOnlineScene::Initialize()
 
     // ── 7) “Login” Button ───────────────────────────────────────────────────
     loginButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW - 150,
         halfH + 140,
         300, 80
     );
     loginButton->SetOnClickCallback([&]() { OnLoginClicked(); });
+    loginButton->EnableBreathing();
     AddNewControlObject(loginButton);
 
     AddNewObject(new Label(
@@ -354,33 +361,35 @@ void LoginOnlineScene::Initialize()
         "balatro.ttf", 60,
         halfW,
         halfH + 140 + 40,
-        0, 0, 0, 255,
+        255,255,255,255,
         0.5f, 0.5f
     ));
 
     // ── 8) “Register” Button (optional) ────────────────────────────────────
     registerButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW + 200,
         halfH + 140,
         300, 80
     );
     registerButton->SetOnClickCallback([&]() { OnRegisterClicked(); });
+    registerButton->EnableBreathing();
     AddNewControlObject(registerButton);
 
     AddNewObject(new Label(
         "Register",
         "balatro.ttf", 60,
-        halfW + 200 + 150,
+        halfW + 200 + 160,
         halfH + 140 + 40,
-        0, 0, 0, 255,
+        255,255,255,255,
         0.5f, 0.5f
     ));
 }
 
 void LoginOnlineScene::Terminate()
 {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -393,7 +402,16 @@ void LoginOnlineScene::Update(float dt)
 
 void LoginOnlineScene::Draw() const
 {
-     IScene::Draw();
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     ALLEGRO_COLOR focusColor = typingEmail
         ? al_map_rgb(0,255,0)

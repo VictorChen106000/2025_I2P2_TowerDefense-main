@@ -55,7 +55,7 @@ void LocalAndOnlineScene::Initialize() {
 
     // ── "Local" button ──────────────────────────────────────────────
     localButton = new ImageButton(
-        "stage-select/dirt.png",  // up image
+        "stage-select/button1.png",  // up image
         "stage-select/floor.png", // down/hover image
         halfW - 200,              // x position (centered minus half width)
         halfH - 75,               // y position
@@ -63,6 +63,8 @@ void LocalAndOnlineScene::Initialize() {
         100                       // height
     );
     localButton->SetOnClickCallback(std::bind(&LocalAndOnlineScene::LocalOnClick, this));
+    localButton->EnableBreathing(0.05f, 2.0f);
+    localButton ->EnableHoverScale(0.9f);
     AddNewControlObject(localButton);
 
     AddNewObject(new Label(
@@ -71,13 +73,13 @@ void LocalAndOnlineScene::Initialize() {
         80,                // size
         halfW,             // x (center of screen)
         halfH - 25,        // y (button center + offset)
-        0, 0, 0, 255,      // color: black
+        255,255,255,255,      // color: black
         0.5f, 0.5f         // anchor: center
     ));
 
     // ── "Online" button ─────────────────────────────────────────────
     onlineButton = new ImageButton(
-        "stage-select/dirt.png",  // up image
+        "stage-select/button1.png",  // up image
         "stage-select/floor.png", // down/hover image
         halfW - 200,              // x position
         halfH + 75,               // y position (below the Local button)
@@ -85,6 +87,8 @@ void LocalAndOnlineScene::Initialize() {
         100                       // height
     );
     onlineButton->SetOnClickCallback(std::bind(&LocalAndOnlineScene::OnlineOnClick, this));
+    onlineButton->EnableBreathing();
+    onlineButton ->EnableHoverScale(0.9f);
     AddNewControlObject(onlineButton);
 
     AddNewObject(new Label(
@@ -93,7 +97,7 @@ void LocalAndOnlineScene::Initialize() {
         80,                // size
         halfW,             // x (center of screen)
         halfH + 125,       // y (button center + offset)
-        0, 0, 0, 255,      // color: black
+        255,255,255,255,      // color: black
         0.5f, 0.5f         // anchor: center
     ));
 }

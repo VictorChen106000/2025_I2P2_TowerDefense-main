@@ -146,6 +146,13 @@ RegisterOnlineScene::~RegisterOnlineScene()
 
 void RegisterOnlineScene::Initialize()
 {
+     parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // Reset all typed strings and state
     typedEmail.clear();
     typedPassword.clear();
@@ -171,17 +178,18 @@ void RegisterOnlineScene::Initialize()
     {
         int btnW = 200, btnH = 60, btnX = 50, btnY = 50;
         backButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             btnX, btnY, btnW, btnH
         );
         backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label(
             "Back",
-            "balatro.ttf", 36,
-            btnX + (btnW / 2), btnY + (btnH / 2) + 5,
+            "balatro.ttf", 60,
+            btnX + (btnW / 2), btnY + (btnH / 2),
             255, 255, 255, 255,
             0.5f, 0.5f
         );
@@ -334,7 +342,7 @@ void RegisterOnlineScene::Initialize()
     // ─── “Register” Button ────────────────────────────────────────────────────
     {
         registerButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             halfW - 150,
             halfH + 240,
@@ -343,6 +351,7 @@ void RegisterOnlineScene::Initialize()
         registerButton->SetOnClickCallback([&]() {
             OnRegisterClicked();
         });
+        registerButton->EnableBreathing();
         AddNewControlObject(registerButton);
 
         AddNewObject(new Label(
@@ -350,7 +359,7 @@ void RegisterOnlineScene::Initialize()
             "balatro.ttf", 60,
             halfW,
             halfH + 240 + 40,
-            0, 0, 0, 255,  // black text
+            255,255,255,255,  // black text
             0.5f, 0.5f
         ));
     }
@@ -358,6 +367,7 @@ void RegisterOnlineScene::Initialize()
 
 void RegisterOnlineScene::Terminate()
 {
+    parallax.Unload();
     IScene::Terminate();
     // Static bitmaps/font already destroyed in the destructor
 }
@@ -371,7 +381,15 @@ void RegisterOnlineScene::Update(float dt)
 
 void RegisterOnlineScene::Draw() const
 {
-    IScene::Draw();
+    int w     = GameEngine::GetInstance().GetScreenSize().x;
+    int h     = GameEngine::GetInstance().GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     // Draw a colored rectangle around the active input field:
     //   typingField == 0 → email (green)
@@ -382,8 +400,6 @@ void RegisterOnlineScene::Draw() const
         : al_map_rgb(255, 0, 0);
 
     // Recompute positions (same as Initialize)
-    int w     = GameEngine::GetInstance().GetScreenSize().x;
-    int h     = GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
     int halfH = h / 2;
 

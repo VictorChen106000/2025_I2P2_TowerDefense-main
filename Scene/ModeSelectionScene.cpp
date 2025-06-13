@@ -5,7 +5,16 @@
 #include "UI/Component/ImageButton.hpp"
 #include "UI/Component/Label.hpp"
 
+using namespace Engine;
+
 void ModeSelectionScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // center layout
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
@@ -15,7 +24,7 @@ void ModeSelectionScene::Initialize() {
     // Title
     AddNewObject(new Engine::Label(
         "Select Mode",
-        "pirulen.ttf",
+        "balatro.ttf",
         120,
         halfW, halfH / 3 + 50,
         10, 255, 255, 255,
@@ -24,7 +33,7 @@ void ModeSelectionScene::Initialize() {
 
     // Normal Mode button
     auto *btnNormal = new Engine::ImageButton(
-        "stage-select/dirt.png",   // up image
+        "stage-select/button1.png",   // up image
         "stage-select/floor.png", // hover image
         halfW - 200, halfH / 2 + 150,
         400, 100
@@ -32,19 +41,20 @@ void ModeSelectionScene::Initialize() {
     btnNormal->SetOnClickCallback(
         std::bind(&ModeSelectionScene::NormalModeOnClick, this, 1)
     );
+    btnNormal->EnableBreathing(0.05f, 2.0f);
     AddNewControlObject(btnNormal);
     AddNewObject(new Engine::Label(
         "Normal",
-        "pirulen.ttf",
-        48,
+        "balatro.ttf",
+        64,
         halfW, halfH / 2 + 200,
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5, 0.5
     ));
 
     // Survival Mode button
     auto *btnSurvival = new Engine::ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW - 200, halfH * 3 / 2 - 100,
         400, 100
@@ -52,19 +62,20 @@ void ModeSelectionScene::Initialize() {
     btnSurvival->SetOnClickCallback(
         std::bind(&ModeSelectionScene::SurvivalModeOnClick, this, 2)
     );
+    btnSurvival->EnableBreathing();
     AddNewControlObject(btnSurvival);
     AddNewObject(new Engine::Label(
         "Survival",
-        "pirulen.ttf",
-        48,
+        "balatro.ttf",
+        64,
         halfW, halfH * 3 / 2 - 50,
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5, 0.5
     ));
 
     // Back button
     auto* btnBack = new Engine::ImageButton(
-        "stage-select/dirt.png",         // up image
+        "stage-select/button1.png",         // up image
         "stage-select/floor.png",   // hover image
         halfW - 200,                    // same X as the other two
         halfH * 5 / 2 - 350,            // Y = survivalY + (survivalY - normalY)
@@ -73,20 +84,35 @@ void ModeSelectionScene::Initialize() {
     btnBack->SetOnClickCallback(
         std::bind(&ModeSelectionScene::BackOnClick, this, 0)
     );
+    btnBack->EnableBreathing();
     AddNewControlObject(btnBack);
     AddNewObject(new Engine::Label(
         "Back",
-        "pirulen.ttf",
-        48,
+        "balatro.ttf",
+        64,
         halfW,                          // center X
         halfH * 5 / 2 - 300,       // backY + btnH/2
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5f, 0.5f                      // center‐center align
     ));
 }
 
 void ModeSelectionScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
+}
+
+void ModeSelectionScene::Draw() const {
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 }
 
 void ModeSelectionScene::BackOnClick(int /*unused*/) {
