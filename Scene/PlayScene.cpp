@@ -351,6 +351,18 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
             }
         }
     }
+    if ((button & 2) && placing && previewBlock) {
+        // rotate the shape
+        previewBlock->Rotate();
+
+        // re-snap to grid under the mouse
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
+
+        // swallow the click so it doesn’t also cancel your drag:
+        return;
+    }
     //aaaaaaaaaaaaaa
     // If it’s a left‐click outside the map *or* any right‐click, cancel both turret preview and shovel
     if (((button & 1) && !clickOnMap) || (button & 2)) {

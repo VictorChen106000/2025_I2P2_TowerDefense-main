@@ -67,5 +67,6 @@ void TetrisBlock::CommitToScene(Engine::Group* towerGroup) {
     for (auto* c : _children) {
         c->Visible = true;
         towerGroup->AddNewObject(c);
-    }
+      }
+    
 }
