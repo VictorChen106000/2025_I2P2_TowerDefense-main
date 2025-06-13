@@ -394,7 +394,7 @@ if ((button & 1) && !placing) {
         previewBlock = new TetrisBlock(type, BlockSize);
         placing      = true;
         // send it into the map‐layer so it follows your OnMouseMove
-        previewBlock->CommitToScene(TowerGroup);
+        
 
         
         return;  // consume the click

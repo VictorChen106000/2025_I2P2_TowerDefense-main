@@ -40,7 +40,7 @@ TetrisBlock::TetrisBlock(TetrominoType type, int tileSize)
 }
 
 TetrisBlock::~TetrisBlock() {
-    for (auto* c : _children) delete c;
+   
 }
 
 void TetrisBlock::SetPosition(int mapX, int mapY) {
@@ -68,5 +68,5 @@ void TetrisBlock::CommitToScene(Engine::Group* towerGroup) {
         c->Visible = true;
         towerGroup->AddNewObject(c);
       }
-    
+      _children.clear();
 }
