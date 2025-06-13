@@ -1,67 +1,98 @@
 // SlimeEnemy.cpp
 #include "SlimeEnemy.hpp"
+#include "Scene/PlayScene.hpp"
+#include "Engine/Resources.hpp"
+#include <allegro5/allegro_primitives.h>
 #include <cmath>
-#include <allegro5/allegro.h>  // for ALLEGRO_PI
 
 SlimeEnemy::SlimeEnemy(int x, int y)
-    : Enemy("play/slime.png",  // your 256×64 PNG under resources/images/play/
-            x, y,
-            /*radius=*/20,
-            /*speed=*/50,
-            /*hp=*/40,
-            /*money=*/10),
+    : Enemy("play/slimejump.png", x, y, 20, 50, 40, 10),
       originalHP(hp)
 {
-    // 1) Chop into 4×1 frames @ 8 fps
-    SetAnimation(4, 1, 8.0f);
-
-    // 2) Scale to 75% of each 64×64 frame → 48×48 on‐screen
-    float frameW = GetBitmapWidth()  / 4.0f;  // = 256/4 = 64
-    float frameH = GetBitmapHeight() / 1.0f;  // =  64/1 = 64
+    // 4×1 @8fps
+    SetAnimation(4, 2, 8.0f);
+    float frameW = GetBitmapWidth()  / 4.0f;  // =64
+    float frameH = GetBitmapHeight() / 2.0f;  // =64
     Size.x = frameW * 1.75f;
     Size.y = frameH * 1.75f;
 }
 
 void SlimeEnemy::Update(float deltaTime) {
-    // ─── Regeneration ───────────────────────────────
-    regenTimer += deltaTime;
-    if (regenTimer >= regenCooldown) {
-        regenTimer -= regenCooldown;
-        hp += regenAmount;
-        if (hp > originalHP) hp = originalHP;
-    }
+    if (_isDying) {
+        // ─── advance death animation ─────────────────
+        _deathFrameTimer += deltaTime;
+        if (_deathFrameTimer >= deathFrameDuration) {
+            _deathFrameTimer -= deathFrameDuration;
+            ++_deathFrame;
+            if (_deathFrame >= deathFrames) {
+                // finally kill
+                Enemy::Hit(hp);
+            }
+        }
+    } else {
+        // ─── regeneration ─────────────────────────────
+        regenTimer += deltaTime;
+        if (regenTimer >= regenCooldown) {
+            regenTimer -= regenCooldown;
+            hp += regenAmount;
+            if (hp > originalHP) hp = originalHP;
+        }
 
-    // ─── Move + animate once ─────────────────────────
-    Enemy::Update(deltaTime);
-
-    // ─── Orientation: face up/down on vertical, left/right on horiz ───
-    float vx = Velocity.x;
-    float vy = Velocity.y;
-    if (std::fabs(vy) > std::fabs(vx)) {
-        // mostly vertical → rotate ±90°
-        Rotation = (vy > 0.0f ?  ALLEGRO_PI/2  // down
-                             : -ALLEGRO_PI/2); // up
-        // no mirror
-        Size.x = std::fabs(Size.x);
+        // ─── movement + orientation ───────────────────
+        Enemy::Update(deltaTime);
+        float vx = Velocity.x, vy = Velocity.y;
+         Rotation = 0.0f;
+    float w = std::fabs(Size.x);
+    Size.x = (Velocity.x < 0 ? -w : w);
     }
-    else {
-        // mostly horizontal → keep upright + mirror
-        Rotation = 0.0f;
-        float w = std::fabs(Size.x);
-        Size.x = (vx < 0.0f ? -w : w);
+}
+
+void SlimeEnemy::Draw() const {
+    if (_isDying) {
+        // draw one frame from slimedie.png (4×2 grid)
+        auto bmpPtr = Engine::Resources::GetInstance()
+                          .GetBitmap("play/slimedie.png");
+        ALLEGRO_BITMAP* bmp = bmpPtr.get();
+        int fw = al_get_bitmap_width(bmp)  / deathCols;
+        int fh = al_get_bitmap_height(bmp) / deathRows;
+        int sx = (_deathFrame % deathCols) * fw;
+        int sy = (_deathFrame / deathCols) * fh;
+
+        float scale = 1.75f;
+        int dw = int(fw * scale);
+        int dh = int(fh * scale);
+
+        al_draw_scaled_bitmap(
+            bmp,
+            sx, sy, fw, fh,
+            Position.x - dw/2.0f,
+            Position.y - dh/2.0f,
+            dw, dh,
+            0
+        );
+    } else {
+        Enemy::Draw();
     }
 }
 
 void SlimeEnemy::Hit(float damage) {
+    if (_isDying) return;
+
     bool willDie = (hp - damage) <= 0.0f;
+    if (willDie) {
+        // start death animation
+        _isDying         = true;
+        _deathFrame      = 0;
+        _deathFrameTimer = 0.0f;
+        return;
+    }
+
     Enemy::Hit(damage);
 
-    // on first drop below half‐health, double regen rate
+    // enrage on low HP
     if (!willDie && !enraged && hp < originalHP * 0.5f) {
-        enraged       = true;
-        regenAmount  *= 2.0f;     // twice the HP per tick
-        regenCooldown *= 0.5f;    // twice as often
+        enraged      = true;
+        regenAmount *= 2.0f;
+        regenCooldown *= 0.5f;
     }
 }
-
-//REGEN

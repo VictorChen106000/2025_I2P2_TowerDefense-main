@@ -1,25 +1,27 @@
-// DemonEnemy.hpp
 #ifndef DEMONENEMY_HPP
 #define DEMONENEMY_HPP
 
-#include <allegro5/allegro.h>
-#include "Engine/Sprite.hpp"
 #include "Enemy.hpp"
-#include "BatEnemy.hpp"
 
-/// DemonEnemy:
-///  • Spawns a BatEnemy every 4s while HP > 0  
-///  • On death: spawns 5 BatEnemies in a row, then dies.
 class DemonEnemy : public Enemy {
 public:
     DemonEnemy(int x, int y);
 
     void Update(float deltaTime) override;
-    void Hit(float damage) override;  // override death to spawn 5 bats
+    void Draw()   const override;
+    void Hit(float damage) override;
 
 private:
+    // spawn bats while alive
     float spawnCooldown = 4.0f;
-    float spawnTimer    = spawnCooldown; // so first bat at ~4s
+    float spawnTimer    = spawnCooldown;
+
+    // ——— death animation state ———
+    bool   _isDying         = false;
+    int    _deathFrame      = 0;          // 0…6
+    float  _deathFrameTimer = 0.0f;
+    static constexpr int   deathFrames       = 7;
+    static constexpr float deathFrameDuration= 0.1f;  // seconds per frame
 };
 
 #endif // DEMONENEMY_HPP

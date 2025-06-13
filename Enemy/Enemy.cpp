@@ -71,7 +71,7 @@ void Enemy::Hit(float damage) {
     hp -= damage;
     if (hp <= 0) {
         // 1) Explosion
-        OnExplode();
+        
 
         // 2) Scene bookkeeping
         auto scene = getPlayScene();

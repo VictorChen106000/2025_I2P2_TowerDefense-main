@@ -53,7 +53,7 @@ void BallistaTurret::applylevelstats() {
             CollisionRadius = 600.0f * 1.25f;  // Increase range for level 2
             break;
         case 3:
-            coolDown = 0.1f;  // Even faster reload for level 3
+            coolDown = 0.2f;  // Even faster reload for level 3
             CollisionRadius = 600.0f * 1.5f;  // Further increase range for level 3
             break;
         default:

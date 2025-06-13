@@ -423,16 +423,17 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                             // Subtract money and upgrade the turret
                             EarnMoney(-upgradeCost);
                             turret->updrage();
-                            AudioHelper::PlayAudio("explosion.wav");  // Play upgrade sound
+                             float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
+                             AudioHelper::PlaySample("levelup.mp3", false, vol);
 
                             // Optionally: show a visual upgrade effect or change sprite, etc.
                         } else {
-                            // If the player doesn't have enough money
-                            AudioHelper::PlayAudio("explosion.wav");  // Play sound or show a message
+                            float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
+                            AudioHelper::PlaySample("cancel.mp3", false, vol);
                         }
                     } else {
-                        // Optionally: Play a sound or show a message if turret is already at max level
-                        AudioHelper::PlayAudio("explosion.wav");
+                        float vol = std::clamp(AudioHelper::SFXVolume * 15.0f, 0.0f, 15.0f);
+                        AudioHelper::PlaySample("cancel.mp3", false, vol);
                     }
                     break; // Exit loop after upgrading the turret
                 }
@@ -1288,15 +1289,15 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
     float cy = g.y * BlockSize + BlockSize/2;
     Enemy* enemy = nullptr;
     switch (type) {
-      case 1: EnemyGroup->AddNewObject(enemy = new SlimeEnemy(cx, cy)); break;
-      case 2: EnemyGroup->AddNewObject(enemy = new BatEnemy  (cx, cy)); break;
-      case 3: EnemyGroup->AddNewObject(enemy = new CaninaEnemy(cx, cy)); break;
-      case 4: EnemyGroup->AddNewObject(enemy = new DemonEnemy(cx, cy)); break;
+      case 1: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx,cy)); break;
+      case 2: EnemyGroup->AddNewObject(enemy = new WolfEnemy  (cx, cy)); break;
+      case 3: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break;
+      case 4: EnemyGroup->AddNewObject(enemy = new SorcererEnemy(cx, cy)); break;
       case 5: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break;
-      case 6: EnemyGroup->AddNewObject(enemy = new FlyEnemy(cx, cy)); break;
-      case 7: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx, cy)); break;
+      case 6: EnemyGroup->AddNewObject(enemy = new CaninaEnemy(cx, cy)); break;
+      case 7: EnemyGroup->AddNewObject(enemy = new SlimeEnemy(cx, cy)); break;
       case 8: EnemyGroup->AddNewObject(enemy = new WolfEnemy(cx, cy)); break;
-      case 9: EnemyGroup->AddNewObject(enemy = new SorcererEnemy(cx, cy)); break;
+      case 9: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx, cy)); break;
       default: return;
     }
 

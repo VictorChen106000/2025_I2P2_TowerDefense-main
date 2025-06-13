@@ -28,15 +28,15 @@ void LaserTurret::setlevelimages() {
 void LaserTurret::applylevelstats() {
     switch (level) {
         case 1:
-            coolDown = 1.5f;  // Initial cooldown
+            coolDown = 1.0f;  // Initial cooldown
             CollisionRadius = 160.0f;  // Initial range
             break;
         case 2:
-            coolDown = 1.3f;  // Faster reload for level 2
+            coolDown = 0.75f;  // Faster reload for level 2
             CollisionRadius = 160.0f * 1.25f;  // Increase range for level 2
             break;
         case 3:
-            coolDown = 1.1f;  // Even faster reload for level 3
+            coolDown = 0.5f;  // Even faster reload for level 3
             CollisionRadius = 160.0f * 1.5f;  // Further increase range for level 3
             break;
         default:

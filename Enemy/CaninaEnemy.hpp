@@ -6,19 +6,37 @@
 
 class CaninaEnemy : public Enemy {
 public:
-    // ctor: spawn at (x,y)
     CaninaEnemy(int x, int y);
 
-    // override to add healing aura
+    void Hit(float damage) override;
     void Update(float deltaTime) override;
-    void Draw() const override;
+    void Draw()   const  override;
 
+    // aura params
+    float healTimer        = 0.0f;
+    const float healInterval = 5.0f;
+    const float healAmount   = 10.0f;
+    const float healRadius   = 100.0f;
+    float originalHP;
 
-    float healTimer      = 0.0f;        // accumulates deltaTime
-    const float healInterval = 5.0f;     // seconds between heal pulses
-    const float healAmount   = 10.0f;    // HP per pulse
-    const float healRadius   = 100.0f;   // px radius of aura
-    float originalHP;                    // max HP cap
+private:
+    // death-animation state
+    bool  _isDying         = false;
+    int   _deathFrame      = 0;       // 0…7
+    float _deathFrameTimer = 0.0f;
+
+    static constexpr int   deathCols          = 4;
+    static constexpr int   deathRows          = 2;
+    static constexpr int   deathFrames        = deathCols * deathRows; // 8
+    static constexpr float deathFrameDuration = 0.1f;                  // seconds/frame
+    static constexpr float drawScale          = 1.7f;                  // same as wolf
+
+    static constexpr int   shieldCols          = 4;
+    static constexpr int   shieldRows          = 4;
+    static constexpr float shieldFrameDuration = 0.1f;  // seconds per frame
+
+    int   _shieldFrame = 0;    // 0 … shieldCols*shieldRows-1
+    float _shieldTimer = 0.0f;
 };
 
 #endif // CANINA_ENEMY_HPP
