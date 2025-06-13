@@ -21,6 +21,9 @@
 #include "Enemy/FlyEnemy.hpp"
 #include "Enemy/BatEnemy.hpp"
 #include "Enemy/DemonEnemy.hpp"
+#include "Enemy/CaninaEnemy.hpp"
+#include "Enemy/NecromancerEnemy.hpp"
+#include "Enemy/SorcererEnemy.hpp"
 
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
@@ -47,7 +50,8 @@
 // TODO HACKATHON-4 (3/3): When the cheat code is entered, a plane should be spawned and added to the scene.
 // TODO HACKATHON-5 (1/4): There's a bug in this file, which crashes the game when you win. Try to find it.
 // TODO HACKATHON-5 (2/4): The "LIFE" label are not updated when you lose a life. Try to fix it.
-
+        // for Enemy*
+extern std::vector<Enemy*> g_enemies;
 bool PlayScene::DebugMode = false;
 const std::vector<Engine::Point> PlayScene::directions = { Engine::Point(-1, 0), Engine::Point(0, -1), Engine::Point(1, 0), Engine::Point(0, 1) };
 const int PlayScene::MapWidth = 20, PlayScene::MapHeight = 13;
@@ -1290,7 +1294,14 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
       case 4: EnemyGroup->AddNewObject(enemy = new BigTankEnemy(cx, cy)); break;
       default: return;
     }
-    enemy->UpdatePath(mapDistance);
-    enemy->Update(extraTicks);
-  }
+
+    // only once, here:
+    if (enemy) {
+        g_enemies.push_back(enemy);
+        enemy->UpdatePath(mapDistance);
+        enemy->Update(extraTicks);
+      }
+}
+
+
   
