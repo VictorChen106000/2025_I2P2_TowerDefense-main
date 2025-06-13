@@ -46,6 +46,9 @@ const std::vector<Engine::Point> PlayScene::directions = { Engine::Point(-1, 0),
 const int PlayScene::MapWidth = 20, PlayScene::MapHeight = 13;
 const int PlayScene::BlockSize = 64;
 const float PlayScene::DangerTime = 7.61;
+std::vector<Engine::Point> PlayScene::SpawnGridPoints;
+std::vector<Engine::Point> PlayScene::EndGridPoints;
+
 const std::vector<int> PlayScene::code = {
     ALLEGRO_KEY_LEFT, ALLEGRO_KEY_UP, ALLEGRO_KEY_RIGHT, ALLEGRO_KEY_DOWN
     // ALLEGRO_KEY_UP, ALLEGRO_KEY_DOWN, ALLEGRO_KEY_DOWN,
@@ -523,6 +526,9 @@ void PlayScene::UpdateKillBar() {
 
 
 void PlayScene::ReadMap() {
+
+    SpawnGridPoints.clear();
+    EndGridPoints.clear();
     // 1) Open map file
     std::string filename = "Resource/map" + std::to_string(MapId) + ".txt";
     std::ifstream fin(filename);
@@ -590,11 +596,11 @@ void PlayScene::ReadMap() {
                     break;
             
                 case 'S':  // spawn
-                    SpawnGridPoint = Engine::Point(j, i);
+                    SpawnGridPoints.push_back( Engine::Point(j, i) );
                     mapData.push_back(TILE_S); 
                     break;
                 case 'E':  // exit
-                    EndGridPoint = Engine::Point(j, i);
+                    EndGridPoints.push_back( Engine::Point(j, i) );
                     mapData.push_back(TILE_S);
                     break;
                 // 3) “Small” corner pieces (you’ll need to add these enums & assets)
@@ -985,37 +991,38 @@ bool PlayScene::CheckSpaceValid(int x, int y) {
 
 
 std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
-
     static auto isWalkable = [](TileType t){
         return t == TILE_S || t == TILE_WHITE_FLOOR;   // add any other “walkable” types here
     };
-    // Reverse BFS to find path.
-    std::vector<std::vector<int>> map(MapHeight, std::vector<int>(MapWidth, -1));
+    // Prepare distance grid, init to -1
+    std::vector<std::vector<int>> dist(MapHeight, std::vector<int>(MapWidth, -1));
     std::queue<Engine::Point> que;
-    // Push end point.
-    // BFS from end point.
-    if (!isWalkable(mapState[EndGridPoint.y][EndGridPoint.x]))
-        return map;
-    que.push( EndGridPoint );
-    map[EndGridPoint.y][EndGridPoint.x] = 0;
-    while (!que.empty()) {
-        Engine::Point p = que.front();
-        que.pop();
-        // TODO PROJECT-1 (1/1): Implement a BFS starting from the most right-bottom block in the map.
-                    //   For each step you should assign the corresponding distance to the most right-bottom block.
-                    //   mapState[y][x] is TILE_DIRT if it is empty.
-        for (const auto& dir : directions) {
-            int nx = p.x + dir.x;
-            int ny = p.y + dir.y;
-            if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight)
-                continue;
-            if (!isWalkable(mapState[ny][nx]) || map[ny][nx] != -1)
-                continue;
-            map[ny][nx] = map[p.y][p.x] + 1;
-            que.push(Engine::Point(nx, ny));
+
+    // 1) Seed the queue with *all* exits
+    for (auto &e : EndGridPoints) {
+        if (e.x >= 0 && e.x < MapWidth && e.y >= 0 && e.y < MapHeight
+            && isWalkable(mapState[e.y][e.x])) {
+            dist[e.y][e.x] = 0;
+            que.push(e);
         }
     }
-    return map;
+
+    // 2) Standard BFS
+    while (!que.empty()) {
+        Engine::Point p = que.front(); que.pop();
+        for (auto &dir : directions) {
+            int nx = p.x + dir.x;
+            int ny = p.y + dir.y;
+            if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight) continue;
+            if (!isWalkable(mapState[ny][nx]) || dist[ny][nx] != -1) continue;
+
+            dist[ny][nx] = dist[p.y][p.x] + 1;
+            que.push( Engine::Point(nx, ny) );
+
+        }
+    }
+
+    return dist;
 }
 
 
@@ -1193,27 +1200,22 @@ std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
 
 
 void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
-    const Engine::Point SpawnCoordinate =
-        Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2,
-                      SpawnGridPoint.y * BlockSize + BlockSize / 2);
-
-    Enemy *enemy = nullptr;
+    static size_t nextSpawnIdx = 0;
+    if (SpawnGridPoints.empty()) return;             // ← use the static you filled
+    Engine::Point g = SpawnGridPoints[nextSpawnIdx++];
+    nextSpawnIdx %= SpawnGridPoints.size();          // wrap around
+  
+    float cx = g.x * BlockSize + BlockSize/2;
+    float cy = g.y * BlockSize + BlockSize/2;
+    Enemy* enemy = nullptr;
     switch (type) {
-        case 1:
-            EnemyGroup->AddNewObject(enemy = new SoldierEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 2:
-            EnemyGroup->AddNewObject(enemy = new PlaneEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 3:
-            EnemyGroup->AddNewObject(enemy = new TankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 4:
-            EnemyGroup->AddNewObject(enemy = new BigTankEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        default:
-            return;
+      case 1: EnemyGroup->AddNewObject(enemy = new SoldierEnemy(cx, cy)); break;
+      case 2: EnemyGroup->AddNewObject(enemy = new PlaneEnemy  (cx, cy)); break;
+      case 3: EnemyGroup->AddNewObject(enemy = new TankEnemy   (cx, cy)); break;
+      case 4: EnemyGroup->AddNewObject(enemy = new BigTankEnemy(cx, cy)); break;
+      default: return;
     }
     enemy->UpdatePath(mapDistance);
     enemy->Update(extraTicks);
-}
+  }
+  

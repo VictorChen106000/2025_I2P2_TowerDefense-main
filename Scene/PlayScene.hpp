@@ -69,6 +69,7 @@ private:
 
       TILE_OCCUPIED            // your existing occupied flag
     };
+    std::vector<Engine::Point> spawnPoints;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
@@ -113,8 +114,8 @@ public:
     static const int MapWidth, MapHeight;
     static const int BlockSize;
     static const float DangerTime;
-    Engine::Point SpawnGridPoint;    
-    Engine::Point EndGridPoint;
+    static std::vector<Engine::Point> SpawnGridPoints;
+    static std::vector<Engine::Point> EndGridPoints;
 
     static const std::vector<int> code;
     int MapId;
