@@ -125,6 +125,7 @@ void Scoreboard::Initialize() {
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::PrevPageOnClick, this));
         b->EnableBreathing(0.05f, 2.0f);
+        b->EnableHoverScale(0.9f);
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "PREV PAGE",
@@ -145,6 +146,7 @@ void Scoreboard::Initialize() {
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::BackOnClick, this));
         b->EnableBreathing();
+        b->EnableHoverScale(0.9f);
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "BACK",
@@ -165,6 +167,7 @@ void Scoreboard::Initialize() {
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::NextPageOnClick, this));
         b->EnableBreathing();
+        b->EnableHoverScale(0.9f);
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "NEXT PAGE",

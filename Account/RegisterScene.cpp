@@ -213,6 +213,7 @@ void RegisterScene::Initialize() {
     );
     confirmButton->SetOnClickCallback([this]() { OnConfirmClicked(); });
     confirmButton->EnableBreathing(0.05f, 2.0f);
+    confirmButton->EnableHoverScale(0.9f);
     AddNewControlObject(confirmButton);
     AddNewObject(new Label(
         "Confirm",
@@ -234,6 +235,7 @@ void RegisterScene::Initialize() {
     );
     backButton->SetOnClickCallback([this]() { OnBackClicked(); });
     backButton->EnableBreathing();
+    backButton->EnableHoverScale(0.9f);
     AddNewControlObject(backButton);
     AddNewObject(new Label(
         "Back",

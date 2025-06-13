@@ -47,6 +47,7 @@ void StartScene::Initialize() {
     );
     btn->SetOnClickCallback(std::bind(&StartScene::PlayOnClick, this, 1));
     btn->EnableBreathing(0.05f, 2.0f);
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label(
         "Play", 
@@ -67,6 +68,7 @@ void StartScene::Initialize() {
     );
     btn->SetOnClickCallback(std::bind(&StartScene::SettingsOnClick, this, 2));
     btn->EnableBreathing();
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label(
         "Settings", 
@@ -97,6 +99,7 @@ void StartScene::Initialize() {
         }
     });
     btnLogout->EnableBreathing();
+    btnLogout->EnableHoverScale(0.9f);
     AddNewControlObject(btnLogout);
     // label centered on that button
     AddNewObject(new Engine::Label(

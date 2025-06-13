@@ -233,6 +233,7 @@ void LoginOnlineScene::Initialize()
         );
         backButton->SetOnClickCallback([&]() { OnBackClicked(); });
         backButton->EnableBreathing(0.05f, 2.0f);
+        backButton->EnableHoverScale(0.9f);
         AddNewControlObject(backButton);
 
         backLabel = new Label(
@@ -354,6 +355,7 @@ void LoginOnlineScene::Initialize()
     );
     loginButton->SetOnClickCallback([&]() { OnLoginClicked(); });
     loginButton->EnableBreathing();
+    loginButton->EnableHoverScale(0.9f);
     AddNewControlObject(loginButton);
 
     AddNewObject(new Label(
@@ -375,6 +377,7 @@ void LoginOnlineScene::Initialize()
     );
     registerButton->SetOnClickCallback([&]() { OnRegisterClicked(); });
     registerButton->EnableBreathing();
+    registerButton->EnableHoverScale(0.9f);
     AddNewControlObject(registerButton);
 
     AddNewObject(new Label(

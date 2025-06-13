@@ -42,6 +42,7 @@ void ModeSelectionScene::Initialize() {
         std::bind(&ModeSelectionScene::NormalModeOnClick, this, 1)
     );
     btnNormal->EnableBreathing(0.05f, 2.0f);
+    btnNormal->EnableHoverScale(0.9f);
     AddNewControlObject(btnNormal);
     AddNewObject(new Engine::Label(
         "Normal",
@@ -63,6 +64,7 @@ void ModeSelectionScene::Initialize() {
         std::bind(&ModeSelectionScene::SurvivalModeOnClick, this, 2)
     );
     btnSurvival->EnableBreathing();
+    btnSurvival->EnableHoverScale(0.9f);
     AddNewControlObject(btnSurvival);
     AddNewObject(new Engine::Label(
         "Survival",
@@ -85,6 +87,7 @@ void ModeSelectionScene::Initialize() {
         std::bind(&ModeSelectionScene::BackOnClick, this, 0)
     );
     btnBack->EnableBreathing();
+    btnBack->EnableHoverScale(0.9f);
     AddNewControlObject(btnBack);
     AddNewObject(new Engine::Label(
         "Back",

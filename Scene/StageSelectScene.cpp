@@ -40,6 +40,7 @@ void StageSelectScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y1, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::PlayOnClick, this, 1));
     btn->EnableBreathing(0.05f, 2.0f);
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Stage 1", "balatro.ttf", 64, halfW, y1 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 
@@ -47,6 +48,7 @@ void StageSelectScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y2, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::PlayOnClick, this, 2));
     btn->EnableBreathing();
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Stage 2", "balatro.ttf", 64, halfW, y2 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 
@@ -54,6 +56,7 @@ void StageSelectScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y3, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::ScoreboardOnClick, this));
     btn->EnableBreathing();
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Scoreboard", "balatro.ttf", 58, halfW, y3 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 
@@ -61,12 +64,14 @@ void StageSelectScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y4, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::BackOnClick, this, 0));
     btn->EnableBreathing();
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Back", "balatro.ttf", 64, halfW, y4 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", 1100, y4, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&StageSelectScene::ShopOnClick, this));
     btn->EnableBreathing();
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Shop", "balatro.ttf", 64, 1300, y4 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 }

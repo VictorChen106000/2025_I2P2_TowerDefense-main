@@ -33,6 +33,7 @@ void ShopScene::Initialize() {
     btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y4, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&ShopScene::BackOnClick, this, 0));
     btn->EnableBreathing(0.05f, 2.0f);
+    btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Back", "balatro.ttf", 64, halfW, y4 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 

@@ -162,6 +162,7 @@ void LoginScene::Initialize() {
                                      btnX,btnY,btnW,btnH);
         backButton->SetOnClickCallback([&](){ OnBackClicked(); });
         backButton->EnableBreathing(0.05f, 2.0f);
+        backButton->EnableHoverScale(0.9f);
         AddNewControlObject(backButton);
 
         backLabel = new Label("Back","balatro.ttf",60,
@@ -228,6 +229,7 @@ void LoginScene::Initialize() {
                                   halfW-150,halfH+180,300,80);
     loginButton->SetOnClickCallback([&](){ OnLoginClicked(); });
     loginButton->EnableBreathing();
+    loginButton->EnableHoverScale(0.9f);
     AddNewControlObject(loginButton);
     AddNewObject(new Label("Login","balatro.ttf",60,
                            halfW,halfH+180+40,
@@ -237,6 +239,7 @@ void LoginScene::Initialize() {
                                      halfW+200,halfH+180,300,80);
     registerButton->SetOnClickCallback([&](){ OnRegisterClicked(); });
     registerButton->EnableBreathing();
+    registerButton->EnableHoverScale(0.9f);
     AddNewControlObject(registerButton);
     AddNewObject(new Label("Register","balatro.ttf",60,
                            halfW+200+160,halfH+180+40,
@@ -249,6 +252,7 @@ void LoginScene::Initialize() {
         GameEngine::GetInstance().ChangeScene("start");
     });
     guestButton->EnableBreathing();
+    guestButton->EnableHoverScale(0.9f);
     AddNewControlObject(guestButton);
     AddNewObject(new Label("Play as Guest","balatro.ttf",60,
                            halfW-550+150,halfH+180+40,
