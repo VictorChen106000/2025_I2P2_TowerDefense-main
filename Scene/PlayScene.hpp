@@ -69,8 +69,13 @@ private:
       TILE_WALL2,              // 'A' / 'a'
       TILE_WALL3,              // 'B' / 'b'
 
-      TILE_OCCUPIED            // your existing occupied flag
+      TILE_OCCUPIED, // your existing occupied flag
+      TILE_TETRIS,         
     };
+    // PlayScene.hpp, inside class PlayScene
+    bool CanPlaceTetrisAt(int gx, int gy,
+      const TetrisBlock::Shape &cells);
+
     std::vector<std::tuple<TetrominoType,int,int,int,int>> _tetrisIcons;
     std::vector<Engine::Point> spawnPoints;
     Mode currentMode = Mode::Normal;

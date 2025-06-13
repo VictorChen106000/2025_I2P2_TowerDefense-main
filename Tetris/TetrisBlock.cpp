@@ -47,8 +47,9 @@ void TetrisBlock::SetPosition(int mapX, int mapY) {
     // snap each child sprite to its cell position in world coords
     for (size_t i = 0; i < _children.size(); ++i) {
         auto [dx,dy] = _cells[i];
-        _children[i]->Position.x = mapX + dx * _tileSize + _tileSize;
-        _children[i]->Position.y = mapY + dy * _tileSize + _tileSize;
+        _children[i]->Position.x = mapX + dx * _tileSize;
+        _children[i]->Position.y = mapY + dy * _tileSize;
+
     }
 }
 

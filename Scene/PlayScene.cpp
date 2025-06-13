@@ -383,6 +383,8 @@ if ((button & 1) && !placing) {
         placing      = true;
         // send it into the map‐layer so it follows your OnMouseMove
         previewBlock->CommitToScene(TowerGroup);
+
+        
         return;  // consume the click
       }
     }
@@ -443,16 +445,35 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
             }
         }
         if (ok) {
-            // mark those cells occupied
-            for (auto [dx,dy] : previewBlock->GetCells())
-                mapState[gy+dy][gx+dx] = TILE_OCCUPIED;
-            // snap and commit the sprites
-            previewBlock->SetPosition(gx*BlockSize, gy*BlockSize);
-            previewBlock->CommitToScene(TowerGroup);
-            previewBlock = nullptr;
-            placing      = false;
+            // 1) mark those cells in mapState
+            auto cells = previewBlock->GetCells();
+        if (!CanPlaceTetrisAt(gx, gy, cells)) {
+            // play your “invalid” effect
+            for (auto [dx,dy] : cells) {
+                float cx = (gx+dx)*BlockSize + BlockSize/2;
+                float cy = (gy+dy)*BlockSize + BlockSize/2;
+                auto e = new DirtyEffect("play/target-invalid.png", 1, cx, cy);
+                GroundEffectGroup->AddNewObject(e);
+                e->Rotation = 0;
+            }
+            return;
         }
-        return;   // <–– drop here, so we don't also run the turret/shovel code below
+        // otherwise go ahead and commit:
+        for (auto [dx,dy] : cells)
+            mapState[gy+dy][gx+dx] = TILE_TETRIS;
+        previewBlock->SetPosition(gx*BlockSize, gy*BlockSize);
+        previewBlock->CommitToScene(TowerGroup);
+                    mapDistance = CalculateBFSDistance();
+            // force every live enemy to re-build its path
+            for (auto & obj : EnemyGroup->GetObjects()) {
+                dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
+            }
+        // (no need to rerun BFS here—it's been done in CanPlaceTetrisAt)
+        placing = false;
+        previewBlock = nullptr;
+
+        }
+        return;  // <–– drop here, so we don't also run the turret/shovel code below
     }
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
@@ -547,7 +568,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                 return;
                 TileType orig = mapState[y][x];
                 bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
-                if (!isBomb && orig != TILE_WHITE_FLOOR) {
+                if (!isBomb && orig != TILE_TETRIS) {
                     auto sprite = new DirtyEffect(
                         "play/target-invalid.png", 1,
                         x * BlockSize + BlockSize/2,
@@ -605,6 +626,38 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         }
     }
 }
+
+bool PlayScene::CanPlaceTetrisAt(int gx, int gy, const TetrisBlock::Shape &cells) {
+    // 1) Backup and block all of the target tiles
+    std::vector<TileType> old;
+    old.reserve(cells.size());
+    for (auto [dx,dy] : cells) {
+        old.push_back(mapState[gy+dy][gx+dx]);
+        mapState[gy+dy][gx+dx] = TILE_TETRIS;
+    }
+
+    // 2) Recompute the distance‐map
+    auto newDist = CalculateBFSDistance();
+
+    // 3) Check that **every** spawn point can still reach an exit
+    bool ok = true;
+    for (auto &sp : SpawnGridPoints) {
+        if (newDist[sp.y][sp.x] == -1) {
+            ok = false;
+            break;
+        }
+    }
+
+    // 4) Restore the old mapState
+    for (size_t i = 0; i < cells.size(); ++i) {
+        auto [dx,dy] = cells[i];
+        mapState[gy+dy][gx+dx] = old[i];
+    }
+
+    return ok;
+}
+
+
 void PlayScene::OnKeyDown(int keyCode) {
     IScene::OnKeyDown(keyCode);
     if (keyCode == ALLEGRO_KEY_TAB) {
