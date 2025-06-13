@@ -3,7 +3,7 @@
 
 #include <allegro5/allegro_audio.h>
 #include <memory>
-
+#include "UI/Animation/ParallaxBackground.hpp"
 #include "Engine/IScene.hpp"
 
 class ModeSelectionScene final : public Engine::IScene {
@@ -19,9 +19,11 @@ public:
     void SurvivalModeOnClick(int mode);
     // Called when the user clicks "Back"
     void BackOnClick(int);
+    void Draw() const override;
 
 private:
     int nextStage = 1;
+    ParallaxBackground parallax;
 };
 
 #endif  // INC_2025_I2P2_TOWERDEFENSE_WITH_ANSWER_MODESELECTIONSCENE_H

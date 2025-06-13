@@ -174,9 +174,7 @@ LoginOnlineScene::LoginOnlineScene()
     , typedPassword()
     , typingEmail(true)
     , emailPromptLabel(nullptr)
-    // , emailInputLabel(nullptr)
     , passwordPromptLabel(nullptr)
-    // , passwordInputLabel(nullptr)
     , infoLabel(nullptr)
     , loginButton(nullptr)
     , registerButton(nullptr)
@@ -197,6 +195,13 @@ LoginOnlineScene::~LoginOnlineScene()
 
 void LoginOnlineScene::Initialize()
 {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // Reset state
     typedEmail.clear();
     typedPassword.clear();
@@ -381,6 +386,7 @@ void LoginOnlineScene::Initialize()
 
 void LoginOnlineScene::Terminate()
 {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -393,7 +399,16 @@ void LoginOnlineScene::Update(float dt)
 
 void LoginOnlineScene::Draw() const
 {
-     IScene::Draw();
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     ALLEGRO_COLOR focusColor = typingEmail
         ? al_map_rgb(0,255,0)

@@ -5,7 +5,16 @@
 #include "UI/Component/ImageButton.hpp"
 #include "UI/Component/Label.hpp"
 
+using namespace Engine;
+
 void ModeSelectionScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // center layout
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
@@ -86,7 +95,21 @@ void ModeSelectionScene::Initialize() {
 }
 
 void ModeSelectionScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
+}
+
+void ModeSelectionScene::Draw() const {
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 }
 
 void ModeSelectionScene::BackOnClick(int /*unused*/) {

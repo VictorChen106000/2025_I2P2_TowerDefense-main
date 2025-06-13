@@ -6,6 +6,7 @@
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
 #include "Scene/StartScene.h"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
@@ -129,6 +130,13 @@ LoginScene::~LoginScene() {
 // ─── Initialize ──────────────────────────────────────────────────
 
 void LoginScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     typedUsername.clear();
     typedPassword.clear();
     typingUsername = true;
@@ -241,6 +249,7 @@ void LoginScene::Initialize() {
 }
 
 void LoginScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -250,7 +259,16 @@ void LoginScene::Update(float dt) {
 }
 
 void LoginScene::Draw() const {
-    IScene::Draw();
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     ALLEGRO_COLOR focusColor = typingUsername
       ? al_map_rgb(0,255,0)

@@ -13,8 +13,16 @@
 #include "UI/Component/Label.hpp"
 #include "UI/Component/Slider.hpp"
 
+using namespace Engine;
 // TODO HACKATHON-2 (1/3): You can imitate the 2 files: 'StartScene.hpp', 'StartScene.cpp' to implement your SettingsScene.
 void StartScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
@@ -99,7 +107,18 @@ void StartScene::Initialize() {
     ));
 }
 void StartScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
+}
+void StartScene::Draw() const {
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+    Group::Draw();
 }
 void StartScene::SetPreviousScene(const std::string& prev) {
     prevScene = prev;

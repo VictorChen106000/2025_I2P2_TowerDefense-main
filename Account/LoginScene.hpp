@@ -5,6 +5,7 @@
 #include "Engine/IScene.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <string>
 
 namespace Engine {
@@ -71,6 +72,7 @@ private:
     static ALLEGRO_BITMAP*     openEyeBmp;
     static ALLEGRO_BITMAP*     closeEyeBmp;
     static Engine::ImageButton* eyeButton;
+    ParallaxBackground parallax;
 };
 
 #endif // LOGIN_SCENE_HPP

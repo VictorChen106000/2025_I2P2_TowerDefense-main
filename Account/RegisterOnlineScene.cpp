@@ -146,6 +146,13 @@ RegisterOnlineScene::~RegisterOnlineScene()
 
 void RegisterOnlineScene::Initialize()
 {
+     parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     // Reset all typed strings and state
     typedEmail.clear();
     typedPassword.clear();
@@ -358,6 +365,7 @@ void RegisterOnlineScene::Initialize()
 
 void RegisterOnlineScene::Terminate()
 {
+    parallax.Unload();
     IScene::Terminate();
     // Static bitmaps/font already destroyed in the destructor
 }
@@ -371,7 +379,15 @@ void RegisterOnlineScene::Update(float dt)
 
 void RegisterOnlineScene::Draw() const
 {
-    IScene::Draw();
+    int w     = GameEngine::GetInstance().GetScreenSize().x;
+    int h     = GameEngine::GetInstance().GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     // Draw a colored rectangle around the active input field:
     //   typingField == 0 → email (green)
@@ -382,8 +398,6 @@ void RegisterOnlineScene::Draw() const
         : al_map_rgb(255, 0, 0);
 
     // Recompute positions (same as Initialize)
-    int w     = GameEngine::GetInstance().GetScreenSize().x;
-    int h     = GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
     int halfH = h / 2;
 

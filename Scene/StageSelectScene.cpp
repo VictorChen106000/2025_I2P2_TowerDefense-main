@@ -14,8 +14,16 @@
 #include "Scene/ModeSelectionScene.hpp"
 #include <iostream>
 using namespace std;
+using namespace Engine;
 
 void StageSelectScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
@@ -58,7 +66,20 @@ void StageSelectScene::Initialize() {
     AddNewObject(new Engine::Label("Shop", "balatro.ttf", 64, 1300, y4 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
 }
 void StageSelectScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
+}
+void StageSelectScene::Draw() const {
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 }
 void StageSelectScene::BackOnClick(int) {
     Engine::GameEngine::GetInstance().ChangeScene("start");
@@ -67,9 +88,6 @@ void StageSelectScene::ShopOnClick() {
     Engine::GameEngine::GetInstance().ChangeScene("shop");
 }
 void StageSelectScene::PlayOnClick(int stage) {
-    // PlayScene *scene = dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetScene("play"));
-    // scene->MapId = stage;
-    // Engine::GameEngine::GetInstance().ChangeScene("play");
      // 1) record which map they chose
     auto *modeScene = dynamic_cast<ModeSelectionScene*>(Engine::GameEngine::GetInstance().GetScene("mode-selection"));
     modeScene->SetNextStage(stage);
