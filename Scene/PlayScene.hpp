@@ -37,10 +37,39 @@ public:
   Mode GetMode() const   { return currentMode; }
 private:
     enum TileType {
-        TILE_DIRT,
-        TILE_FLOOR,
-        TILE_OCCUPIED,
+      TILE_DIRT           = 0,  // '0' or ' ' (space)
+      TILE_WHITE_FLOOR    = 1,  // '1'
+      TILE_BLUE_FLOOR,         // 'D' / 'd'
+
+      // Big corners
+      TILE_CORNER_BOT_LEFT,    // 'C'
+      TILE_CORNER_TOP_LEFT,    // '3'
+      TILE_CORNER_TOP_RIGHT,   // '4'
+      TILE_CORNER1,            // '5'
+      TILE_CORNER2,            // '6'
+      TILE_CORNER_4,
+      TILE_CORNER_3,
+
+      // Small corners (add these 4)
+      TILE_CORNER_SMALL_1,     // e.g. 's' → corner-small-1.png
+      TILE_CORNER_SMALL_2,     // 't' → corner-small-2.png
+      TILE_CORNER_SMALL_3,     // 'u' → corner-small-3.png
+      TILE_CORNER_SMALL_4,     // 'v' → corner-small-4.png
+
+      // Platforms & special tiles
+      TILE_PLATFORM,           // '7'
+      TILE_TILE011,   
+      
+      TILE_S,// '8'
+
+      // Walls
+      TILE_WALL1,              // '#' or '9'
+      TILE_WALL2,              // 'A' / 'a'
+      TILE_WALL3,              // 'B' / 'b'
+
+      TILE_OCCUPIED            // your existing occupied flag
     };
+    std::vector<Engine::Point> spawnPoints;
     Mode currentMode = Mode::Normal;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
@@ -91,8 +120,9 @@ public:
     static const int MapWidth, MapHeight;
     static const int BlockSize;
     static const float DangerTime;
-    static const Engine::Point SpawnGridPoint;
-    static const Engine::Point EndGridPoint;
+    static std::vector<Engine::Point> SpawnGridPoints;
+    static std::vector<Engine::Point> EndGridPoints;
+
     static const std::vector<int> code;
     int MapId;
     float ticks;

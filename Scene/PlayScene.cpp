@@ -53,8 +53,9 @@ const std::vector<Engine::Point> PlayScene::directions = { Engine::Point(-1, 0),
 const int PlayScene::MapWidth = 20, PlayScene::MapHeight = 13;
 const int PlayScene::BlockSize = 64;
 const float PlayScene::DangerTime = 7.61;
-const Engine::Point PlayScene::SpawnGridPoint = Engine::Point(-1, 0);
-const Engine::Point PlayScene::EndGridPoint = Engine::Point(MapWidth, MapHeight - 1);
+std::vector<Engine::Point> PlayScene::SpawnGridPoints;
+std::vector<Engine::Point> PlayScene::EndGridPoints;
+
 const std::vector<int> PlayScene::code = {
     ALLEGRO_KEY_LEFT, ALLEGRO_KEY_UP, ALLEGRO_KEY_RIGHT, ALLEGRO_KEY_DOWN
     // ALLEGRO_KEY_UP, ALLEGRO_KEY_DOWN, ALLEGRO_KEY_DOWN,
@@ -476,9 +477,22 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         if (mapState[y][x] != TILE_OCCUPIED) {
             if (!preview)
                 return;
-            bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
+                TileType orig = mapState[y][x];
+                bool isBomb = dynamic_cast<BombTurret *>(preview) != nullptr;
+                if (!isBomb && orig != TILE_WHITE_FLOOR) {
+                    auto sprite = new DirtyEffect(
+                        "play/target-invalid.png", 1,
+                        x * BlockSize + BlockSize/2,
+                        y * BlockSize + BlockSize/2
+                    );
+                    GroundEffectGroup->AddNewObject(sprite);
+                    // 3) then set its rotation
+                    sprite->Rotation = 0;
+                    return;
+                }
+            
             if (isBomb) {
-                if (mapState[y][x] != TILE_DIRT) {
+                if (mapState[y][x] != TILE_DIRT && mapState[y][x] != TILE_WHITE_FLOOR) {
                     Engine::Sprite *sprite;
                     GroundEffectGroup->AddNewObject(sprite = new DirtyEffect(
                         "play/target-invalid.png", 1,
@@ -584,41 +598,268 @@ void PlayScene::UpdateKillBar() {
     killBarLabel->Text = std::to_string(count) + "/" + std::to_string(KILLS_PER_COIN);
 }
 
+
+
 void PlayScene::ReadMap() {
-    std::string filename = std::string("Resource/map") + std::to_string(MapId) + ".txt";
-    // Read map file.
-    char c;
-    std::vector<bool> mapData;
+
+    SpawnGridPoints.clear();
+    EndGridPoints.clear();
+    // 1) Open map file
+    std::string filename = "Resource/map" + std::to_string(MapId) + ".txt";
     std::ifstream fin(filename);
-    while (fin >> c) {
-        switch (c) {
-            case '0': mapData.push_back(false); break;
-            case '1': mapData.push_back(true); break;
-            case '\n':
-            case '\r':
-                if (static_cast<int>(mapData.size()) / MapWidth != 0)
-                    throw std::ios_base::failure("Map data is corrupted.");
-                break;
-            default: throw std::ios_base::failure("Map data is corrupted.");
+    if (!fin) {
+        throw std::ios_base::failure("Cannot open map file: " + filename);
+    }
+
+    // 2) Read all lines (preserves spaces)
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(fin, line)) {
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();  // strip Windows CR
         }
+        lines.push_back(line);
     }
     fin.close();
-    // Validate map data.
-    if (static_cast<int>(mapData.size()) != MapWidth * MapHeight)
-        throw std::ios_base::failure("Map data is corrupted.");
-    // Store map in 2d array.
-    mapState = std::vector<std::vector<TileType>>(MapHeight, std::vector<TileType>(MapWidth));
+
+    // 3) Validate row count
+    if ((int)lines.size() != MapHeight) {
+        throw std::ios_base::failure(
+            "Map data is corrupted: expected " + 
+            std::to_string(MapHeight) + " rows but got " + 
+            std::to_string(lines.size()));
+    }
+
+    // 4) Flatten into mapData with padding/truncation
+    std::vector<TileType> mapData;
+    mapData.reserve(MapWidth * MapHeight);
+    for (int i = 0; i < MapHeight; i++) {
+        // pad short lines or truncate long ones
+        if ((int)lines[i].size() < MapWidth) {
+            lines[i] += std::string(MapWidth - lines[i].size(), ' ');
+        } else if ((int)lines[i].size() > MapWidth) {
+            lines[i].resize(MapWidth);
+        }
+
+        for (int j = 0; j < MapWidth; j++) {
+            char ch = lines[i][j];
+            switch (ch) {
+                // 1) Blue floor (D/d)
+                case 'D': case 'd':
+                    mapData.push_back(TILE_DIRT);
+                    break;
+            
+                // 2) Big corner pieces
+                case 'C':  // corner-bot-left.png
+                    mapData.push_back(TILE_CORNER_BOT_LEFT);
+                    break;
+                case '3':  // corner-top-left.png
+                    mapData.push_back(TILE_CORNER_TOP_LEFT);
+                    break;
+                case '4':  // corner-top-right.png
+                    mapData.push_back(TILE_CORNER_TOP_RIGHT);
+                    break;
+                case '5':  // corner1.png
+                    mapData.push_back(TILE_CORNER1);
+                    break;
+                case '6':  // corner2.png
+                    mapData.push_back(TILE_CORNER2);
+                    break;
+                case '9':  // wall1 uses '9' as well as '#'
+                case '#':
+                    mapData.push_back(TILE_WALL1);
+                    break;
+            
+                case 'S':  // spawn
+                    SpawnGridPoints.push_back( Engine::Point(j, i) );
+                    mapData.push_back(TILE_S); 
+                    break;
+                case 'E':  // exit
+                    EndGridPoints.push_back( Engine::Point(j, i) );
+                    mapData.push_back(TILE_S);
+                    break;
+                // 3) “Small” corner pieces (you’ll need to add these enums & assets)
+                case 's':  // corner-small-1.png
+                    mapData.push_back(TILE_CORNER_SMALL_1);
+                    break;
+                case 't':  // corner-small-2.png
+                    mapData.push_back(TILE_CORNER_SMALL_2);
+                    break;
+                case 'u':  // corner-small-3.png
+                    mapData.push_back(TILE_CORNER_SMALL_3);
+                    break;
+                case 'v':  // corner-small-4.png
+                    mapData.push_back(TILE_CORNER_SMALL_4);
+                    break;
+                case 'w':  // corner-4.png
+                    mapData.push_back(TILE_CORNER_4);
+                    break;
+                case 'x':  // corner-3.png
+                    mapData.push_back(TILE_CORNER_3);
+                    break;
+            
+                // 4) Platform & tile011
+                case '7':  // platform.png
+                    mapData.push_back(TILE_PLATFORM);
+                    break;
+                case '8':  // tile011.png
+                    mapData.push_back(TILE_TILE011);
+                    break;
+            
+                // 5) The other walls
+                case 'A': case 'a': 
+                    mapData.push_back(TILE_WALL2);  // wall2.png
+                    break;
+                case 'B': case 'b': 
+                    mapData.push_back(TILE_WALL3);  // wall3.png
+                    break;
+            
+                // 6) Standard floor & dirt
+                case '1':  // white-floor.png
+                    mapData.push_back(TILE_WHITE_FLOOR);
+                    break;
+                case '0':  // black/dirt background
+                case ' ':  
+                    mapData.push_back(TILE_BLUE_FLOOR);
+                    break;
+            
+                default:
+                    throw std::ios_base::failure(
+                      std::string("Map data corrupted: invalid char '")
+                      + ch + "' at row " + std::to_string(i)
+                      + ", col " + std::to_string(j));
+            }
+            
+        }
+    }
+
+    // 5) Validate total cell count
+    if ((int)mapData.size() != MapWidth * MapHeight) {
+        throw std::ios_base::failure(
+            "Map data is corrupted: expected " +
+            std::to_string(MapWidth * MapHeight) + " cells but got " +
+            std::to_string(mapData.size()));
+    }
+
+    // 6) Store in mapState and create tile images
+    mapState.assign(MapHeight, std::vector<TileType>(MapWidth));
+    TileMapGroup->Clear();
     for (int i = 0; i < MapHeight; i++) {
         for (int j = 0; j < MapWidth; j++) {
-            const int num = mapData[i * MapWidth + j];
-            mapState[i][j] = num ? TILE_FLOOR : TILE_DIRT;
-            if (num)
-                TileMapGroup->AddNewObject(new Engine::Image("play/floor.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
-            else
-                TileMapGroup->AddNewObject(new Engine::Image("play/dirt.png", j * BlockSize, i * BlockSize, BlockSize, BlockSize));
+            TileType t = mapData[i * MapWidth + j];
+            mapState[i][j] = t;
+
+            float x = j * BlockSize;
+            float y = i * BlockSize;
+            switch (t) {
+                // 1) Dirt (background)
+                case TILE_DIRT:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("play/dirt.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 2) White floor (‘1’)
+                case TILE_WHITE_FLOOR:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/white-floor.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 3) Blue floor (‘D’/‘d’)
+                case TILE_BLUE_FLOOR:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/blue-floor.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 4) Big corners
+                case TILE_CORNER_BOT_LEFT:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-bot-left.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_TOP_LEFT:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-top-left.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_TOP_RIGHT:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-top-right.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER1:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner1.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER2:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner2.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 5) Small corners
+                case TILE_CORNER_SMALL_1:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-small-1.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_SMALL_2:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-small-2.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_SMALL_3:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-small-3.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_SMALL_4:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner-small-4.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_4:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner4.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_CORNER_3:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/corner3.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 6) Platform & special tile
+                case TILE_PLATFORM:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/platform.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_TILE011:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/tile011.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 7) Walls
+                case TILE_WALL1:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/wall1.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_WALL2:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/wall2.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_WALL3:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/wall3.png", x, y, BlockSize, BlockSize));
+                    break;
+                case TILE_S:
+                    TileMapGroup->AddNewObject(
+                        new Engine::Image("tile/S-top.png", x, y, BlockSize, BlockSize));
+                    break;
+            
+                // 8) (Optional) Occupied marker
+                case TILE_OCCUPIED:
+                    // you can draw your “occupied” overlay here, if you use one
+                    break;
+            
+                default:
+                    // nothing to draw
+                    break;
+            }
+            
         }
     }
 }
+
 void PlayScene::ReadEnemyWave() {
     std::string filename = std::string("./Resource/enemy") + std::to_string(MapId) + ".txt";
     // Read enemy file.
@@ -632,7 +873,7 @@ void PlayScene::ReadEnemyWave() {
     fin.close();
 }
 void PlayScene::ConstructUI() {
-    // Background
+    // DASHBOARD
     UIGroup->AddNewObject(new Engine::Image("play/sand.png", 1280, 0, 320, 832));
     // Text
     UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
@@ -822,34 +1063,41 @@ bool PlayScene::CheckSpaceValid(int x, int y) {
         dynamic_cast<Enemy *>(it)->UpdatePath(mapDistance);
     return true;
 }
+
+
 std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
-    // Reverse BFS to find path.
-    std::vector<std::vector<int>> map(MapHeight, std::vector<int>(std::vector<int>(MapWidth, -1)));
+    static auto isWalkable = [](TileType t){
+        return t == TILE_S || t == TILE_WHITE_FLOOR;   // add any other “walkable” types here
+    };
+    // Prepare distance grid, init to -1
+    std::vector<std::vector<int>> dist(MapHeight, std::vector<int>(MapWidth, -1));
     std::queue<Engine::Point> que;
-    // Push end point.
-    // BFS from end point.
-    if (mapState[MapHeight - 1][MapWidth - 1] != TILE_DIRT)
-        return map;
-    que.push(Engine::Point(MapWidth - 1, MapHeight - 1));
-    map[MapHeight - 1][MapWidth - 1] = 0;
-    while (!que.empty()) {
-        Engine::Point p = que.front();
-        que.pop();
-        // TODO PROJECT-1 (1/1): Implement a BFS starting from the most right-bottom block in the map.
-                    //   For each step you should assign the corresponding distance to the most right-bottom block.
-                    //   mapState[y][x] is TILE_DIRT if it is empty.
-        for (const auto& dir : directions) {
-            int nx = p.x + dir.x;
-            int ny = p.y + dir.y;
-            if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight)
-                continue;
-            if (mapState[ny][nx] != TILE_DIRT || map[ny][nx] != -1)
-                continue;
-            map[ny][nx] = map[p.y][p.x] + 1;
-            que.push(Engine::Point(nx, ny));
+
+    // 1) Seed the queue with *all* exits
+    for (auto &e : EndGridPoints) {
+        if (e.x >= 0 && e.x < MapWidth && e.y >= 0 && e.y < MapHeight
+            && isWalkable(mapState[e.y][e.x])) {
+            dist[e.y][e.x] = 0;
+            que.push(e);
         }
     }
-    return map;
+
+    // 2) Standard BFS
+    while (!que.empty()) {
+        Engine::Point p = que.front(); que.pop();
+        for (auto &dir : directions) {
+            int nx = p.x + dir.x;
+            int ny = p.y + dir.y;
+            if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight) continue;
+            if (!isWalkable(mapState[ny][nx]) || dist[ny][nx] != -1) continue;
+
+            dist[ny][nx] = dist[p.y][p.x] + 1;
+            que.push( Engine::Point(nx, ny) );
+
+        }
+    }
+
+    return dist;
 }
 
 
@@ -1027,33 +1275,22 @@ std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
 
 
 void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
-    const Engine::Point SpawnCoordinate =
-        Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2,
-                      SpawnGridPoint.y * BlockSize + BlockSize / 2);
-
-    Enemy *enemy = nullptr;
+    static size_t nextSpawnIdx = 0;
+    if (SpawnGridPoints.empty()) return;             // ← use the static you filled
+    Engine::Point g = SpawnGridPoints[nextSpawnIdx++];
+    nextSpawnIdx %= SpawnGridPoints.size();          // wrap around
+  
+    float cx = g.x * BlockSize + BlockSize/2;
+    float cy = g.y * BlockSize + BlockSize/2;
+    Enemy* enemy = nullptr;
     switch (type) {
-        case 1:
-            EnemyGroup->AddNewObject(enemy = new SlimeEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 2:
-            EnemyGroup->AddNewObject(enemy = new GolemEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 3:
-            EnemyGroup->AddNewObject(enemy = new FlyEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 4:
-            EnemyGroup->AddNewObject(enemy = new DemonEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;  
-        case 5:
-            EnemyGroup->AddNewObject(enemy = new WolfEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        case 6:
-            EnemyGroup->AddNewObject(enemy = new BatEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;
-        default:
-            return;
+      case 1: EnemyGroup->AddNewObject(enemy = new SoldierEnemy(cx, cy)); break;
+      case 2: EnemyGroup->AddNewObject(enemy = new PlaneEnemy  (cx, cy)); break;
+      case 3: EnemyGroup->AddNewObject(enemy = new TankEnemy   (cx, cy)); break;
+      case 4: EnemyGroup->AddNewObject(enemy = new BigTankEnemy(cx, cy)); break;
+      default: return;
     }
     enemy->UpdatePath(mapDistance);
     enemy->Update(extraTicks);
-}
+  }
+  
