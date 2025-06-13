@@ -72,6 +72,13 @@ RegisterScene::~RegisterScene() {
 }
 
 void RegisterScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     typedUsername.clear();
     typedPassword.clear();
     typedConfirmPassword.clear();
@@ -197,7 +204,7 @@ void RegisterScene::Initialize() {
     // ─── 5) Confirm + Back buttons ────────────────────────────────────
 
     confirmButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW - 150,
         halfH + 200,
@@ -205,6 +212,7 @@ void RegisterScene::Initialize() {
         80
     );
     confirmButton->SetOnClickCallback([this]() { OnConfirmClicked(); });
+    confirmButton->EnableBreathing(0.05f, 2.0f);
     AddNewControlObject(confirmButton);
     AddNewObject(new Label(
         "Confirm",
@@ -212,12 +220,12 @@ void RegisterScene::Initialize() {
         60,
         halfW,
         halfH + 200 + 40,
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5f, 0.5f
     ));
 
     backButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW + 200,
         halfH + 200,
@@ -225,14 +233,15 @@ void RegisterScene::Initialize() {
         80
     );
     backButton->SetOnClickCallback([this]() { OnBackClicked(); });
+    backButton->EnableBreathing();
     AddNewControlObject(backButton);
     AddNewObject(new Label(
-        "Back to Login",
+        "Back",
         "balatro.ttf",
         60,
         halfW + 200 + 150,
         halfH + 200 + 40,
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5f, 0.5f
     ));
 
@@ -330,6 +339,7 @@ void RegisterScene::Initialize() {
 }
 
 void RegisterScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -339,7 +349,16 @@ void RegisterScene::Update(float dt) {
 }
 
 void RegisterScene::Draw() const {
-    IScene::Draw();
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 
     ALLEGRO_COLOR focusColor = al_map_rgb(0, 255, 0);
     if (activeField == UsernameField) {

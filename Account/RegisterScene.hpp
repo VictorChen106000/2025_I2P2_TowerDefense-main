@@ -2,6 +2,7 @@
 #define REGISTER_SCENE_HPP
 
 #include "Engine/IScene.hpp"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <string>
 
 namespace Engine {
@@ -17,7 +18,7 @@ public:
     void Initialize() override;
     void Terminate()  override;
     void Update(float deltaTime) override;
-    void Draw()   const override;
+    void Draw() const override;
 
     void OnKeyChar(int unicode) override;
 
@@ -55,6 +56,7 @@ private:
     int usernameBoxX, usernameBoxY, usernameBoxW, usernameBoxH;
     int passwordBoxX, passwordBoxY, passwordBoxW, passwordBoxH;
     int confirmBoxX,  confirmBoxY,  confirmBoxW,  confirmBoxH;
+    ParallaxBackground parallax;
 };
 
 #endif // REGISTER_SCENE_HPP

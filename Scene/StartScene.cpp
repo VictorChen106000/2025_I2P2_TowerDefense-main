@@ -31,7 +31,7 @@ void StartScene::Initialize() {
 
     AddNewObject(new Engine::Label(
         "Tower Defense", 
-        "pirulen.ttf", 
+        "balatro.ttf", 
         120, 
         halfW, 
         halfH / 3 + 50, 
@@ -40,39 +40,41 @@ void StartScene::Initialize() {
 
     // Play Button
     btn = new Engine::ImageButton(
-        "stage-select/dirt.png", 
+        "stage-select/button1.png", 
         "stage-select/floor.png", 
         halfW - 200, halfH / 2 + 150, 
         400, 100
     );
     btn->SetOnClickCallback(std::bind(&StartScene::PlayOnClick, this, 1));
+    btn->EnableBreathing(0.05f, 2.0f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label(
         "Play", 
-        "pirulen.ttf", 
-        48, 
+        "balatro.ttf", 
+        64, 
         halfW, 
         halfH / 2 + 200, 
-        0, 0, 0, 255, 0.5, 0.5
+        255, 255, 255, 255, 0.5, 0.5
     ));
 
     // Setting Button
     btn = new Engine::ImageButton(
-        "stage-select/dirt.png", 
+        "stage-select/button1.png", 
         "stage-select/floor.png", 
         halfW - 200, 
         halfH * 3 / 2 - 100, 
         400, 100
     );
     btn->SetOnClickCallback(std::bind(&StartScene::SettingsOnClick, this, 2));
+    btn->EnableBreathing();
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label(
         "Settings", 
-        "pirulen.ttf", 
-        48, 
+        "balatro.ttf", 
+        64, 
         halfW, 
         halfH * 3 / 2 - 50, 
-        0, 0, 0, 255, 0.5, 0.5
+        255, 255, 255, 255, 0.5, 0.5
     ));
 
     // Conditional Logout/Back Button
@@ -80,7 +82,7 @@ void StartScene::Initialize() {
     const char* text = fromOnline ? "Logout" : "Back";
     // Y = halfH*5/2 - 300  (same vertical spacing)
     auto* btnLogout = new Engine::ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW - 200, halfH * 5 / 2 - 350,
         400, 100
@@ -94,15 +96,16 @@ void StartScene::Initialize() {
             Engine::GameEngine::GetInstance().ChangeScene("login");
         }
     });
+    btnLogout->EnableBreathing();
     AddNewControlObject(btnLogout);
     // label centered on that button
     AddNewObject(new Engine::Label(
         text,
-        "pirulen.ttf",
-        48,
+        "balatro.ttf",
+        64,
         halfW,
         halfH * 5 / 2 - 300,  // center of the button
-        0, 0, 0, 255,
+        255, 255, 255, 255,
         0.5f, 0.5f
     ));
 }

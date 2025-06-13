@@ -227,11 +227,12 @@ void LoginOnlineScene::Initialize()
     {
         int btnW = 200, btnH = 60, btnX = 50, btnY = 50;
         backButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             btnX, btnY, btnW, btnH
         );
         backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label(
@@ -239,8 +240,8 @@ void LoginOnlineScene::Initialize()
             "balatro.ttf", 
             60,
             btnX + (btnW / 2),
-            btnY + (btnH / 2) + 5,
-            0, 0, 0, 255,
+            btnY + (btnH / 2),
+            255,255,255,255,
             0.5f, 0.5f
         );
         AddNewObject(backLabel);
@@ -345,13 +346,14 @@ void LoginOnlineScene::Initialize()
 
     // ── 7) “Login” Button ───────────────────────────────────────────────────
     loginButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW - 150,
         halfH + 140,
         300, 80
     );
     loginButton->SetOnClickCallback([&]() { OnLoginClicked(); });
+    loginButton->EnableBreathing();
     AddNewControlObject(loginButton);
 
     AddNewObject(new Label(
@@ -359,27 +361,28 @@ void LoginOnlineScene::Initialize()
         "balatro.ttf", 60,
         halfW,
         halfH + 140 + 40,
-        0, 0, 0, 255,
+        255,255,255,255,
         0.5f, 0.5f
     ));
 
     // ── 8) “Register” Button (optional) ────────────────────────────────────
     registerButton = new ImageButton(
-        "stage-select/dirt.png",
+        "stage-select/button1.png",
         "stage-select/floor.png",
         halfW + 200,
         halfH + 140,
         300, 80
     );
     registerButton->SetOnClickCallback([&]() { OnRegisterClicked(); });
+    registerButton->EnableBreathing();
     AddNewControlObject(registerButton);
 
     AddNewObject(new Label(
         "Register",
         "balatro.ttf", 60,
-        halfW + 200 + 150,
+        halfW + 200 + 160,
         halfH + 140 + 40,
-        0, 0, 0, 255,
+        255,255,255,255,
         0.5f, 0.5f
     ));
 }

@@ -71,7 +71,7 @@ void Scoreboard::Initialize() {
     // 3) draw title
     AddNewObject(new Engine::Label(
         "SCOREBOARD",
-        "pirulen.ttf", 64,
+        "balatro.ttf", 64,
         halfW, titleY,
         0, 255, 0, 255,  // green text
         0.5f, 0.5f       // centered
@@ -86,7 +86,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             e.name,
-            "pirulen.ttf", 24,
+            "balatro.ttf", 64,
             colNameX, y,
             255, 255, 255, 255,  // white text
             0.f, 0.5f            // left-aligned
@@ -94,7 +94,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             std::to_string(e.pts),
-            "pirulen.ttf", 24,
+            "balatro.ttf", 64,
             colScoreX, y,
             255, 255, 255, 255,
             0.f, 0.5f
@@ -102,7 +102,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             e.timestamp,
-            "pirulen.ttf", 24,
+            "balatro.ttf", 64,
             colTimeX, y,
             255, 255, 255, 255,
             1.f, 0.5f            // right-aligned
@@ -119,17 +119,18 @@ void Scoreboard::Initialize() {
     {
         int x = startX + 0 * (btnW + margin);
         auto *b = new Engine::ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
-            x, btnY, btnW, btnH
+            x - 180, btnY - 10, btnW + 150, btnH + 20
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::PrevPageOnClick, this));
+        b->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "PREV PAGE",
-            "pirulen.ttf", 24,
-            x + btnW/2, btnY + btnH/2,
-            0, 0, 0, 255,
+            "balatro.ttf", 64,
+            x + btnW/2 - 100, btnY + btnH/2,
+            255, 255, 255, 255,
             0.5f, 0.5f
         ));
     }
@@ -138,17 +139,18 @@ void Scoreboard::Initialize() {
     {
         int x = startX + 1 * (btnW + margin);
         auto *b = new Engine::ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
-            x, btnY, btnW, btnH
+            x, btnY -10, btnW, btnH + 20
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::BackOnClick, this));
+        b->EnableBreathing();
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "BACK",
-            "pirulen.ttf", 24,
+            "balatro.ttf", 64,
             x + btnW/2, btnY + btnH/2,
-            0, 0, 0, 255,
+            255, 255, 255, 255,
             0.5f, 0.5f
         ));
     }
@@ -157,17 +159,18 @@ void Scoreboard::Initialize() {
     {
         int x = startX + 2 * (btnW + margin);
         auto *b = new Engine::ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
-            x, btnY, btnW, btnH
+            x + 20, btnY - 10, btnW + 150, btnH + 20
         );
         b->SetOnClickCallback(std::bind(&Scoreboard::NextPageOnClick, this));
+        b->EnableBreathing();
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "NEXT PAGE",
-            "pirulen.ttf", 24,
-            x + btnW/2, btnY + btnH/2,
-            0, 0, 0, 255,
+            "balatro.ttf", 64,
+            x + btnW/2 + 100, btnY + btnH/2,
+            255, 255, 255, 255,
             0.5f, 0.5f
         ));
     }

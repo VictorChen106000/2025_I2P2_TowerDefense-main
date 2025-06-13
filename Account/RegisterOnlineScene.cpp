@@ -178,17 +178,18 @@ void RegisterOnlineScene::Initialize()
     {
         int btnW = 200, btnH = 60, btnX = 50, btnY = 50;
         backButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             btnX, btnY, btnW, btnH
         );
         backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label(
             "Back",
-            "balatro.ttf", 36,
-            btnX + (btnW / 2), btnY + (btnH / 2) + 5,
+            "balatro.ttf", 60,
+            btnX + (btnW / 2), btnY + (btnH / 2),
             255, 255, 255, 255,
             0.5f, 0.5f
         );
@@ -341,7 +342,7 @@ void RegisterOnlineScene::Initialize()
     // ─── “Register” Button ────────────────────────────────────────────────────
     {
         registerButton = new ImageButton(
-            "stage-select/dirt.png",
+            "stage-select/button1.png",
             "stage-select/floor.png",
             halfW - 150,
             halfH + 240,
@@ -350,6 +351,7 @@ void RegisterOnlineScene::Initialize()
         registerButton->SetOnClickCallback([&]() {
             OnRegisterClicked();
         });
+        registerButton->EnableBreathing();
         AddNewControlObject(registerButton);
 
         AddNewObject(new Label(
@@ -357,7 +359,7 @@ void RegisterOnlineScene::Initialize()
             "balatro.ttf", 60,
             halfW,
             halfH + 240 + 40,
-            0, 0, 0, 255,  // black text
+            255,255,255,255,  // black text
             0.5f, 0.5f
         ));
     }

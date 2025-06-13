@@ -158,9 +158,10 @@ void LoginScene::Initialize() {
     // Back button
     {
         int btnW=200, btnH=60, btnX=50, btnY=50;
-        backButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+        backButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                      btnX,btnY,btnW,btnH);
         backButton->SetOnClickCallback([&](){ OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
         AddNewControlObject(backButton);
 
         backLabel = new Label("Back","balatro.ttf",60,
@@ -223,29 +224,35 @@ void LoginScene::Initialize() {
     AddNewObject(infoLabel);
 
     // Login / Register / Guest
-    loginButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+    loginButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                   halfW-150,halfH+180,300,80);
     loginButton->SetOnClickCallback([&](){ OnLoginClicked(); });
+    loginButton->EnableBreathing();
     AddNewControlObject(loginButton);
     AddNewObject(new Label("Login","balatro.ttf",60,
-                           halfW,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    registerButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
+    registerButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
                                      halfW+200,halfH+180,300,80);
     registerButton->SetOnClickCallback([&](){ OnRegisterClicked(); });
+    registerButton->EnableBreathing();
     AddNewControlObject(registerButton);
     AddNewObject(new Label("Register","balatro.ttf",60,
-                           halfW+200+150,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW+200+160,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    guestButton = new ImageButton("stage-select/dirt.png","stage-select/floor.png",
-                                  halfW-500,halfH+180,300,80);
+    guestButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                  halfW-600,halfH+180,400,80);
     guestButton->SetOnClickCallback([&](){
         CurrentUser = "Guest";
         GameEngine::GetInstance().ChangeScene("start");
     });
+    guestButton->EnableBreathing();
     AddNewControlObject(guestButton);
     AddNewObject(new Label("Play as Guest","balatro.ttf",60,
-                           halfW-500+150,halfH+180+40,0,0,0,255,0.5f,0.5f));
+                           halfW-550+150,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 }
 
 void LoginScene::Terminate() {

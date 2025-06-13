@@ -30,10 +30,11 @@ void ShopScene::Initialize() {
     int x = halfW - btnW/2;
 
     int y4 = startY + 3*gap;
-    btn = new Engine::ImageButton("stage-select/dirt.png", "stage-select/floor.png", x, y4, btnW, btnH);
+    btn = new Engine::ImageButton("stage-select/button1.png", "stage-select/floor.png", x, y4, btnW, btnH);
     btn->SetOnClickCallback(std::bind(&ShopScene::BackOnClick, this, 0));
+    btn->EnableBreathing(0.05f, 2.0f);
     AddNewControlObject(btn);
-    AddNewObject(new Engine::Label("Back", "balatro.ttf", 64, halfW, y4 + btnH / 2, 0, 0, 0, 255, 0.5, 0.5));
+    AddNewObject(new Engine::Label("Back", "balatro.ttf", 64, halfW, y4 + btnH / 2, 255, 255, 255, 255, 0.5, 0.5));
 
     AddNewObject(new Engine::Label("WELCOME TO Lee Be SHOP", "balatro.ttf", 64, halfW, 100, 0, 255, 0, 255, 0.5, 0.5));
 }
