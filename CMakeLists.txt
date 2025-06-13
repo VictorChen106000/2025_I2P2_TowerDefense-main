@@ -74,6 +74,12 @@ add_executable(2025_I2P2_TowerDefense
     Enemy/BatEnemy.hpp
     Enemy/DemonEnemy.cpp
     Enemy/DemonEnemy.hpp
+    Enemy/CaninaEnemy.cpp
+    Enemy/CaninaEnemy.hpp
+    Enemy/NecromancerEnemy.cpp
+    Enemy/NecromancerEnemy.hpp
+    Enemy/SorcererEnemy.cpp
+    Enemy/SorcererEnemy.hpp
 
 
     Engine/Allegro5Exception.cpp

@@ -21,6 +21,9 @@
 #include "Enemy/FlyEnemy.hpp"
 #include "Enemy/BatEnemy.hpp"
 #include "Enemy/DemonEnemy.hpp"
+#include "Enemy/CaninaEnemy.hpp"
+#include "Enemy/NecromancerEnemy.hpp"
+#include "Enemy/SorcererEnemy.hpp"
 
 #include "Engine/AudioHelper.hpp"
 #include "Engine/GameEngine.hpp"
@@ -47,7 +50,8 @@
 // TODO HACKATHON-4 (3/3): When the cheat code is entered, a plane should be spawned and added to the scene.
 // TODO HACKATHON-5 (1/4): There's a bug in this file, which crashes the game when you win. Try to find it.
 // TODO HACKATHON-5 (2/4): The "LIFE" label are not updated when you lose a life. Try to fix it.
-
+        // for Enemy*
+extern std::vector<Enemy*> g_enemies;
 bool PlayScene::DebugMode = false;
 const std::vector<Engine::Point> PlayScene::directions = { Engine::Point(-1, 0), Engine::Point(0, -1), Engine::Point(1, 0), Engine::Point(0, 1) };
 const int PlayScene::MapWidth = 20, PlayScene::MapHeight = 13;
@@ -1031,29 +1035,44 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
         Engine::Point(SpawnGridPoint.x * BlockSize + BlockSize / 2,
                       SpawnGridPoint.y * BlockSize + BlockSize / 2);
 
-    Enemy *enemy = nullptr;
+    Enemy* enemy = nullptr;
     switch (type) {
         case 1:
             EnemyGroup->AddNewObject(enemy = new SlimeEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 2:
-            EnemyGroup->AddNewObject(enemy = new GolemEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new CaninaEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 3:
-            EnemyGroup->AddNewObject(enemy = new FlyEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new SorcererEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 4:
             EnemyGroup->AddNewObject(enemy = new DemonEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
-            break;  
+            break;
         case 5:
-            EnemyGroup->AddNewObject(enemy = new WolfEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
         case 6:
             EnemyGroup->AddNewObject(enemy = new BatEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
             break;
+        case 7:
+            EnemyGroup->AddNewObject(enemy = new GolemEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 8:
+            EnemyGroup->AddNewObject(enemy = new WolfEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
+        case 9:
+            EnemyGroup->AddNewObject(enemy = new SorcererEnemy(SpawnCoordinate.x, SpawnCoordinate.y));
+            break;
         default:
             return;
     }
-    enemy->UpdatePath(mapDistance);
-    enemy->Update(extraTicks);
+
+    // only once, here:
+    if (enemy) {
+        g_enemies.push_back(enemy);
+        enemy->UpdatePath(mapDistance);
+        enemy->Update(extraTicks);
+    }
 }
+
