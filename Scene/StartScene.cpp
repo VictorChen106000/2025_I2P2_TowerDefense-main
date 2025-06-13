@@ -69,7 +69,6 @@ void StartScene::Initialize() {
 
     // Conditional Logout/Back Button
     bool fromOnline = (prevScene == "login-online");
-    // prevScene.clear();
     const char* text = fromOnline ? "Logout" : "Back";
     // Y = halfH*5/2 - 300  (same vertical spacing)
     auto* btnLogout = new Engine::ImageButton(

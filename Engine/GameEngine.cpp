@@ -31,6 +31,8 @@ namespace Engine {
         // if (!al_init_font_addon()) throw Allegro5Exception("failed to initialize font add-on");
         if (!al_init_ttf_addon()) throw Allegro5Exception("failed to initialize ttf add-on");
         if (!al_init_image_addon()) throw Allegro5Exception("failed to initialize image add-on");
+        // Set alpha blending mode.
+        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
         // Enable antialias by linear interpolation.
         al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
         if (!al_install_audio()) throw Allegro5Exception("failed to initialize audio add-on");
@@ -45,8 +47,6 @@ namespace Engine {
         display = al_create_display(screenW, screenH);
         if (!display) throw Allegro5Exception("failed to create display");
         al_set_window_title(display, title);
-        // Set alpha blending mode.
-        al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 
         // Load and set window icon.
         if (icon) {
