@@ -145,6 +145,9 @@ add_executable(2025_I2P2_TowerDefense
     Turret/BowTurret.hpp
 
     Shovel/ShovelButton.hpp
+    
+    Tetris/TetrisBlock.cpp
+    Tetris/TetrisBlock.hpp
 
     UI/Animation/DirtyEffect.cpp
     UI/Animation/DirtyEffect.hpp

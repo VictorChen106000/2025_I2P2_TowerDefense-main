@@ -44,6 +44,7 @@
 #include "UI/Component/Label.hpp"
 #include "UI/Component/Slider.hpp"
 #include "Turret/BombTurret.hpp"
+#include "Tetris/TetrisBlock.hpp"
 
 // TODO HACKATHON-4 (1/3): Trace how the game handles keyboard input.
 // TODO HACKATHON-4 (2/3): Find the cheat code sequence in this file.
@@ -59,6 +60,8 @@ const int PlayScene::BlockSize = 64;
 const float PlayScene::DangerTime = 7.61;
 std::vector<Engine::Point> PlayScene::SpawnGridPoints;
 std::vector<Engine::Point> PlayScene::EndGridPoints;
+
+
 
 const std::vector<int> PlayScene::code = {
     ALLEGRO_KEY_LEFT, ALLEGRO_KEY_UP, ALLEGRO_KEY_RIGHT, ALLEGRO_KEY_DOWN
@@ -304,6 +307,8 @@ void PlayScene::Update(float deltaTime) {
             preview->Update(deltaTime);
         }
     }
+
+    
 }
 void PlayScene::Draw() const {
     IScene::Draw();
@@ -364,32 +369,91 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
             imgTarget->Visible = false;  // hide the grid highlight
         }
     }
+    // 0) click on one of our panel icons?
+if ((button & 1) && !placing) {
+    for (auto &tpl : _tetrisIcons) {
+      TetrominoType type;
+      int x,y,w,h;
+      std::tie(type,x,y,w,h) = tpl;
+      if (mx >= x && mx < x + w
+       && my >= y && my < y + h) {
+        // begin dragging that shape
+        delete previewBlock;
+        previewBlock = new TetrisBlock(type, BlockSize);
+        placing      = true;
+        // send it into the map‐layer so it follows your OnMouseMove
+        previewBlock->CommitToScene(TowerGroup);
+        return;  // consume the click
+      }
+    }
+  }
+  
     // Always forward to base for button callbacks (so your TurretButton / ShovelButton still work)
     IScene::OnMouseDown(button, mx, my);
 }
 void PlayScene::OnMouseMove(int mx, int my) {
     IScene::OnMouseMove(mx, my);
-    const int x = mx / BlockSize;
-    const int y = my / BlockSize;
-    //aaaaaaa
+
+    // grid coords
+    const int gx = mx / BlockSize;
+    const int gy = my / BlockSize;
+
+    // Aiming turret early-out
     if (isAiming && aimingTurret) {
         float dx = mx - aimingTurret->Position.x;
         float dy = my - aimingTurret->Position.y;
-        // +PI/2 if your sprite is “up” at 0 radians
         aimingTurret->Rotation = std::atan2(dy, dx) + ALLEGRO_PI/2;
         return;
     }
-    //aaaaaaaaa
-    if (!preview || x < 0 || x >= MapWidth || y < 0 || y >= MapHeight) {
+
+    // hide target if off-map
+    if (gx < 0 || gx >= MapWidth || gy < 0 || gy >= MapHeight) {
         imgTarget->Visible = false;
         return;
     }
-    imgTarget->Visible = true;
-    imgTarget->Position.x = x * BlockSize;
-    imgTarget->Position.y = y * BlockSize;
+
+    // snap your tetromino preview
+    if (placing && previewBlock) {
+        int gx = mx/BlockSize, gy = my/BlockSize;
+        previewBlock->SetPosition(gx*BlockSize, gy*BlockSize);
+      }
+
+    // update your mouse-over highlight
+    imgTarget->Visible   = true;
+    imgTarget->Position.x = gx * BlockSize;
+    imgTarget->Position.y = gy * BlockSize;
 }
+
 void PlayScene::OnMouseUp(int button, int mx, int my) {
+
+    
     IScene::OnMouseUp(button, mx, my);
+
+    if (placing && previewBlock && (button & 1)) {
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        bool ok = true;
+        for (auto [dx,dy] : previewBlock->GetCells()) {
+            int xx = gx + dx, yy = gy + dy;
+            if (xx<0 || xx>=MapWidth
+             || yy<0 || yy>=MapHeight
+             || mapState[yy][xx] != TILE_WHITE_FLOOR) {
+                ok = false;
+                break;
+            }
+        }
+        if (ok) {
+            // mark those cells occupied
+            for (auto [dx,dy] : previewBlock->GetCells())
+                mapState[gy+dy][gx+dx] = TILE_OCCUPIED;
+            // snap and commit the sprites
+            previewBlock->SetPosition(gx*BlockSize, gy*BlockSize);
+            previewBlock->CommitToScene(TowerGroup);
+            previewBlock = nullptr;
+            placing      = false;
+        }
+        return;   // <–– drop here, so we don't also run the turret/shovel code below
+    }
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
@@ -996,7 +1060,43 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(killBarFill = new PanelRect(BAR_X, BAR_Y, 0,     BAR_H, al_map_rgba(0,200,0,255)));
     // text "0/3"
     UIGroup->AddNewObject(killBarLabel = new Engine::Label("0/3", "pirulen.ttf", 20, BAR_X + BAR_W/2, BAR_Y + BAR_H/2));
-    killBarLabel->Anchor = Engine::Point(0.5f, 0.5f); 
+    killBarLabel->Anchor = Engine::Point(0.5f, 0.5f);
+    
+    //tetris button
+    // right of your map, under the turret/shovel buttons.
+// pick a small icon size (e.g. 32px) and a y‐offset in the panel
+        // in PlayScene.cpp, inside PlayScene::ConstructUI():
+
+// … your existing turret/shovel button setup here …
+
+// 1) STATIC 32×32 ICONS  
+const int iconSize = 32;
+const std::vector<TetrominoType> tetTypes = {
+  TetrominoType::T,
+  TetrominoType::L,
+  TetrominoType::I
+};
+
+int panelX = MapWidth * BlockSize + 20;  // just right of the map
+int panelY = 600;                        // under your turret/shovel row
+
+_tetrisIcons.clear();
+
+for (int i = 0; i < 3; ++i) {
+  TetrominoType type = tetTypes[i];
+  auto *icon = new TetrisBlock(type, iconSize);
+
+  // position the little icon
+  int ix = panelX + i * (iconSize*3 + 10);
+  int iy = panelY;
+  icon->SetPosition(ix, iy);
+  icon->CommitToScene(UIGroup);
+
+  // remember its clickable area (max tetro width = 3 cells, height ~2)
+  _tetrisIcons.emplace_back(type, ix, iy, iconSize*3, iconSize*2);
+}
+
+
 }
 
 void PlayScene::UIBtnClicked(int id) {
