@@ -36,24 +36,37 @@ struct PanelRect : public Engine::IObject {
 
 class PlayScene final : public Engine::IScene {
 private:
-  enum TileType {
-    TILE_DIRT = 0,           // '0'
-    TILE_FLOOR = 1,          // '1'
-    TILE_CORNER_BOT_LEFT,    // '2'
-    TILE_CORNER_TOP_LEFT,    // '3'
-    TILE_CORNER_TOP_RIGHT,   // '4'
-    TILE_CORNER1,            // '5'
-    TILE_CORNER2,            // '6'
-    TILE_PLATFORM,           // '7'
-    TILE_TILE011,            // '8'
-    TILE_WALL1,              // '9'
-    TILE_WALL2,              // 'A' / 'a'
-    TILE_WALL3,              // 'B' / 'b'
-    TILE_WHITE_FLOOR,   
-    TILE_BLUE_FLOOR,     // 'C' / 'c'
-    TILE_OCCUPIED
-               // your existing occupied‐tile flag
-  };
+    enum TileType {
+      TILE_DIRT           = 0,  // '0' or ' ' (space)
+      TILE_WHITE_FLOOR    = 1,  // '1'
+      TILE_BLUE_FLOOR,         // 'D' / 'd'
+
+      // Big corners
+      TILE_CORNER_BOT_LEFT,    // 'C'
+      TILE_CORNER_TOP_LEFT,    // '3'
+      TILE_CORNER_TOP_RIGHT,   // '4'
+      TILE_CORNER1,            // '5'
+      TILE_CORNER2,            // '6'
+      TILE_CORNER_4,
+      TILE_CORNER_3,
+
+      // Small corners (add these 4)
+      TILE_CORNER_SMALL_1,     // e.g. 's' → corner-small-1.png
+      TILE_CORNER_SMALL_2,     // 't' → corner-small-2.png
+      TILE_CORNER_SMALL_3,     // 'u' → corner-small-3.png
+      TILE_CORNER_SMALL_4,     // 'v' → corner-small-4.png
+
+      // Platforms & special tiles
+      TILE_PLATFORM,           // '7'
+      TILE_TILE011,            // '8'
+
+      // Walls
+      TILE_WALL1,              // '#' or '9'
+      TILE_WALL2,              // 'A' / 'a'
+      TILE_WALL3,              // 'B' / 'b'
+
+      TILE_OCCUPIED            // your existing occupied flag
+    };
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
     std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> deathBGMInstance;
     float  elapsedTime = 0.0f;
@@ -98,8 +111,9 @@ public:
     static const int MapWidth, MapHeight;
     static const int BlockSize;
     static const float DangerTime;
-    static const Engine::Point SpawnGridPoint;
-    static const Engine::Point EndGridPoint;
+    Engine::Point SpawnGridPoint;    
+    Engine::Point EndGridPoint;
+
     static const std::vector<int> code;
     int MapId;
     float ticks;

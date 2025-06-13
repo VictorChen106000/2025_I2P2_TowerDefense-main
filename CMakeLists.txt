@@ -217,7 +217,10 @@ endif()
 # Post‐build: copy your Resource folder next to the exe (lower-case “resource”)
 # -----------------------------------------------------------------------------
 add_custom_command(TARGET 2025_I2P2_TowerDefense POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E remove_directory
+          "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/Resource"
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/Resource"
-    "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/resource"
+          "${CMAKE_SOURCE_DIR}/Resource"
+          "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/Resource"
+  COMMENT "Copying Resource folder"
 )
