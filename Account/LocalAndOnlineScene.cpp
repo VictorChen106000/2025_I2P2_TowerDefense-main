@@ -9,12 +9,14 @@ using namespace Engine;
 // scroll speeds in pixels/sec
 namespace {
     constexpr float L1_SPEED = 300.0f; // front layer (fastest)
-    constexpr float L2_SPEED = 180.0f; // middle
-    constexpr float L3_SPEED =  80.0f; // back (just in front of static)
+    constexpr float L2_SPEED = 150.0f; // middle
+    constexpr float L3_SPEED =  75.0f; // third
+    constexpr float L4_SPEED =  37.5f; // back (just in front of static)
 }
 
 LocalAndOnlineScene::LocalAndOnlineScene()
     : background(nullptr)
+    , layer4(nullptr)
     , layer3(nullptr)
     , layer2(nullptr)
     , layer1(nullptr)
@@ -26,18 +28,24 @@ LocalAndOnlineScene::~LocalAndOnlineScene() { }
 
 void LocalAndOnlineScene::Initialize() {
     // load depth-4 (static) + depths 3–1 for scrolling
-    background = al_load_bitmap("Resource/images/background/Day/d4.png");
-    layer3     = al_load_bitmap("Resource/images/background/Day/d3.png");
-    layer2     = al_load_bitmap("Resource/images/background/Day/d2.png");
-    layer1     = al_load_bitmap("Resource/images/background/Day/d1.png");
+    // background = al_load_bitmap("Resource/images/background/Day/d4.png");
+    // layer3     = al_load_bitmap("Resource/images/background/Day/d3.png");
+    // layer2     = al_load_bitmap("Resource/images/background/Day/d2.png");
+    // layer1     = al_load_bitmap("Resource/images/background/Day/d1.png");
 
-    if (!background || !layer3 || !layer2 || !layer1) {
+    background = al_load_bitmap("Resource/images/background/wl5.png");
+    layer4     = al_load_bitmap("Resource/images/background/wl4.png");
+    layer3     = al_load_bitmap("Resource/images/background/wl3.png");
+    layer2     = al_load_bitmap("Resource/images/background/wl2.png");
+    layer1     = al_load_bitmap("Resource/images/background/wl1.png");
+
+    if (!background || !layer4 || !layer3 || !layer2 || !layer1) {
         printf("Failed to load one of the background layers\n");
     }
 
-    al_convert_mask_to_alpha(layer1, al_map_rgb(255,255,255));
-    al_convert_mask_to_alpha(layer2, al_map_rgb(255,255,255));
-    al_convert_mask_to_alpha(layer3, al_map_rgb(255,255,255));
+    // al_convert_mask_to_alpha(layer1, al_map_rgb(255,255,255));
+    // al_convert_mask_to_alpha(layer2, al_map_rgb(255,255,255));
+    // al_convert_mask_to_alpha(layer3, al_map_rgb(255,255,255));
 
     // get screen dimensions
     int w = GameEngine::GetInstance().GetScreenSize().x;
@@ -126,6 +134,7 @@ void LocalAndOnlineScene::Draw() const {
     };
 
     // 5) draw scrolling layers in back→front order
+    drawLayer(layer4, L4_SPEED);
     drawLayer(layer3, L3_SPEED);
     drawLayer(layer2, L2_SPEED);
     drawLayer(layer1, L1_SPEED);
@@ -135,8 +144,8 @@ void LocalAndOnlineScene::Draw() const {
 }
 
 void LocalAndOnlineScene::Terminate() {
-    // destroy all 4 layers
-    for (ALLEGRO_BITMAP** bmp : { &background, &layer3, &layer2, &layer1 }) {
+    // destroy all 5 layers
+    for (ALLEGRO_BITMAP** bmp : { &background, &layer4, &layer3, &layer2, &layer1 }) {
         if (*bmp) { al_destroy_bitmap(*bmp); *bmp = nullptr; }
     }
     IScene::Terminate();

@@ -20,8 +20,9 @@ public:
 
 private:
      // 4-layer parallax: depth4 static, depths 3–1 scroll
-    ALLEGRO_BITMAP* background;  // depth 4 (static)
-    ALLEGRO_BITMAP* layer3;      // depth 3 (slowest scrolling)
+    ALLEGRO_BITMAP* background;  // depth 5 (static)
+    ALLEGRO_BITMAP* layer4;      // depth 4 (slowest scrolling)
+    ALLEGRO_BITMAP* layer3;      // depth 3 (second to slowest scrolling)
     ALLEGRO_BITMAP* layer2;      // depth 2 (medium scrolling)
     ALLEGRO_BITMAP* layer1;      // depth 1 (fastest scrolling)
     // callback handlers for each button
