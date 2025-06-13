@@ -1288,10 +1288,15 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
     float cy = g.y * BlockSize + BlockSize/2;
     Enemy* enemy = nullptr;
     switch (type) {
-      case 1: EnemyGroup->AddNewObject(enemy = new SoldierEnemy(cx, cy)); break;
-      case 2: EnemyGroup->AddNewObject(enemy = new PlaneEnemy  (cx, cy)); break;
-      case 3: EnemyGroup->AddNewObject(enemy = new TankEnemy   (cx, cy)); break;
-      case 4: EnemyGroup->AddNewObject(enemy = new BigTankEnemy(cx, cy)); break;
+      case 1: EnemyGroup->AddNewObject(enemy = new SlimeEnemy(cx, cy)); break;
+      case 2: EnemyGroup->AddNewObject(enemy = new BatEnemy  (cx, cy)); break;
+      case 3: EnemyGroup->AddNewObject(enemy = new CaninaEnemy(cx, cy)); break;
+      case 4: EnemyGroup->AddNewObject(enemy = new DemonEnemy(cx, cy)); break;
+      case 5: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break;
+      case 6: EnemyGroup->AddNewObject(enemy = new FlyEnemy(cx, cy)); break;
+      case 7: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx, cy)); break;
+      case 8: EnemyGroup->AddNewObject(enemy = new WolfEnemy(cx, cy)); break;
+      case 9: EnemyGroup->AddNewObject(enemy = new SorcererEnemy(cx, cy)); break;
       default: return;
     }
 
