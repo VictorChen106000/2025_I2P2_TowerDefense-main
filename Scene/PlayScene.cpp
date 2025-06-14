@@ -332,6 +332,26 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         IScene::OnMouseDown(button, mx, my);
         return;   // …but skip all the rest (turret/shovel logic)
     }
+
+    if ((button & 1) && !placing) {
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
+            // find the turret instance at this cell
+            for (auto obj : TowerGroup->GetObjects()) {
+                Turret* turret = dynamic_cast<Turret*>(obj);
+                if (!turret) continue;
+                int tx = int(turret->Position.x) / BlockSize;
+                int ty = int(turret->Position.y) / BlockSize;
+                if (tx == gx && ty == gy) {
+                    // Start aiming on this turret
+                    isAiming = true;
+                    aimingTurret = turret;
+                    return; // consume for aiming
+                }
+            }
+        }
+    }
     // Calculate whether the click is on the map area:
     const int mapW = MapWidth * BlockSize;
     const int mapH = MapHeight * BlockSize;
