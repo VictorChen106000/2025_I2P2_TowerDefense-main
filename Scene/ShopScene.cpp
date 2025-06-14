@@ -55,12 +55,21 @@ void ShopScene::Initialize() {
       std::to_string(crystals),
       "Balatro.ttf",
       36,               
-      padX + iconSize + 15,  
+      padX + iconSize + 15-10,  
       padY + iconSize/2,    
       255,255,255,255,
       0.0f, 0.5f          
     );
     AddNewObject(crystalCountLbl);
+    memek = new Engine::Label(
+        "1",
+        "balatro.ttf", 60,
+        360,
+        250,
+        255, 255, 255, 255,
+        0.5f, 0.5f
+    );
+    AddNewObject(memek);
 
     // --- podium graphic beneath ninja ---
     const int podiumW = 300;
@@ -127,6 +136,15 @@ void ShopScene::Initialize() {
     
     AddNewObject(buyCostIcon);
 
+    
+    meki = new Engine::Image(
+      "play/crystal.png",
+      280, 215,
+      80, 80
+    );
+
+     AddNewObject(meki);
+
     buyCostLabel = new Engine::Label(
       "1",
       "Balatro.ttf",
@@ -154,6 +172,12 @@ void ShopScene::Initialize() {
     back->EnableHoverScale(0.9f);
     AddNewControlObject(back);
 
+    auto crystal = new Engine::ImageButton(
+      "stage-select/button1.png",
+      "stage-select/floor.png",
+      150, 200, menuW, menuH
+    );
+    AddNewControlObject(crystal);
     AddNewObject(new Engine::Label(
       "Back","Balatro.ttf",64,
       halfW, my + menuH/2,
@@ -208,7 +232,7 @@ void ShopScene::Draw() const {
       al_draw_scaled_bitmap(
         idleBmp,
         idleCurFrame*idleFrameW, 0,
-        idleFrameW, idleFrameH,
+        idleFrameW, idleFrameH+5.0f,
         idleX - extraW, idleY - extraH,
         idleFrameW*idleScale, idleFrameH*idleScale,
         0
