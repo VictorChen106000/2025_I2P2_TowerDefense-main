@@ -37,6 +37,7 @@
 #include "Turret/RocketTurret.hpp"
 #include "Turret/TurretButton.hpp"
 #include "Turret/BowTurret.hpp"
+#include "Turret/Hero.hpp"
 #include "Shovel/ShovelButton.hpp"
 #include "Turret/BallistaTurret.hpp"
 #include "UI/Animation/DirtyEffect.hpp"
@@ -45,6 +46,7 @@
 #include "UI/Component/Slider.hpp"
 #include "Turret/BombTurret.hpp"
 #include "Tetris/TetrisBlock.hpp"
+#include "UI/Component/ImageButton.hpp"
 
 // TODO HACKATHON-4 (1/3): Trace how the game handles keyboard input.
 // TODO HACKATHON-4 (2/3): Find the cheat code sequence in this file.
@@ -103,6 +105,7 @@ void PlayScene::Initialize() {
     AddNewObject(EnemyGroup = new Group());
     AddNewObject(BulletGroup = new Group());
     AddNewObject(EffectGroup = new Group());
+    AddNewObject(HeroGroup= new Group());
     // Should support buttons.
     AddNewControlObject(UIGroup = new Group());
     ReadMap();
@@ -334,23 +337,85 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         IScene::OnMouseDown(button, mx, my);
         return;   // …but skip all the rest (turret/shovel logic)
     }
+
+    if ((button & 1) && !placing) {
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
+            // find the turret instance at this cell
+            for (auto obj : TowerGroup->GetObjects()) {
+                Turret* turret = dynamic_cast<Turret*>(obj);
+                if (!turret) continue;
+                int tx = int(turret->Position.x) / BlockSize;
+                int ty = int(turret->Position.y) / BlockSize;
+                if (tx == gx && ty == gy) {
+                    // Start aiming on this turret
+                    isAiming = true;
+                    aimingTurret = turret;
+                    return; // consume for aiming
+                }
+            }
+        }
+    }
     // Calculate whether the click is on the map area:
     const int mapW = MapWidth * BlockSize;
     const int mapH = MapHeight * BlockSize;
     bool clickOnMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
     //aaaaaaaaaaaaa
-    if ((button & 1) && !isPaused) {
-        for (auto obj : TowerGroup->GetObjects()) {
-            auto bt = dynamic_cast<BowTurret*>(obj);
-            if (!bt) continue;
-            float dx = mx - bt->Position.x;
-            float dy = my - bt->Position.y;
-            const float pickRadius = 32; 
-            if (dx*dx + dy*dy < pickRadius*pickRadius) {
-                isAiming = true;
-                aimingTurret = bt;
-                return;   // consume the click
+    if (placing && previewBlock) {
+        // Left-click: either place if over map, or cancel if outside
+        if (button & 1) {
+            int gx = mx / BlockSize;
+            int gy = my / BlockSize;
+            if (clickOnMap) {
+                // attempt placement
+                bool ok = true;
+                for (auto [dx,dy] : previewBlock->GetCells()) {
+                    int xx = gx + dx, yy = gy + dy;
+                    if (xx < 0 || xx >= MapWidth || yy < 0 || yy >= MapHeight
+                     || mapState[yy][xx] != TILE_WHITE_FLOOR) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok && !CanPlaceTetrisAt(gx, gy, previewBlock->GetCells()))
+                    ok = false;
+                if (ok) {
+                    // commit placement
+                    for (auto* cell : previewBlock->GetSprites()) {
+                        cell->GetObjectIterator()->first = false;
+                        UIGroup->RemoveObject(cell->GetObjectIterator());
+                        GroundEffectGroup->AddNewObject(cell);
+                    }
+                    previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
+                    for (auto [dx,dy] : previewBlock->GetCells())
+                        mapState[gy+dy][gx+dx] = TILE_TETRIS;
+                    mapDistance = CalculateBFSDistance();
+                    for (auto& obj : EnemyGroup->GetObjects())
+                        dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
+                    delete previewBlock;
+                    previewBlock = nullptr;
+                    placing = false;
+                } else {
+                    // invalid placement feedback
+                    Engine::Sprite* spr = new DirtyEffect(
+                        "play/target-invalid.png", 1,
+                        gx * BlockSize + BlockSize/2,
+                        gy * BlockSize + BlockSize/2
+                    );
+                    GroundEffectGroup->AddNewObject(spr);
+                    spr->Rotation = 0;
+                    // keep placing = true for retry
+                }
+            } else {
+                // clicked outside map: cancel drag
+                for (auto* cellSprite : previewBlock->GetSprites())
+                    UIGroup->RemoveObject(cellSprite->GetObjectIterator());
+                delete previewBlock;
+                previewBlock = nullptr;
+                placing = false;
             }
+            return; // consume click
         }
     }
     if ((button & 2) && placing && previewBlock) {
@@ -432,6 +497,13 @@ void PlayScene::OnMouseMove(int mx, int my) {
     // grid coords
     const int gx = mx / BlockSize;
     const int gy = my / BlockSize;
+    if (heroMode && heroPreview) {
+        int gx = mx / BlockSize, gy = my / BlockSize;
+        heroPreview->Position = Engine::Point(
+          gx * BlockSize + BlockSize/2,
+          gy * BlockSize + BlockSize/2
+        );
+    }
 
     // Aiming turret early-out
     if (isAiming && aimingTurret) {
@@ -464,51 +536,22 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
     
     IScene::OnMouseUp(button, mx, my);
 
-    if (placing && previewBlock && (button & 1)) {
-        int gx = mx / BlockSize;
-        int gy = my / BlockSize;
-        bool ok = true;
-        for (auto [dx,dy] : previewBlock->GetCells()) {
-            int xx = gx + dx, yy = gy + dy;
-            if (xx<0 || xx>=MapWidth
-             || yy<0 || yy>=MapHeight
-             || mapState[yy][xx] != TILE_WHITE_FLOOR) {
-                ok = false;
-                break;
-            }
-        }
-        if (ok) {
-            // 1) remove each cell from UIGroup, then add to TowerGroup
-            for (auto* cell : previewBlock->GetSprites()) {
-                cell->GetObjectIterator()->first = false;      // keep it alive
-                UIGroup->RemoveObject(cell->GetObjectIterator());
-                GroundEffectGroup->AddNewObject(cell);
-            }
-            // one call re-adds all four sprites into TowerGroup
-            previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
-            
-
-        
-            // 2) mark the tiles and recalc BFS
-            for (auto [dx,dy] : previewBlock->GetCells())
-                mapState[gy+dy][gx+dx] = TILE_TETRIS;
-            mapDistance = CalculateBFSDistance();
-            for (auto& obj : EnemyGroup->GetObjects())
-                dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
-        
-            // 3) snap the whole block into its final world position
-            
-        
-            // 4) clear drag state
-            placing      = false;
+    if (placing && previewBlock) {
+        // Optional: if you want release-outside to cancel:
+        const int mapW = MapWidth * BlockSize;
+        const int mapH = MapHeight * BlockSize;
+        bool overMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
+        if (!overMap) {
+            // cancel drag
+            for (auto* cellSprite : previewBlock->GetSprites())
+                UIGroup->RemoveObject(cellSprite->GetObjectIterator());
             delete previewBlock;
             previewBlock = nullptr;
-        
-        
-
+            placing = false;
         }
-        return;  // <–– drop here, so we don't also run the turret/shovel code below
+        // If released over map, do nothing: placement was on mouse-down
     }
+
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
@@ -517,14 +560,41 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         aimingTurret = nullptr;
         return;  // prevent passing through to “place turret” logic
     }
+    if (heroMode && heroPreview && (button & 1)) {
+        int gx = mx / BlockSize, gy = my / BlockSize;
+        // Only allow on enemy path (mapDistance >= 0)
+        if (gy >= 0 && gy < MapHeight && gx >= 0 && gx < MapWidth
+         && mapDistance[gy][gx] >= 0)
+        {
+            // spawn Hero
+            float px = gx * BlockSize + BlockSize/2;
+            float py = gy * BlockSize + BlockSize/2;
+            Hero *h = new Hero(px, py);
+            HeroGroup->AddNewObject(h);
+
+            // clean up preview
+            UIGroup->RemoveObject(heroPreview->GetObjectIterator());
+            heroPreview = nullptr;
+            heroMode = false;
+        } else {
+            // invalid spot: show a quick red X or dirty effect
+            auto fx = new DirtyEffect(
+              "play/target-invalid.png", 1,
+              gx*BlockSize + BlockSize/2,
+              gy*BlockSize + BlockSize/2
+            );
+            GroundEffectGroup->AddNewObject(fx);
+        }
+        return;  // consume the click—don’t fall into turret code
+    }
 
     // If the right mouse button is clicked (for upgrade)
     if (button & 2) {  // Check if it's a right-click
         const int x = mx / BlockSize;
         const int y = my / BlockSize;
 
-        // Check if the clicked tile has a turret (i.e., is occupied)
-        if (mapState[y][x] == TILE_OCCUPIED) {
+        if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight) return;
+        if (mapState[y][x] == TILE_OCCUPIED ) {
             // Iterate over the TowerGroup to find the turret clicked
             for (auto obj : TowerGroup->GetObjects()) {
                 Turret* turret = dynamic_cast<Turret*>(obj);
@@ -543,16 +613,16 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                             EarnMoney(-upgradeCost);
                             turret->updrage();
                              float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
-                             AudioHelper::PlaySample("levelup.mp3", false, vol);
+                            AudioHelper::PlaySample("levelup.ogg", false, vol);
 
                             // Optionally: show a visual upgrade effect or change sprite, etc.
                         } else {
                             float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
-                            AudioHelper::PlaySample("cancel.mp3", false, vol);
+                            AudioHelper::PlaySample("cancel.ogg", false, vol);
                         }
                     } else {
                         float vol = std::clamp(AudioHelper::SFXVolume * 15.0f, 0.0f, 15.0f);
-                        AudioHelper::PlaySample("cancel.mp3", false, vol);
+                        AudioHelper::PlaySample("cancel.ogg", false, vol);
                     }
                     break; // Exit loop after upgrading the turret
                 }
@@ -1120,6 +1190,23 @@ void PlayScene::ConstructUI() {
         }
     });
     UIGroup->AddNewControlObject(shovelBtn);
+
+    //hero
+    auto heroBtn = new Engine::ImageButton(
+    "play/yellowninja.png",   // up & down images
+    "play/yellowninja.png",
+    1294, 300,       // pick a spot in your side panel
+    64, 64
+);
+    heroBtn->SetOnClickCallback([this](){
+        if (isPaused) return;
+        heroMode = true;
+        heroPreview = new Engine::Sprite("play/yellowninja.png", 0, 0);
+        heroPreview->Tint = al_map_rgba(255,255,255,150);
+        heroPreview->Anchor = Engine::Point(0.5, 0.5);
+        UIGroup->AddNewObject(heroPreview);
+    });
+    UIGroup->AddNewControlObject(heroBtn);
 
     // RocketTurret Button
     btn = new TurretButton(
