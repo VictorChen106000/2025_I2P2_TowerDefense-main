@@ -475,6 +475,10 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                 break;
             }
         }
+        if (ok && !CanPlaceTetrisAt(gx, gy, previewBlock->GetCells())) {
+            ok = false;
+        }
+
         if (ok) {
             // 1) remove each cell from UIGroup, then add to TowerGroup
             for (auto* cell : previewBlock->GetSprites()) {
@@ -501,10 +505,20 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
             placing      = false;
             delete previewBlock;
             previewBlock = nullptr;
-        
+        } else {
+            // Show invalid placement effect (e.g. a red flash or DirtyEffect)
+            Engine::Sprite* sprite = new DirtyEffect(
+                "play/target-invalid.png", 1,
+                gx * BlockSize + BlockSize/2,
+                gy * BlockSize + BlockSize/2
+            );
+            GroundEffectGroup->AddNewObject(sprite);
+            sprite->Rotation = 0;
+            // keep placing = true so user can try elsewhere
+        }
         
 
-        }
+        
         return;  // <–– drop here, so we don't also run the turret/shovel code below
     }
     if (isPaused) return; 
