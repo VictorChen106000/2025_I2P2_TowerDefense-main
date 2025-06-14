@@ -81,6 +81,7 @@ void PlayScene::Initialize() {
     deathCountDown = -1;
     coins =0; // tambahan
     soldierkillcount=0; // tambahan 
+    wolfKillCount=0;
     lives = 10;
     money = 2000;
     killCount = 0;
@@ -135,6 +136,14 @@ void PlayScene::Terminate() {
     IScene::Terminate();
 }
 void PlayScene::Update(float deltaTime) {
+        // -- survival timer
+    surviveTimer += deltaTime;
+    if (surviveTimer >= SURVIVE_GOAL) {
+        EarnCoin(1);
+        surviveTimer -= SURVIVE_GOAL;        // reset (carry over any overflow)
+    }
+    UpdateSurviveBar();
+
     elapsedTime += deltaTime;
     // If we use deltaTime directly, then we might have Bullet-through-paper problem.
     // Reference: Bullet-Through-Paper
@@ -821,7 +830,21 @@ void PlayScene::UpdateKillBar() {
     killBarFill->w = frac * killBarBg->w;
     killBarLabel->Text = std::to_string(count) + "/" + std::to_string(KILLS_PER_COIN);
 }
-
+void PlayScene::UpdateWolfBar() {
+    // make sure count never exceeds the goal
+    int count = std::min(wolfKillCount, KILLS_PER_COIN);
+    float frac = float(count) / float(KILLS_PER_COIN);
+    wolfBarFill->w = frac * killBarBg->w;
+    wolfBarLabel->Text = std::to_string(count) + "/" + std::to_string(KILLS_PER_COIN);
+}
+void PlayScene::UpdateSurviveBar() {
+    // clamp to 50
+    float t = std::min(surviveTimer, SURVIVE_GOAL);
+    float frac = t / SURVIVE_GOAL;
+    surviveBarFill->w = frac * surviveBarBg->w;
+    int secs = int(t);
+    surviveBarLabel->Text = std::to_string(secs) + "s/50s";
+}
 
 
 void PlayScene::ReadMap() {
@@ -1100,13 +1123,15 @@ void PlayScene::ConstructUI() {
     // DASHBOARD
     UIGroup->AddNewObject(new Engine::Image("play/sand.png", 1280, 0, 320, 832));
     // Text
-    UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "pirulen.ttf", 32, 1294, 0));
-    UIGroup->AddNewObject(UIMoney = new Engine::Label(std::string("$") + std::to_string(money), "pirulen.ttf", 24, 1294, 48));
-    UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "pirulen.ttf", 24, 1294, 88));
+    UIGroup->AddNewObject(new Engine::Label(std::string("Stage ") + std::to_string(MapId), "Balatro.ttf", 48, 1294, 0));
+    UIGroup->AddNewObject(UIMoney = new Engine::Label(std::string("$") + std::to_string(money), "Balatro.ttf", 30, 1294, 48));
+    UIGroup->AddNewObject(UILives = new Engine::Label(std::string("Life ") + std::to_string(lives), "Balatro.ttf", 30, 1294, 88));
     //coin
-    UIGroup->AddNewObject(UICoinIcon = new Engine::Image("play/goldcoin3.png",1294, 350,48, 48));
-    UIGroup->AddNewObject(UICoins = new Engine::Label(std::to_string(coins),"pirulen.ttf",24,1355,360));
-    UIGroup->AddNewObject(UICoinCount = new Engine::Label("Kill 3 Enemy Soldiers","pirulen.ttf",16,1294,480));
+    UIGroup->AddNewObject(UICoinIcon = new Engine::Image("play/crystal.png",1294, 350,64, 48));
+    UIGroup->AddNewObject(UICoins = new Engine::Label(std::to_string(coins),"Balatro.ttf",30,1355,360));
+    UIGroup->AddNewObject(UICoinCount = new Engine::Label("Kill 3 Slime","Balatro.ttf",24,1294,480));
+    UIGroup->AddNewObject(UIWolfCount = new Engine::Label("Kill 3 Skeleton", "Balatro.ttf",24,1294,520));
+    UIGroup->AddNewObject(UITimeCount = new Engine::Label("Survive 50s", "Balatro.ttf",24,1294,440));
     // Pause Button (toggles SpeedMult between 0 and 1)
     pauseBtn = new Engine::ImageButton(
         "play/pause.png",       // out
@@ -1232,8 +1257,24 @@ void PlayScene::ConstructUI() {
     // fill (green, start at 0 width)
     UIGroup->AddNewObject(killBarFill = new PanelRect(BAR_X, BAR_Y, 0,     BAR_H, al_map_rgba(0,200,0,255)));
     // text "0/3"
-    UIGroup->AddNewObject(killBarLabel = new Engine::Label("0/3", "pirulen.ttf", 20, BAR_X + BAR_W/2, BAR_Y + BAR_H/2));
+    UIGroup->AddNewObject(killBarLabel = new Engine::Label("0/3", "balatro.ttf", 26, BAR_X + BAR_W/2, BAR_Y + BAR_H/2));
     killBarLabel->Anchor = Engine::Point(0.5f, 0.5f);
+
+        // ─── wolf bar ─────────────────────────
+    const int WOLF_BAR_Y = BAR_Y + BAR_H + 20;   // just under the slime bar
+    UIGroup->AddNewObject(wolfBarBg   = new PanelRect(BAR_X, WOLF_BAR_Y, BAR_W, BAR_H, al_map_rgba(100,100,100,255)));
+    UIGroup->AddNewObject(wolfBarFill = new PanelRect(BAR_X, WOLF_BAR_Y,   0, BAR_H, al_map_rgba(  0,200,  0,255)));
+    UIGroup->AddNewObject(wolfBarLabel = new Engine::Label("0/3", "balatro.ttf", 26, BAR_X + BAR_W/2, WOLF_BAR_Y + BAR_H/2));
+    wolfBarLabel->Anchor = Engine::Point(0.5f, 0.5f);
+
+        // ─── survive‐50s bar ────────────────────
+    const int S_BAR_Y = BAR_Y + BAR_H-60 ;                  // above your slime bar (which is at 500)
+    UIGroup->AddNewObject(surviveBarBg   = new PanelRect(BAR_X, S_BAR_Y, BAR_W, BAR_H, al_map_rgba(100,100,100,255)));
+    UIGroup->AddNewObject(surviveBarFill = new PanelRect(BAR_X, S_BAR_Y,   0, BAR_H, al_map_rgba(  0,200,  0,255)));
+    UIGroup->AddNewObject(surviveBarLabel = new Engine::Label("0s/50s", "balatro.ttf", 26, BAR_X + BAR_W/2, BAR_Y-20 + BAR_H/2-20));
+    surviveBarLabel->Anchor = Engine::Point(0.5f, 0.5f);
+
+
     
     //tetris button
     // right of your map, under the turret/shovel buttons.

@@ -1,3 +1,4 @@
+// Hero.cpp
 #include "Hero.hpp"
 #include "Engine/Resources.hpp"
 #include "Engine/GameEngine.hpp"
@@ -35,13 +36,12 @@ void Hero::loadAnim(Anim &anim,
     int W = al_get_bitmap_width(raw);
     int H = al_get_bitmap_height(raw);
     int fw = W / cols;
-    int fh = H;
 
     anim.fps = fps;
     anim.frames.reserve(cols);
     for (int i = 0; i < cols; i++) {
         anim.frames.push_back(
-          al_create_sub_bitmap(raw, i * fw, 0, fw, fh)
+          al_create_sub_bitmap(raw, i * fw, 0, fw, H)
         );
     }
 }
@@ -59,8 +59,7 @@ void Hero::Update(float deltaTime) {
         _frameTime  = 0;
         Velocity    = Engine::Point(0.0f, 0.0f);
     }
-
-    // 2) Dying animation
+    // 2) Dying animation (no movement)
     if (_state == Dying) {
         _frameTime += deltaTime;
         float frameDur = 1.0f / _dieAnim.fps;
@@ -75,7 +74,7 @@ void Hero::Update(float deltaTime) {
         return;
     }
 
-    // 3) Seek nearest enemy
+    // 3) Find nearest enemy
     Enemy* nearest = nullptr;
     float bestD2 = std::numeric_limits<float>::infinity();
     for (auto o : scene->EnemyGroup->GetObjects()) {
@@ -89,7 +88,12 @@ void Hero::Update(float deltaTime) {
         }
     }
 
-    // 4) Chase only if beyond _stopDistance
+    // → decide facing
+    if (nearest) {
+        _faceLeft = (nearest->Position.x < Position.x);
+    }
+
+    // 4) Chase vs stop
     if (nearest) {
         Engine::Point delta = nearest->Position - Position;
         float dist = delta.Magnitude();
@@ -106,21 +110,12 @@ void Hero::Update(float deltaTime) {
     // 5) Move
     Engine::Sprite::Update(deltaTime);
 
-    // 6) Lock rotation to 0 & flip horizontally
-    Rotation = 0.0f;
-    {
-        float w = std::fabs(Size.x);
-        Size.x = (Velocity.x < 0.0f ? -w : w);
-    }
-
-    // 7) Damage & switch state
+    // 6) Attack check (within attackRange)
     bool inRange = false;
-    for (auto o : scene->EnemyGroup->GetObjects()) {
-        auto e = dynamic_cast<Enemy*>(o);
-        float dx = e->Position.x - Position.x;
-        float dy = e->Position.y - Position.y;
-        if (dx*dx + dy*dy <= _range*_range) {
-            e->Hit(_dps * deltaTime);
+    if (nearest) {
+        Engine::Point delta = nearest->Position - Position;
+        if (delta.Magnitude() <= _attackRange) {
+            nearest->Hit(_dps * deltaTime);
             inRange = true;
         }
     }
@@ -131,7 +126,7 @@ void Hero::Update(float deltaTime) {
         _frameTime  = 0;
     }
 
-    // 8) Advance current animation
+    // 7) Advance current animation frame
     Anim &A = (_state == Walking ? _walkAnim : _attackAnim);
     _frameTime += deltaTime;
     float fd = 1.0f / A.fps;
@@ -158,8 +153,8 @@ void Hero::Draw() const {
     float dx = Position.x - dw/2;
     float dy = Position.y - dh/2;
 
-    // flip if moving left
-    if (Velocity.x < 0.0f) {
+    // flip based on _faceLeft
+    if (_faceLeft) {
         dx += dw;
         dw = -dw;
     }
