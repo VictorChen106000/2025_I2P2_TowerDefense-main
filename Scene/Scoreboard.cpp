@@ -3,6 +3,7 @@
 #include "Account/ScoreboardOnline.hpp"            // for FirebaseService
 #include "Engine/GameEngine.hpp"
 #include "UI/Component/ImageButton.hpp"
+#include "UI/Component/Image.hpp" 
 #include "UI/Component/Label.hpp"
 #include <functional>
 #include <fstream>
@@ -12,6 +13,10 @@
 #include <cctype>       // std::isspace
 
 void Scoreboard::Initialize() {
+    bgBitmap = al_load_bitmap("Resource/images/background/sb-bg.png");
+    if (!bgBitmap) {
+        printf("[Scoreboard] failed to load bg image\n");
+    } else printf("SB BG OK!\n");
     // 1) load all scores + timestamps (cloud if signed in, otherwise local file)
     scores.clear();
     if (!ScoreboardOnline::idToken.empty()) {
@@ -179,6 +184,24 @@ void Scoreboard::Initialize() {
     }
 }
 
+void Scoreboard::Draw() const {
+    // clear
+    al_clear_to_color(al_map_rgb(0,0,0));
+
+    // draw full-screen bg
+    int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
+    int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
+    int bw = al_get_bitmap_width(bgBitmap);
+    int bh = al_get_bitmap_height(bgBitmap);
+    al_draw_scaled_bitmap(bgBitmap,
+                          0,0, bw,bh,
+                          0,0, w,h,
+                          0);
+
+    // then let IScene draw all your labels & buttons
+    Group::Draw();
+}
+
 void Scoreboard::NextPageOnClick() {
     int maxPage = (scores.size() - 1) / itemsPerPage;
     if (currentPage < maxPage) {
@@ -199,5 +222,9 @@ void Scoreboard::PrevPageOnClick(){
 }
 
 void Scoreboard::Terminate(){
+    if (bgBitmap) {
+        al_destroy_bitmap(bgBitmap);
+        bgBitmap = nullptr;
+    }
   IScene::Terminate();
 }

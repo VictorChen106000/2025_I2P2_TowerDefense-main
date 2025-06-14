@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include "Engine/IScene.hpp"
+#include <allegro5/allegro.h>        // core Allegro types & drawing routines
+#include <allegro5/allegro_image.h>  // al_load_bitmap, image‐addon init
 
 class Scoreboard : public Engine::IScene {
 public:
@@ -25,6 +27,8 @@ private:
     void PrevPageOnClick();
     void NextPageOnClick();
     void BackOnClick();
+    void Draw() const override;
+    ALLEGRO_BITMAP* bgBitmap = nullptr;
 };
 
 #endif // SCOREBOARDSCENE_HPP :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
