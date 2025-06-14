@@ -189,6 +189,9 @@ public:
 
     //earcoin
     void EarnCoin(int c);
+    // returns the current “crystal” count
+    int GetGoldCoins() const { return coins; }
+
 
     int coins;
     int soldierkillcount;
@@ -221,8 +224,9 @@ public:
     Engine::Label* surviveBarLabel  = nullptr;
     float surviveTimer = 0.0f;
     static constexpr float SURVIVE_GOAL = 50.0f;
+    bool surviveRewarded = false;
 
-
+   
   
 };
 #endif   // PLAYSCENE_HPP

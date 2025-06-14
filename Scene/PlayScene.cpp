@@ -138,11 +138,14 @@ void PlayScene::Terminate() {
 void PlayScene::Update(float deltaTime) {
         // -- survival timer
     surviveTimer += deltaTime;
+    if (!surviveRewarded) {
+    surviveTimer += deltaTime * SpeedMult;
     if (surviveTimer >= SURVIVE_GOAL) {
         EarnCoin(1);
-        surviveTimer -= SURVIVE_GOAL;        // reset (carry over any overflow)
+        surviveRewarded = true;
     }
-    UpdateSurviveBar();
+}
+UpdateSurviveBar();
 
     elapsedTime += deltaTime;
     // If we use deltaTime directly, then we might have Bullet-through-paper problem.
@@ -1174,7 +1177,7 @@ void PlayScene::ConstructUI() {
     UIGroup->AddNewObject(UICoins = new Engine::Label(std::to_string(coins),"Balatro.ttf",30,1355,360));
     UIGroup->AddNewObject(UICoinCount = new Engine::Label("Kill 3 Slime","Balatro.ttf",24,1294,480));
     UIGroup->AddNewObject(UIWolfCount = new Engine::Label("Kill 3 Skeleton", "Balatro.ttf",24,1294,520));
-    UIGroup->AddNewObject(UITimeCount = new Engine::Label("Survive 50s", "Balatro.ttf",24,1294,440));
+    UIGroup->AddNewObject(UITimeCount = new Engine::Label("Survive 50s (Only Once)", "Balatro.ttf",24,1294,440));
     // Pause Button (toggles SpeedMult between 0 and 1)
     pauseBtn = new Engine::ImageButton(
         "play/pause.png",       // out
