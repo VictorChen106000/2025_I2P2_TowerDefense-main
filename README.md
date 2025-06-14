@@ -104,9 +104,17 @@ target_link_libraries(YourGame PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 DYLD_LIBRARY_PATH=/opt/homebrew/opt/openssl/lib ./YourGame
 ```
 
-###👥 Contributors
-Daryn James Welling (白鸿恩) 113006271 — Local and online account for mac and windows, tetronomical based map editor, map UI, UI handling
-Revallo (朱冠名）113006268 - Updragable Turret and Skilled Enemies, Quest and Mission, Hero Character, Shop, UI handling
-Thet Zaw Hein (陳家俊）113006270- Online account debug for Windows, AI adaptive enemy waves, UI handling ( Button UI, Background, and Scoreboard) 
-Based on the I2P(II) Final Project at National Tsing Hua University (NTHU)
+## 👥 Contributors
+
+- **Daryn James Welling (白鸿恩) — 113006271**  
+  Local and online account for mac and windows, tetromino-based map editor, map UI, UI handling
+
+- **Revallo (朱冠名) — 113006268**  
+  Upgradable Turret and Skilled Enemies, Quest and Mission, Hero Character, Shop, UI handling
+
+- **Thet Zaw Hein (陳家俊) — 113006270**  
+  Online account debug for Windows, AI adaptive enemy waves, UI handling (Button UI, Background, and Scoreboard)
+
+*Based on the I2P(II) Final Project at National Tsing Hua University (NTHU)*
+
 
