@@ -143,6 +143,8 @@ add_executable(2025_I2P2_TowerDefense
     Turret/BallistaTurret.hpp
     Turret/BowTurret.cpp
     Turret/BowTurret.hpp
+    Turret/Hero.cpp
+    Turret/Hero.hpp
 
     Shovel/ShovelButton.hpp
     

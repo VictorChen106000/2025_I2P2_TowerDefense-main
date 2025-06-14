@@ -13,6 +13,7 @@
 #include "UI/Component/ImageButton.hpp"
 #include "Tetris/TetrisBlock.hpp"
 #include <tuple>
+#include "Turret/Hero.hpp"
 
 class Turret;
 namespace Engine {
@@ -84,6 +85,8 @@ private:
     float  elapsedTime = 0.0f;
     bool shovelMode = false;
     Engine::Sprite* shovelPreview = nullptr;
+    bool heroMode = false;
+    Engine::Sprite* heroPreview = nullptr;
     bool isPaused = false;
     int savedSpeedMult = 1;
     Engine::ImageButton* quitBtn = nullptr;
@@ -149,6 +152,7 @@ public:
     Group *EnemyGroup;
     Group *EffectGroup;
     Group *UIGroup;
+    Group *HeroGroup;
     Engine::Label *UIMoney;
     Engine::Label *UILives;
     Engine::Image *imgTarget;
