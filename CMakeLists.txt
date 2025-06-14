@@ -122,7 +122,6 @@ add_executable(2025_I2P2_TowerDefense
     Scene/SettingsScene.hpp
     Scene/Scoreboard.hpp
     Scene/Scoreboard.cpp
-    Scene/ShopScene.cpp
     Scene/ShopScene.hpp
     Scene/ModeSelectionScene.hpp
     Scene/ModeSelectionScene.cpp
