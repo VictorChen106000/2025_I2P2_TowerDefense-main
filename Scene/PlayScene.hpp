@@ -178,6 +178,9 @@ public:
     void UIBtnClicked(int id);
     bool CheckSpaceValid(int x, int y);
     std::vector<std::vector<int>> CalculateBFSDistance();
+    // In class PlayScene:
+  std::vector<std::vector<int>> CalculateBFSDistance(const std::vector<std::vector<TileType>>& state) const;
+
     float CalculatePlayerPower();
     std::pair<int, float> GenerateAdaptiveEnemy(float D);
     void AddKill() {++killCount;}

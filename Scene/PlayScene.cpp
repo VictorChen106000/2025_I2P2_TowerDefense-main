@@ -317,6 +317,47 @@ void PlayScene::Update(float deltaTime) {
 }
 void PlayScene::Draw() const {
     IScene::Draw();
+
+    if (placing && previewBlock) {
+        // 1) Copy current mapState
+        auto tempState = mapState;  // allowed in const
+
+        // 2) Get preview’s snapped grid cell from its Position (already set in OnMouseMove)
+        Engine::Point mouseP = Engine::GameEngine::GetInstance().GetMousePosition();
+        int gx = int(mouseP.x) / BlockSize;
+        int gy = int(mouseP.y) / BlockSize;
+
+        // 3) “Place” preview cells in tempState
+        for (auto [dx, dy] : previewBlock->GetCells()) {
+            int x = gx + dx;
+            int y = gy + dy;
+            if (x >= 0 && x < MapWidth && y >= 0 && y < MapHeight) {
+                tempState[y][x] = TILE_TETRIS;
+            }
+        }
+
+        // 4) Compute BFS on the hypothetical map
+        auto newDist = CalculateBFSDistance(tempState);
+
+        // 5) Compare vs. real mapDistance, draw overlays
+        for (int y = 0; y < MapHeight; y++) {
+            for (int x = 0; x < MapWidth; x++) {
+                int orig = mapDistance[y][x];
+                int neu  = newDist[y][x];
+                if (orig >= 0 && neu >= 0 && neu != orig) {
+                    int delta = neu - orig;
+                    int alpha = std::min(200, std::abs(delta) * 20);
+                    ALLEGRO_COLOR col = (delta > 0)
+                        ? al_map_rgba(255, 0, 0, alpha)   // longer path → red
+                        : al_map_rgba(0, 255, 0, alpha);  // shorter → green
+                    float px = x * BlockSize;
+                    float py = y * BlockSize;
+                    al_draw_filled_rectangle(px, py, px + BlockSize, py + BlockSize, col);
+                }
+            }
+        }
+    }
+
     if (DebugMode) {
         // Draw reverse BFS distance on all reachable blocks.
         for (int i = 0; i < MapHeight; i++) {
@@ -1378,6 +1419,36 @@ std::vector<std::vector<int>> PlayScene::CalculateBFSDistance() {
 
     return dist;
 }
+
+std::vector<std::vector<int>> PlayScene::CalculateBFSDistance(const std::vector<std::vector<TileType>>& state) const {
+    static auto isWalkable = [](TileType t) {
+        return t == TILE_S || t == TILE_WHITE_FLOOR;
+    };
+    std::vector<std::vector<int>> dist(MapHeight, std::vector<int>(MapWidth, -1));
+    std::queue<Engine::Point> que;
+    // Seed with exits:
+    for (auto &e : EndGridPoints) {
+        if (e.x >= 0 && e.x < MapWidth && e.y >= 0 && e.y < MapHeight
+            && isWalkable(state[e.y][e.x])) {
+            dist[e.y][e.x] = 0;
+            que.push(e);
+        }
+    }
+    // BFS:
+    while (!que.empty()) {
+        Engine::Point p = que.front(); que.pop();
+        for (auto &dir : directions) {
+            int nx = p.x + dir.x;
+            int ny = p.y + dir.y;
+            if (nx < 0 || nx >= MapWidth || ny < 0 || ny >= MapHeight) continue;
+            if (!isWalkable(state[ny][nx]) || dist[ny][nx] != -1) continue;
+            dist[ny][nx] = dist[p.y][p.x] + 1;
+            que.push(Engine::Point(nx, ny));
+        }
+    }
+    return dist;
+}
+
 
 
 void PlayScene::BGMSlideOnValueChanged(float value) {
