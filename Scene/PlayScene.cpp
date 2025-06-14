@@ -340,18 +340,60 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
     const int mapH = MapHeight * BlockSize;
     bool clickOnMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
     //aaaaaaaaaaaaa
-    if ((button & 1) && !isPaused) {
-        for (auto obj : TowerGroup->GetObjects()) {
-            auto bt = dynamic_cast<BowTurret*>(obj);
-            if (!bt) continue;
-            float dx = mx - bt->Position.x;
-            float dy = my - bt->Position.y;
-            const float pickRadius = 32; 
-            if (dx*dx + dy*dy < pickRadius*pickRadius) {
-                isAiming = true;
-                aimingTurret = bt;
-                return;   // consume the click
+    if (placing && previewBlock) {
+        // Left-click: either place if over map, or cancel if outside
+        if (button & 1) {
+            int gx = mx / BlockSize;
+            int gy = my / BlockSize;
+            if (clickOnMap) {
+                // attempt placement
+                bool ok = true;
+                for (auto [dx,dy] : previewBlock->GetCells()) {
+                    int xx = gx + dx, yy = gy + dy;
+                    if (xx < 0 || xx >= MapWidth || yy < 0 || yy >= MapHeight
+                     || mapState[yy][xx] != TILE_WHITE_FLOOR) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok && !CanPlaceTetrisAt(gx, gy, previewBlock->GetCells()))
+                    ok = false;
+                if (ok) {
+                    // commit placement
+                    for (auto* cell : previewBlock->GetSprites()) {
+                        cell->GetObjectIterator()->first = false;
+                        UIGroup->RemoveObject(cell->GetObjectIterator());
+                        GroundEffectGroup->AddNewObject(cell);
+                    }
+                    previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
+                    for (auto [dx,dy] : previewBlock->GetCells())
+                        mapState[gy+dy][gx+dx] = TILE_TETRIS;
+                    mapDistance = CalculateBFSDistance();
+                    for (auto& obj : EnemyGroup->GetObjects())
+                        dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
+                    delete previewBlock;
+                    previewBlock = nullptr;
+                    placing = false;
+                } else {
+                    // invalid placement feedback
+                    Engine::Sprite* spr = new DirtyEffect(
+                        "play/target-invalid.png", 1,
+                        gx * BlockSize + BlockSize/2,
+                        gy * BlockSize + BlockSize/2
+                    );
+                    GroundEffectGroup->AddNewObject(spr);
+                    spr->Rotation = 0;
+                    // keep placing = true for retry
+                }
+            } else {
+                // clicked outside map: cancel drag
+                for (auto* cellSprite : previewBlock->GetSprites())
+                    UIGroup->RemoveObject(cellSprite->GetObjectIterator());
+                delete previewBlock;
+                previewBlock = nullptr;
+                placing = false;
             }
+            return; // consume click
         }
     }
     if ((button & 2) && placing && previewBlock) {
@@ -472,51 +514,22 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
     
     IScene::OnMouseUp(button, mx, my);
 
-    if (placing && previewBlock && (button & 1)) {
-        int gx = mx / BlockSize;
-        int gy = my / BlockSize;
-        bool ok = true;
-        for (auto [dx,dy] : previewBlock->GetCells()) {
-            int xx = gx + dx, yy = gy + dy;
-            if (xx<0 || xx>=MapWidth
-             || yy<0 || yy>=MapHeight
-             || mapState[yy][xx] != TILE_WHITE_FLOOR) {
-                ok = false;
-                break;
-            }
-        }
-        if (ok) {
-            // 1) remove each cell from UIGroup, then add to TowerGroup
-            for (auto* cell : previewBlock->GetSprites()) {
-                cell->GetObjectIterator()->first = false;      // keep it alive
-                UIGroup->RemoveObject(cell->GetObjectIterator());
-                GroundEffectGroup->AddNewObject(cell);
-            }
-            // one call re-adds all four sprites into TowerGroup
-            previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
-            
-
-        
-            // 2) mark the tiles and recalc BFS
-            for (auto [dx,dy] : previewBlock->GetCells())
-                mapState[gy+dy][gx+dx] = TILE_TETRIS;
-            mapDistance = CalculateBFSDistance();
-            for (auto& obj : EnemyGroup->GetObjects())
-                dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
-        
-            // 3) snap the whole block into its final world position
-            
-        
-            // 4) clear drag state
-            placing      = false;
+    if (placing && previewBlock) {
+        // Optional: if you want release-outside to cancel:
+        const int mapW = MapWidth * BlockSize;
+        const int mapH = MapHeight * BlockSize;
+        bool overMap = mx >= 0 && mx < mapW && my >= 0 && my < mapH;
+        if (!overMap) {
+            // cancel drag
+            for (auto* cellSprite : previewBlock->GetSprites())
+                UIGroup->RemoveObject(cellSprite->GetObjectIterator());
             delete previewBlock;
             previewBlock = nullptr;
-        
-        
-
+            placing = false;
         }
-        return;  // <–– drop here, so we don't also run the turret/shovel code below
+        // If released over map, do nothing: placement was on mouse-down
     }
+
     if (isPaused) return; 
     const int mapPixelWidth  = MapWidth  * BlockSize;  // 20 * 64 = 1280
     const int mapPixelHeight = MapHeight * BlockSize;  // 13 * 64 =  832
