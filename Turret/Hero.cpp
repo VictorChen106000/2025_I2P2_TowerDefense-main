@@ -6,14 +6,14 @@
 #include <limits>
 #include <cmath>
 #include <algorithm>
+#include <allegro5/allegro_primitives.h>
 
 Hero::Hero(float x, float y, float scale)
-  : Engine::Sprite("play/crystal.png", x, y)
+  : Engine::Sprite("play/yellowninja.png", x, y)
   , _scale(scale)
 {
     Anchor = Engine::Point(0.5f, 0.5f);
 
-    // load each sprite-sheet:  path, columns, fps
     loadAnim(_walkAnim,   "play/yellowninjawalk.png",   10, 10.0f);
     loadAnim(_attackAnim, "play/yellowninjaattack.png", 20, 15.0f);
     loadAnim(_dieAnim,    "play/yellowninjadie.png",    14,  8.0f);
@@ -21,7 +21,7 @@ Hero::Hero(float x, float y, float scale)
     _state      = Walking;
     _frameIndex = 0;
     _frameTime  = 0;
-    Velocity    = Engine::Point(0,0);
+    Velocity    = Engine::Point(0.0f, 0.0f);
 }
 
 void Hero::loadAnim(Anim &anim,
@@ -29,7 +29,6 @@ void Hero::loadAnim(Anim &anim,
                     int cols,
                     float fps)
 {
-    // grab the shared bitmap
     anim.sheet = Engine::Resources::GetInstance().GetBitmap(path);
     ALLEGRO_BITMAP* raw = anim.sheet.get();
 
@@ -41,9 +40,8 @@ void Hero::loadAnim(Anim &anim,
     anim.fps = fps;
     anim.frames.reserve(cols);
     for (int i = 0; i < cols; i++) {
-        // slice out frame i
         anim.frames.push_back(
-          al_create_sub_bitmap(raw, i*fw, 0, fw, fh)
+          al_create_sub_bitmap(raw, i * fw, 0, fw, fh)
         );
     }
 }
@@ -54,15 +52,15 @@ void Hero::Update(float deltaTime) {
         Engine::GameEngine::GetInstance().GetActiveScene()
     );
 
-    // 1) If lifetime expired, switch to dying
+    // 1) Lifetime expiry → start dying
     if (_elapsed >= _lifetime && _state != Dying) {
         _state      = Dying;
         _frameIndex = 0;
         _frameTime  = 0;
-        Velocity    = Engine::Point(0,0);
+        Velocity    = Engine::Point(0.0f, 0.0f);
     }
 
-    // 2) Handle dying animation
+    // 2) Dying animation
     if (_state == Dying) {
         _frameTime += deltaTime;
         float frameDur = 1.0f / _dieAnim.fps;
@@ -90,18 +88,32 @@ void Hero::Update(float deltaTime) {
             nearest = e;
         }
     }
+
+    // 4) Chase only if beyond _stopDistance
     if (nearest) {
-        auto dir = (nearest->Position - Position).Normalize();
-        Velocity = dir * _speed;
-        Rotation = std::atan2(dir.y, dir.x) + ALLEGRO_PI/2;
+        Engine::Point delta = nearest->Position - Position;
+        float dist = delta.Magnitude();
+        if (dist > _stopDistance) {
+            Engine::Point dir = delta.Normalize();
+            Velocity = dir * _speed;
+        } else {
+            Velocity = Engine::Point(0.0f, 0.0f);
+        }
     } else {
-        Velocity = Engine::Point(0,0);
+        Velocity = Engine::Point(0.0f, 0.0f);
     }
 
-    // move
+    // 5) Move
     Engine::Sprite::Update(deltaTime);
 
-    // 4) Damage & decide walk vs attack
+    // 6) Lock rotation to 0 & flip horizontally
+    Rotation = 0.0f;
+    {
+        float w = std::fabs(Size.x);
+        Size.x = (Velocity.x < 0.0f ? -w : w);
+    }
+
+    // 7) Damage & switch state
     bool inRange = false;
     for (auto o : scene->EnemyGroup->GetObjects()) {
         auto e = dynamic_cast<Enemy*>(o);
@@ -112,27 +124,26 @@ void Hero::Update(float deltaTime) {
             inRange = true;
         }
     }
-    State nextState = inRange ? Attacking : Walking;
-    if (nextState != _state) {
-        _state      = nextState;
+    State next = inRange ? Attacking : Walking;
+    if (next != _state) {
+        _state      = next;
         _frameIndex = 0;
         _frameTime  = 0;
     }
 
-    // 5) Advance current animation
+    // 8) Advance current animation
     Anim &A = (_state == Walking ? _walkAnim : _attackAnim);
     _frameTime += deltaTime;
-    float frameDur = 1.0f / A.fps;
-    if (_frameTime >= frameDur) {
-        _frameTime -= frameDur;
+    float fd = 1.0f / A.fps;
+    if (_frameTime >= fd) {
+        _frameTime -= fd;
         _frameIndex = (_frameIndex + 1) % int(A.frames.size());
     }
 }
 
 void Hero::Draw() const {
-    // select anim sheet
     const Anim* A = nullptr;
-    switch(_state) {
+    switch (_state) {
       case Walking:   A = &_walkAnim;   break;
       case Attacking: A = &_attackAnim; break;
       case Dying:     A = &_dieAnim;    break;
@@ -142,14 +153,23 @@ void Hero::Draw() const {
     int fw = al_get_bitmap_width(bmp);
     int fh = al_get_bitmap_height(bmp);
 
-    // draw centered, scaled, rotated
-    al_draw_tinted_scaled_rotated_bitmap(
-      bmp,
-      Tint,
-      fw/2, fh/2,
-      Position.x, Position.y,
-      _scale, _scale,
-      Rotation,
-      0
+    float dw = fw * _scale;
+    float dh = fh * _scale;
+    float dx = Position.x - dw/2;
+    float dy = Position.y - dh/2;
+
+    // flip if moving left
+    if (Velocity.x < 0.0f) {
+        dx += dw;
+        dw = -dw;
+    }
+
+    al_draw_tinted_scaled_bitmap(
+        bmp,
+        Tint,
+        0, 0, fw, fh,
+        dx, dy,
+        dw, dh,
+        0
     );
 }

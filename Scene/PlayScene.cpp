@@ -1171,15 +1171,15 @@ void PlayScene::ConstructUI() {
 
     //hero
     auto heroBtn = new Engine::ImageButton(
-    "play/crystal.png",   // up & down images
-    "play/crystal.png",
+    "play/yellowninja.png",   // up & down images
+    "play/yellowninja.png",
     1294, 300,       // pick a spot in your side panel
-    32, 32
+    64, 64
 );
     heroBtn->SetOnClickCallback([this](){
         if (isPaused) return;
         heroMode = true;
-        heroPreview = new Engine::Sprite("play/crystal.png", 0, 0);
+        heroPreview = new Engine::Sprite("play/yellowninja.png", 0, 0);
         heroPreview->Tint = al_map_rgba(255,255,255,150);
         heroPreview->Anchor = Engine::Point(0.5, 0.5);
         UIGroup->AddNewObject(heroPreview);
