@@ -1,3 +1,4 @@
+// ShopScene.hpp
 #ifndef SHOPSCENE_HPP
 #define SHOPSCENE_HPP
 
@@ -29,9 +30,12 @@ private:
 
     // UI pointers
     Engine::Label*       crystalCountLbl = nullptr;
+    Engine::Label*       memek = nullptr;
     Engine::ImageButton* buyBtn          = nullptr;
     Engine::Image*       buyCostIcon     = nullptr;
+    Engine::Image*       meki = nullptr;
     Engine::Label*       buyCostLabel    = nullptr;
+    Engine::ImageButton* crystalBtn      = nullptr;  // ← New crystal button
 
 public:
     void Initialize() override;
@@ -46,3 +50,4 @@ public:
 };
 
 #endif // SHOPSCENE_HPP
+ 
