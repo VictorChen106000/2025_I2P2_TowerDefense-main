@@ -335,6 +335,26 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         IScene::OnMouseDown(button, mx, my);
         return;   // …but skip all the rest (turret/shovel logic)
     }
+
+    if ((button & 1) && !placing) {
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
+            // find the turret instance at this cell
+            for (auto obj : TowerGroup->GetObjects()) {
+                Turret* turret = dynamic_cast<Turret*>(obj);
+                if (!turret) continue;
+                int tx = int(turret->Position.x) / BlockSize;
+                int ty = int(turret->Position.y) / BlockSize;
+                if (tx == gx && ty == gy) {
+                    // Start aiming on this turret
+                    isAiming = true;
+                    aimingTurret = turret;
+                    return; // consume for aiming
+                }
+            }
+        }
+    }
     // Calculate whether the click is on the map area:
     const int mapW = MapWidth * BlockSize;
     const int mapH = MapHeight * BlockSize;
@@ -571,8 +591,8 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         const int x = mx / BlockSize;
         const int y = my / BlockSize;
 
-        // Check if the clicked tile has a turret (i.e., is occupied)
-        if (mapState[y][x] == TILE_OCCUPIED) {
+        if (x < 0 || x >= MapWidth || y < 0 || y >= MapHeight) return;
+        if (mapState[y][x] == TILE_OCCUPIED ) {
             // Iterate over the TowerGroup to find the turret clicked
             for (auto obj : TowerGroup->GetObjects()) {
                 Turret* turret = dynamic_cast<Turret*>(obj);
@@ -591,16 +611,16 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                             EarnMoney(-upgradeCost);
                             turret->updrage();
                              float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
-                             AudioHelper::PlaySample("levelup.mp3", false, vol);
+                            AudioHelper::PlaySample("levelup.ogg", false, vol);
 
                             // Optionally: show a visual upgrade effect or change sprite, etc.
                         } else {
                             float vol = std::clamp(AudioHelper::SFXVolume * 20.0f, 0.0f, 20.0f);
-                            AudioHelper::PlaySample("cancel.mp3", false, vol);
+                            AudioHelper::PlaySample("cancel.ogg", false, vol);
                         }
                     } else {
                         float vol = std::clamp(AudioHelper::SFXVolume * 15.0f, 0.0f, 15.0f);
-                        AudioHelper::PlaySample("cancel.mp3", false, vol);
+                        AudioHelper::PlaySample("cancel.ogg", false, vol);
                     }
                     break; // Exit loop after upgrading the turret
                 }
