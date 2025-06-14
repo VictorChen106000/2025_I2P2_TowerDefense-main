@@ -382,6 +382,8 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         }
     }
     // 0) click on one of our panel icons?
+// 0) click on one of our panel icons?
+// 0) click on one of our panel icons?
 if ((button & 1) && !placing) {
     for (auto &tpl : _tetrisIcons) {
       TetrominoType type;
@@ -389,18 +391,35 @@ if ((button & 1) && !placing) {
       std::tie(type,x,y,w,h) = tpl;
       if (mx >= x && mx < x + w
        && my >= y && my < y + h) {
-        // begin dragging that shape
-        delete previewBlock;
+        
+        // ——— clean up any old preview ———
+        if (previewBlock) {
+          for (auto* oldCell : previewBlock->GetSprites())
+            UIGroup->RemoveObject(oldCell->GetObjectIterator());
+          previewBlock = nullptr;
+          placing = false;
+        }
+        
+        // ——— start a new drag ———
         previewBlock = new TetrisBlock(type, BlockSize);
         placing      = true;
-        // send it into the map‐layer so it follows your OnMouseMove
-        
-
-        
+  
+        // snap it into place before drawing
+        int gx = mx / BlockSize;
+        int gy = my / BlockSize;
+        previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
+  
+        // add its sprites into UIGroup
+        for (auto* cell : previewBlock->GetSprites()) {
+          cell->Visible = true;
+          UIGroup->AddNewObject(cell);
+        }
         return;  // consume the click
       }
     }
-  }
+}
+
+  
   
     // Always forward to base for button callbacks (so your TurretButton / ShovelButton still work)
     IScene::OnMouseDown(button, mx, my);
@@ -457,32 +476,33 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
             }
         }
         if (ok) {
-            // 1) mark those cells in mapState
-            auto cells = previewBlock->GetCells();
-        if (!CanPlaceTetrisAt(gx, gy, cells)) {
-            // play your “invalid” effect
-            for (auto [dx,dy] : cells) {
-                float cx = (gx+dx)*BlockSize + BlockSize/2;
-                float cy = (gy+dy)*BlockSize + BlockSize/2;
-                auto e = new DirtyEffect("play/target-invalid.png", 1, cx, cy);
-                GroundEffectGroup->AddNewObject(e);
-                e->Rotation = 0;
+            // 1) remove each cell from UIGroup, then add to TowerGroup
+            for (auto* cell : previewBlock->GetSprites()) {
+                cell->GetObjectIterator()->first = false;      // keep it alive
+                UIGroup->RemoveObject(cell->GetObjectIterator());
+                GroundEffectGroup->AddNewObject(cell);
             }
-            return;
-        }
-        // otherwise go ahead and commit:
-        for (auto [dx,dy] : cells)
-            mapState[gy+dy][gx+dx] = TILE_TETRIS;
-        previewBlock->SetPosition(gx*BlockSize, gy*BlockSize);
-        previewBlock->CommitToScene(TowerGroup);
-                    mapDistance = CalculateBFSDistance();
-            // force every live enemy to re-build its path
-            for (auto & obj : EnemyGroup->GetObjects()) {
+            // one call re-adds all four sprites into TowerGroup
+            previewBlock->SetPosition(gx * BlockSize, gy * BlockSize);
+            
+
+        
+            // 2) mark the tiles and recalc BFS
+            for (auto [dx,dy] : previewBlock->GetCells())
+                mapState[gy+dy][gx+dx] = TILE_TETRIS;
+            mapDistance = CalculateBFSDistance();
+            for (auto& obj : EnemyGroup->GetObjects())
                 dynamic_cast<Enemy*>(obj)->UpdatePath(mapDistance);
-            }
-        // (no need to rerun BFS here—it's been done in CanPlaceTetrisAt)
-        placing = false;
-        previewBlock = nullptr;
+        
+            // 3) snap the whole block into its final world position
+            
+        
+            // 4) clear drag state
+            placing      = false;
+            delete previewBlock;
+            previewBlock = nullptr;
+        
+        
 
         }
         return;  // <–– drop here, so we don't also run the turret/shovel code below

@@ -15,7 +15,9 @@ public:
 
     // Get the 4 cell-offsets so PlayScene can do placement checks itself
     const Shape& GetCells() const { return _cells; }
-
+    const std::vector<Engine::Sprite*>& GetSprites() const {
+        return _children;
+    }
     // Create / destroy
     TetrisBlock(TetrominoType type, int tileSize);
     ~TetrisBlock();
