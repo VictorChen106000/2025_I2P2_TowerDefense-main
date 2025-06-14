@@ -13,10 +13,10 @@
 #include <cctype>       // std::isspace
 
 void Scoreboard::Initialize() {
-    bgBitmap = al_load_bitmap("Resource/images/background/sb-bg.png");
-    if (!bgBitmap) {
-        printf("[Scoreboard] failed to load bg image\n");
-    } else printf("SB BG OK!\n");
+    // bgBitmap = al_load_bitmap("Resource/images/background/sb-bg.png");
+    // if (!bgBitmap) {
+    //     printf("[Scoreboard] failed to load bg image\n");
+    // } else printf("SB BG OK!\n");
     // 1) load all scores + timestamps (cloud if signed in, otherwise local file)
     scores.clear();
     if (!ScoreboardOnline::idToken.empty()) {
@@ -56,29 +56,58 @@ void Scoreboard::Initialize() {
     int h     = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
 
-    constexpr float leftMarginPct  = 0.10f;  // 10% from left
-    constexpr float rightMarginPct = 0.90f;  // 10% from right
+     // 2a) full-screen background (replace “bg.png” with whatever you actually have)
+    AddNewObject(new Engine::Image(
+        "background/dirty_2.png",  // e.g. Resource/images/background/bg.png
+        0, 0,
+        w, h
+    ));
+
+    // 2b) scoreboard panel at 80% of screen size, centered
+    float panelW = w * 0.8f;
+    float panelH = h * 0.8f;
+    AddNewObject(new Engine::Image(
+        "background/sb-bg2.png",  // your decorative frame
+        (w - panelW) * 0.5f,
+        (h - panelH) * 0.5f,
+        panelW,
+        panelH
+    ));
+
+    constexpr float leftMarginPct  = 0.20f;  // 10% from left
+    constexpr float rightMarginPct = 0.80f;  // 10% from right
 
     const float colNameX  = w * leftMarginPct;
     const float colScoreX = w * 0.50f;
     const float colTimeX  = w * rightMarginPct;
 
-    const int titleY      = 80;
-    const int startY      = 160;
+    const int titleY      = 60;
+    const int startY      = 180;
     const int bottomY     = h - 100;
-    const int lineSpacing = 60;
+    const int lineSpacing = 40;
 
     // calculate pagination
     itemsPerPage = (bottomY - startY) / lineSpacing;
     int maxPage  = (scores.size() - 1) / itemsPerPage;
     currentPage  = std::max(0, std::min(currentPage, maxPage));
 
+    // 2c) small background behind the title
+    float titleBgW = w * 0.2f;              // half screen–wide
+    float titleBgH = 90;                    // 60px tall
+    float titleBgX = halfW - titleBgW/2;    // centered
+    float titleBgY = titleY - titleBgH/2;   // vertically center on titleY
+
+    AddNewObject(new Engine::Image(
+        "background/sb-title-bg.png",                  // your little art file
+        titleBgX, titleBgY + 5,
+        titleBgW, titleBgH
+    ));
     // 3) draw title
     AddNewObject(new Engine::Label(
         "SCOREBOARD",
-        "balatro.ttf", 64,
+        "balatro.ttf", 32,
         halfW, titleY,
-        0, 255, 0, 255,  // green text
+        255, 255, 255, 255,  // green text
         0.5f, 0.5f       // centered
     ));
 
@@ -91,7 +120,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             e.name,
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             colNameX, y,
             255, 255, 255, 255,  // white text
             0.f, 0.5f            // left-aligned
@@ -99,7 +128,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             std::to_string(e.pts),
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             colScoreX, y,
             255, 255, 255, 255,
             0.f, 0.5f
@@ -107,7 +136,7 @@ void Scoreboard::Initialize() {
 
         AddNewObject(new Engine::Label(
             e.timestamp,
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             colTimeX, y,
             255, 255, 255, 255,
             1.f, 0.5f            // right-aligned
@@ -134,7 +163,7 @@ void Scoreboard::Initialize() {
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "PREV PAGE",
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             x + btnW/2 - 100, btnY + btnH/2,
             255, 255, 255, 255,
             0.5f, 0.5f
@@ -155,7 +184,7 @@ void Scoreboard::Initialize() {
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "BACK",
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             x + btnW/2, btnY + btnH/2,
             255, 255, 255, 255,
             0.5f, 0.5f
@@ -176,7 +205,7 @@ void Scoreboard::Initialize() {
         AddNewControlObject(b);
         AddNewObject(new Engine::Label(
             "NEXT PAGE",
-            "balatro.ttf", 64,
+            "balatro.ttf", 32,
             x + btnW/2 + 100, btnY + btnH/2,
             255, 255, 255, 255,
             0.5f, 0.5f
@@ -184,23 +213,23 @@ void Scoreboard::Initialize() {
     }
 }
 
-void Scoreboard::Draw() const {
-    // clear
-    al_clear_to_color(al_map_rgb(0,0,0));
+// void Scoreboard::Draw() const {
+//     // clear
+//     al_clear_to_color(al_map_rgb(0,0,0));
 
-    // draw full-screen bg
-    int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
-    int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
-    int bw = al_get_bitmap_width(bgBitmap);
-    int bh = al_get_bitmap_height(bgBitmap);
-    al_draw_scaled_bitmap(bgBitmap,
-                          0,0, bw,bh,
-                          0,0, w,h,
-                          0);
+//     // draw full-screen bg
+//     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
+//     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
+//     int bw = al_get_bitmap_width(bgBitmap);
+//     int bh = al_get_bitmap_height(bgBitmap);
+//     al_draw_scaled_bitmap(bgBitmap,
+//                           0,0, bw,bh,
+//                           0,0, w,h,
+//                           0);
 
-    // then let IScene draw all your labels & buttons
-    Group::Draw();
-}
+//     // then let IScene draw all your labels & buttons
+//     Group::Draw();
+// }
 
 void Scoreboard::NextPageOnClick() {
     int maxPage = (scores.size() - 1) / itemsPerPage;
@@ -222,9 +251,9 @@ void Scoreboard::PrevPageOnClick(){
 }
 
 void Scoreboard::Terminate(){
-    if (bgBitmap) {
-        al_destroy_bitmap(bgBitmap);
-        bgBitmap = nullptr;
-    }
+    // if (bgBitmap) {
+    //     al_destroy_bitmap(bgBitmap);
+    //     bgBitmap = nullptr;
+    // }
   IScene::Terminate();
 }

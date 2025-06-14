@@ -27,8 +27,8 @@ private:
     void PrevPageOnClick();
     void NextPageOnClick();
     void BackOnClick();
-    void Draw() const override;
-    ALLEGRO_BITMAP* bgBitmap = nullptr;
+    // void Draw() const override;
+    // ALLEGRO_BITMAP* bgBitmap = nullptr;
 };
 
 #endif // SCOREBOARDSCENE_HPP :contentReference[oaicite:0]{index=0}:contentReference[oaicite:1]{index=1}
