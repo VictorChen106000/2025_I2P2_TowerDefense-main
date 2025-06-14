@@ -24,7 +24,14 @@ void LoseScene::Initialize() {
     btn->EnableHoverScale(0.9f);
     AddNewControlObject(btn);
     AddNewObject(new Engine::Label("Back", "balatro.ttf", 48, halfW, halfH * 7 / 4, 255, 255, 255, 255, 0.5, 0.5));
-    bgmInstance = AudioHelper::PlaySample("lose-sound2.ogg", false, AudioHelper::BGMVolume, PlayScene::DangerTime);
+    // bgmInstance = AudioHelper::PlaySample("lose-sound2.mp3", false, AudioHelper::BGMVolume, PlayScene::DangerTime);
+    // play the losing sound from the very start, no countdown cue
+    bgmInstance = AudioHelper::PlaySample(
+        "lose-sound2.mp3",
+        false,
+        AudioHelper::BGMVolume,
+        0.0f
+    );
 }
 void LoseScene::Terminate() {
     AudioHelper::StopSample(bgmInstance);

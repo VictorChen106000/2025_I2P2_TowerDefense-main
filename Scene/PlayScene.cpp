@@ -123,7 +123,7 @@ void PlayScene::Initialize() {
     preview = nullptr;
     UIGroup->AddNewObject(imgTarget);
     // Preload Lose Scene
-    deathBGMInstance = Engine::Resources::GetInstance().GetSampleInstance("lose-sound.ogg");
+    deathBGMInstance = Engine::Resources::GetInstance().GetSampleInstance("lose-sound2.mp3");
     Engine::Resources::GetInstance().GetBitmap("lose/benjamin-happy.png");
     // Start BGM.
     bgmInstance = AudioHelper::PlaySample("play.ogg", true, AudioHelper::BGMVolume);
@@ -1597,75 +1597,6 @@ float PlayScene::CalculatePlayerPower() {
     return totalDPS;
 }
 
-// std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
-//     // 1) Count how many towers are placed:
-//     int towerCount = static_cast<int>(TowerGroup->GetObjects().size());
-
-//     // 2) Sum up all turret DPS:
-//     float totalDPS = CalculatePlayerPower();
-
-//     // 3) Combine (towerCount, totalDPS, elapsedTime) into a single difficulty score D:
-//     //
-//     //   – Let α tune “importance of tower‐count” (e.g. each tower → 0.5 difficulty points)
-//     //   – Let β tune “importance of total DPS”    (e.g. each 1 DPS → 1 difficulty point)
-//     //   – Let γ tune “importance of time”         (to slowly ramp even if no turrets)
-//     //
-//     const float α = 0.5f;       // each tower adds 0.5 difficulty
-//     const float β = 1.0f;       // each DPS point adds 1 difficulty
-//     const float γ = 0.2f;       // each second adds 0.2 difficulty
-//     float D = α * float(towerCount) + β * totalDPS + γ * elapsedTime;
-
-//     int   type;
-//     float wait;
-
-//     // ─── Phase 1: D < 5 → only Soldiers, spawn every 2.0 → 1.5 s ─────────────
-//     if (D < 5.0f) {
-//         type = 1; // Soldier
-//         wait = 2.0f - 0.1f * D;        // linearly 2.0 → 1.5 as D goes 0→5
-//         wait = std::clamp(wait, 1.5f, 2.0f);
-//     }
-//     // ─── Phase 2: 5 ≤ D < 12 → mix Soldiers & Tanks, spawn 1.5 → 1.0 s ─────────
-//     else if (D < 12.0f) {
-//         // As D climbs 5→12, tankChance goes 20%→60%
-//         int tankChance = static_cast<int>(20 + (D - 5.0f) * (40.0f / 7.0f));
-//         if ((rand() % 100) < tankChance) {
-//             type = 3; // Tank
-//         } else {
-//             type = 1; // Soldier
-//         }
-//         wait = 1.5f - 0.0714286f * (D - 5.0f);  // 1.5 → 1.0 as D goes 5→12
-//         wait = std::clamp(wait, 1.0f, 1.5f);
-//     }
-//     // ─── Phase 3: D ≥ 12 → Tanks/Planes/BigTanks, spawn 1.0 → 0.6 s ────────────
-//     else {
-//         static float lastBigTankTime = 0.0f;
-//         int r = rand() % 100;
-//         if (r < 40) {
-//             type = 3; // Tank (40%)
-//         }
-//         else if (r < 65) {
-//             type = 2; // Plane (25%)
-//         }
-//         else {
-//             // 35% chance for BigTank, but only once every 20 seconds
-//             if ((elapsedTime - lastBigTankTime) >= 20.0f) {
-//                 type = 4; // BigTank
-//                 lastBigTankTime = elapsedTime;
-//             } else {
-//                 type = 3; // fallback to Tank
-//             }
-//         }
-//         float rawWait = 1.0f - 0.025f * (D - 12.0f);  // 1.0 → 0.6 as D goes 12→28
-//         wait = std::clamp(rawWait, 0.6f, 1.0f);
-//     }
-
-//     // ─── Prevent overcrowding: if ≥ 8 enemies alive, add +1s delay ────────────
-//     if ((int)EnemyGroup->GetObjects().size() >= 8) {
-//         wait += 1.0f;
-//     }
-
-//     return { type, wait };
-// }
 
 std::pair<int,float> PlayScene::GenerateAdaptiveEnemy(float D) {
     float totalDPS = CalculatePlayerPower();

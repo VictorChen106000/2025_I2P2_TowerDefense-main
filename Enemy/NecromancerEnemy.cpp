@@ -5,7 +5,7 @@
 #include <cmath>
 
 NecromancerEnemy::NecromancerEnemy(int x, int y)
-  : Enemy("play/necromancer.png", x, y, 25, 60, 400, 35)
+  : Enemy("play/necromancer.png", x, y, 25, 60, 600, 35)
 {
     // walk animation: 17×7 @8fps, use row 2 only for movement
     SetAnimation(17, 7, 8.0f);
