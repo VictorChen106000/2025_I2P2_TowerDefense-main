@@ -12,28 +12,27 @@
 #include "UI/Component/Label.hpp"
 
 // ─── Adjustable Offsets ────────────────────────────────────────────────
-// These are *added* to the screen-center when placing each element.
-static float NINJA_ADJUST_X   =  460.0f; // shift ninja left/right
-static float NINJA_ADJUST_Y   =  -200.0f; // shift ninja up/down
-static float PODIUM_ADJUST_X  =  0.0f; // shift podium left/right
-static float PODIUM_ADJUST_Y  = 130.0f; // shift podium up/down
-static const float IDLE_SCALE = 7.0f;  // how much to scale up ninja frames
+static float NINJA_ADJUST_X   =  460.0f;
+static float NINJA_ADJUST_Y   =  -200.0f;
+static float PODIUM_ADJUST_X  =  0.0f;
+static float PODIUM_ADJUST_Y  = 130.0f;
+static const float IDLE_SCALE = 7.0f;
 
 void ShopScene::Initialize() {
     // 1) BGM
     bgmInstance = AudioHelper::PlaySample("levelup.ogg", true, AudioHelper::BGMVolume);
 
     // 2) Screen dims & center
-    int w     = Engine::GameEngine::GetInstance().GetScreenSize().x;
-    int h     = Engine::GameEngine::GetInstance().GetScreenSize().y;
+    int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
+    int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
     int halfH = h / 2;
 
     // 3) Background
     AddNewObject(new Engine::Image("background/dirty_2.png", 0, 0, w, h));
 
-    // 4) Crystal icon + count (top-left)
-    const int ICON = 64, PAD = 20;
+    // 4) Crystal icon + count
+    const int ICON = 96, PAD = 20;
     auto play    = dynamic_cast<PlayScene*>(
                      Engine::GameEngine::GetInstance().GetScene("play"));
     int crystals = play ? play->GetGoldCoins() : 0;
@@ -45,7 +44,7 @@ void ShopScene::Initialize() {
     );
     AddNewObject(crystalCountLbl);
 
-    // 5) Title (top-center)
+    // 5) Title
     AddNewObject(new Engine::Label(
         "WELCOME TO Lee Be SHOP", "Balatro.ttf", 48,
         halfW, PAD,
@@ -53,27 +52,26 @@ void ShopScene::Initialize() {
         0.5f, 0.0f
     ));
 
-    // 6) Ninja‐idle animation setup
+    // 6) Ninja‐idle animation
     idleBmp       = Engine::Resources::GetInstance()
                      .GetBitmap("play/yellowninjaidle.png").get();
     int sheetW    = al_get_bitmap_width(idleBmp);
     int sheetH    = al_get_bitmap_height(idleBmp);
 
-    idleCols      = 2;             // <-- actual frame count in your sheet
+    idleCols      = 2;
     idleFrameW    = sheetW / idleCols;
     idleFrameH    = sheetH;
 
     idleCurFrame  = 0;
     idleTimer     = 0.0f;
-    idleFrameTime = 0.25f;         // <-- how long each frame stays on screen
+    idleFrameTime = 0.25f;
 
-    // 7) Compute ninja center + adjust
     float scaledW = idleFrameW * IDLE_SCALE;
     float scaledH = idleFrameH * IDLE_SCALE;
     idleX = (halfW - scaledW/2) + NINJA_ADJUST_X;
     idleY = (halfH - scaledH/2) + NINJA_ADJUST_Y;
 
-    // 8) Podium IMAGE at center + adjust
+    // 7) Podium
     const int PW = 300, PH = 400;
     float podiumX = (halfW - PW/2) + PODIUM_ADJUST_X;
     float podiumY = (halfH - PH/2) + PODIUM_ADJUST_Y;
@@ -84,45 +82,58 @@ void ShopScene::Initialize() {
         PW, PH
     ));
 
-    // 9) Buy button under podium
+    // 8) Buy button under podium
     const int BW = 120, BH = 50;
-    int bx = halfW - BW/2;
-    int by = static_cast<int>(podiumY) + PH + 20;
-    buyBtn = new Engine::ImageButton(
-        "stage-select/button1.png","stage-select/floor.png",
-        bx, by, BW, BH
-    );
-    buyBtn->SetOnClickCallback([this](){
-        auto p = dynamic_cast<PlayScene*>(
-                   Engine::GameEngine::GetInstance().GetScene("play"));
-        if (!p || p->GetGoldCoins() < buyCost) {
-            AudioHelper::PlaySample(
-              "cancel.ogg", false, AudioHelper::SFXVolume
-            );
-            return;
-        }
-        p->EarnCoin(-buyCost);
-        p->EarnMoney(100);
-        crystalCountLbl->Text = std::to_string(p->GetGoldCoins());
-    });
-    AddNewControlObject(buyBtn);
+int bx = halfW - BW/2;
+int by = static_cast<int>(podiumY) + PH + 20;
 
-    // 10) Cost icon + label
-    const int CI = 32;
-    int ix = bx + 10;
-    int iy = by + (BH - CI)/2;
-    buyCostIcon  = new Engine::Image(
-        "play/crystal.png", ix, iy, CI, CI
-    );
-    buyCostLabel = new Engine::Label(
-        std::to_string(buyCost), "Balatro.ttf", 28,
-        ix + CI + 8, iy + CI/2,
-        255,255,255,255, 0.0f, 0.5f
-    );
-    AddNewObject(buyCostIcon);
-    AddNewObject(buyCostLabel);
+buyBtn = new Engine::ImageButton(
+    "stage-select/button1.png","stage-select/floor.png",
+    bx, by, BW, BH
+);
+buyBtn->SetOnClickCallback([this](){
+    auto p = dynamic_cast<PlayScene*>(
+               Engine::GameEngine::GetInstance().GetScene("play"));
+    if (!p || p->GetGoldCoins() < buyCost) {
+        AudioHelper::PlaySample("cancel.ogg", false, AudioHelper::SFXVolume);
+        return;
+    }
+    // subtract the crystals, award the item, update UI
+    p->EarnCoin(-buyCost);
+    p->EarnMoney(100);
+    crystalCountLbl->Text = std::to_string(p->GetGoldCoins());
+});
 
-    // 11) Back button (bottom-left corner)
+// hover & breathing  
+buyBtn->EnableBreathing(0.05f, 2.0f);
+buyBtn->EnableHoverScale(0.9f);
+AddNewControlObject(buyBtn);
+
+// ——————————
+// 8a) Add the “Buy” label centered in the button:
+auto buyLabel = new Engine::Label(
+    "Buy", "Balatro.ttf", 24,
+    bx + BW/2, by + BH/2,
+    255,255,255,255,
+    0.5f, 0.5f
+);
+AddNewObject(buyLabel);
+
+// 8b) Move your crystal icon + cost label to the right of “Buy”:
+const int CI = 32;
+int iconX = bx + BW + 10;                 // 10px to the right of the button
+int iconY = by + (BH - CI)/2;
+buyCostIcon = new Engine::Image("play/crystal.png", iconX, iconY, CI, CI);
+buyCostLabel = new Engine::Label(
+    std::to_string(buyCost), "Balatro.ttf", 28,
+    iconX + CI + 4, iconY + CI/2,
+    255,255,255,255,
+    0.0f, 0.5f
+);
+AddNewObject(buyCostIcon);
+AddNewObject(buyCostLabel);
+
+    // 10) Back button (bottom-left)
     const int BW2 = 200, BH2 = 80, M = 20;
     backBtn = new Engine::ImageButton(
         "stage-select/button1.png","stage-select/floor.png",
@@ -131,6 +142,9 @@ void ShopScene::Initialize() {
     backBtn->SetOnClickCallback(
       std::bind(&ShopScene::BackOnClick, this, 0)
     );
+    // ← same hover & breathing
+    backBtn->EnableBreathing(0.05f, 2.0f);
+    backBtn->EnableHoverScale(0.9f);
     AddNewControlObject(backBtn);
     AddNewObject(new Engine::Label(
         "Back","Balatro.ttf",32,
@@ -144,10 +158,9 @@ void ShopScene::Update(float dt) {
     bool ok = false;
     if (auto p = dynamic_cast<PlayScene*>(
           Engine::GameEngine::GetInstance().GetScene("play")))
-      ok = (p->GetGoldCoins() >= buyCost);
+        ok = (p->GetGoldCoins() >= buyCost);
     buyBtn->Enabled = ok;
 
-    // advance idle animation
     idleTimer += dt;
     if (idleTimer >= idleFrameTime) {
         idleTimer   -= idleFrameTime;
@@ -157,7 +170,6 @@ void ShopScene::Update(float dt) {
 
 void ShopScene::Draw() const {
     IScene::Draw();
-    // draw single ninja sprite
     if (idleBmp) {
         al_draw_scaled_bitmap(
             idleBmp,
