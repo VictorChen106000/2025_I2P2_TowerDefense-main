@@ -24,8 +24,8 @@ private:
     // behavior
     float _lifetime     = 15.0f;   // seconds before forced death
     float _elapsed      =  0.0f;
-    float _attackRange  =100.0f;   // start attacking at this distance (px)
-    float _stopDistance = 100.0f;  // hero will stop this far from enemy
+    float _attackRange  =64.0f;   // start attacking at this distance (px)
+    float _stopDistance = 10.0f;  // hero will stop this far from enemy
     float _dps          = 30.0f;   // damage per second
     float _speed        =120.0f;   // chase speed (px/sec)
     float _scale        =   1.0f;  // uniform draw scale
