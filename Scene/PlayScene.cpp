@@ -391,7 +391,7 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         return;   // …but skip all the rest (turret/shovel logic)
     }
 
-    if ((button & 1) && !placing) {
+    if ((button & 1) && !placing && !shovelMode) {
         int gx = mx / BlockSize;
         int gy = my / BlockSize;
         if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
@@ -704,7 +704,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                 // 3b) remove turret & clear tile
                 turret->GetObjectIterator()->first = false;
                 TowerGroup->RemoveObject(turret->GetObjectIterator());
-                mapState[gy][gx] = TILE_DIRT;
+                mapState[gy][gx] = TILE_TETRIS;
                 break;
             }
         }
