@@ -13,8 +13,8 @@
 
 // ─── Adjustable Offsets ────────────────────────────────────────────────
 // These are *added* to the screen-center when placing each element.
-static float NINJA_ADJUST_X   =  0.0f; // shift ninja left/right
-static float NINJA_ADJUST_Y   =  0.0f; // shift ninja up/down
+static float NINJA_ADJUST_X   =  460.0f; // shift ninja left/right
+static float NINJA_ADJUST_Y   =  -200.0f; // shift ninja up/down
 static float PODIUM_ADJUST_X  =  0.0f; // shift podium left/right
 static float PODIUM_ADJUST_Y  = 130.0f; // shift podium up/down
 static const float IDLE_SCALE = 7.0f;  // how much to scale up ninja frames
@@ -58,11 +58,14 @@ void ShopScene::Initialize() {
                      .GetBitmap("play/yellowninjaidle.png").get();
     int sheetW    = al_get_bitmap_width(idleBmp);
     int sheetH    = al_get_bitmap_height(idleBmp);
-    idleCols      = 4;
+
+    idleCols      = 2;             // <-- actual frame count in your sheet
     idleFrameW    = sheetW / idleCols;
     idleFrameH    = sheetH;
+
     idleCurFrame  = 0;
     idleTimer     = 0.0f;
+    idleFrameTime = 0.25f;         // <-- how long each frame stays on screen
 
     // 7) Compute ninja center + adjust
     float scaledW = idleFrameW * IDLE_SCALE;
@@ -81,7 +84,7 @@ void ShopScene::Initialize() {
         PW, PH
     ));
 
-    // 9) Buy button under podium (y based on podiumY+PH+20)
+    // 9) Buy button under podium
     const int BW = 120, BH = 50;
     int bx = halfW - BW/2;
     int by = static_cast<int>(podiumY) + PH + 20;
@@ -144,6 +147,7 @@ void ShopScene::Update(float dt) {
       ok = (p->GetGoldCoins() >= buyCost);
     buyBtn->Enabled = ok;
 
+    // advance idle animation
     idleTimer += dt;
     if (idleTimer >= idleFrameTime) {
         idleTimer   -= idleFrameTime;
@@ -153,7 +157,7 @@ void ShopScene::Update(float dt) {
 
 void ShopScene::Draw() const {
     IScene::Draw();
-    // draw single ninja sprite at idleX, idleY
+    // draw single ninja sprite
     if (idleBmp) {
         al_draw_scaled_bitmap(
             idleBmp,
