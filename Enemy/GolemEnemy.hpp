@@ -14,6 +14,7 @@ public:
     void Update(float deltaTime) override;
     void Hit(float damage) override;
     void Draw()   const    override;
+    Type GetType() const override { return Type::Pawn3; }
 
 private:
     // ─── Shielding ───────────────────────────────────────

@@ -42,7 +42,6 @@ private:
       TILE_DIRT           = 0,  // '0' or ' ' (space)
       TILE_WHITE_FLOOR    = 1,  // '1'
       TILE_BLUE_FLOOR,         // 'D' / 'd'
-
       // Big corners
       TILE_CORNER_BOT_LEFT,    // 'C'
       TILE_CORNER_TOP_LEFT,    // '3'
@@ -51,31 +50,25 @@ private:
       TILE_CORNER2,            // '6'
       TILE_CORNER_4,
       TILE_CORNER_3,
-
       // Small corners (add these 4)
       TILE_CORNER_SMALL_1,     // e.g. 's' → corner-small-1.png
       TILE_CORNER_SMALL_2,     // 't' → corner-small-2.png
       TILE_CORNER_SMALL_3,     // 'u' → corner-small-3.png
       TILE_CORNER_SMALL_4,     // 'v' → corner-small-4.png
-
       // Platforms & special tiles
       TILE_PLATFORM,           // '7'
       TILE_TILE011,   
-      
       TILE_S,// '8'
-
       // Walls
       TILE_WALL1,              // '#' or '9'
       TILE_WALL2,              // 'A' / 'a'
       TILE_WALL3,              // 'B' / 'b'
-
       TILE_OCCUPIED, // your existing occupied flag
       TILE_TETRIS,         
     };
-    // PlayScene.hpp, inside class PlayScene
-    bool CanPlaceTetrisAt(int gx, int gy,
-      const TetrisBlock::Shape &cells);
 
+    // PlayScene.hpp, inside class PlayScene
+    bool CanPlaceTetrisAt(int gx, int gy, const TetrisBlock::Shape &cells);
     std::vector<std::tuple<TetrominoType,int,int,int,int>> _tetrisIcons;
     std::vector<Engine::Point> spawnPoints;
     Mode currentMode = Mode::Normal;
@@ -95,23 +88,26 @@ private:
     Engine::IObject* pausePanel = nullptr;
     float lastGroundSpawnTime = 0.0f;
     const float minGroundGap = 0.8f;
+    bool   isAiming = false;
+    Turret* aimingTurret = nullptr;
+    int staticWaveCount = 0;
+    int currentWave = 0;
+    int adaptiveSpawnCount = 0;
+    int maxWaves = 0;
+    TetrisBlock* previewBlock = nullptr;
+    bool placing = false;
+    // ── new for Survival waves ────────────────────────────────────
+    // int   strongSpawnCount[7] = {};   // counts for types 4,5,6
+    int   bossSpawnCount[9]   = {};   // counts for types 7,8
+    bool  inWaveBreak         = false;
+
     void ShowPauseMenu();
     void HidePauseMenu();
     void BGMSlideOnValueChanged(float value);
     void SFXSlideOnValueChanged(float value);
     void SpawnEnemyOfType(int type, float extraTicks);
-    //++++
-
-    bool   isAiming = false;
-    Turret* aimingTurret = nullptr;
-
-    int staticWaveCount = 0;
-    int currentWave = 0;
-    int adaptiveSpawnCount = 0;
-    int maxWaves = 0;
-
-    TetrisBlock* previewBlock = nullptr;
-    bool placing = false;
+    void SpawnAdaptive();
+    int CountAliveOfType(int type) const;
 
 protected:
     int lives;
@@ -179,7 +175,7 @@ public:
     bool CheckSpaceValid(int x, int y);
     std::vector<std::vector<int>> CalculateBFSDistance();
     float CalculatePlayerPower();
-    std::pair<int, float> GenerateAdaptiveEnemy();
+    std::pair<int, float> GenerateAdaptiveEnemy(float D);
     void AddKill() {++killCount;}
     int GetKillCount() const {return killCount;}
     // void ModifyReadMapTiles();

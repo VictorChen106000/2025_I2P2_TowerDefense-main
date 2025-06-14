@@ -224,7 +224,7 @@ void PlayScene::Update(float deltaTime) {
                         float dbgDPS = CalculatePlayerPower();
                         const float α = 0.5f, β = 1.0f, γ = 0.2f;
                         float dbgD   = α*dbgCount + β*dbgDPS + γ*elapsedTime;
-                        auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
+                        auto [dbgType, dbgWait] = GenerateAdaptiveEnemy(dbgD);
 
                         printf(
                         "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  type=%d  wait=%.2f  alive=%zu  wave=%d\n",
@@ -259,35 +259,37 @@ void PlayScene::Update(float deltaTime) {
             }
 
             // ─── 3b) SURVIVAL MODE: endless adaptive ────────────────────────────
-            else {
-                // always spawn, identical logic to above debug+separation
-                if (ticks >= nextAdaptiveWait) {
-                    ticks -= nextAdaptiveWait;
-
-                    // === BEGIN DEBUG + SEPARATION from old logic ===
-                    int dbgCount = static_cast<int>(TowerGroup->GetObjects().size());
-                    float dbgDPS = CalculatePlayerPower();
-                    const float α = 0.5f, β = 1.0f, γ = 0.2f;
-                    float dbgD   = α*dbgCount + β*dbgDPS + γ*elapsedTime;
-                    auto [dbgType, dbgWait] = GenerateAdaptiveEnemy();
-
-                    printf(
-                    "[ADAPTIVE DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  type=%d  wait=%.2f  alive=%zu  wave=%d\n",
-                    dbgCount, dbgDPS, elapsedTime, dbgD, dbgType, dbgWait,
-                    EnemyGroup->GetObjects().size(), currentWave
-                    );
-
-                    bool isGround       = (dbgType==1||dbgType==3||dbgType==4);
-                    float timeSinceLast = elapsedTime - lastGroundSpawnTime;
-                    if (isGround && timeSinceLast < minGroundGap) {
-                        float leftover = (minGroundGap - timeSinceLast);
-                        nextAdaptiveWait = dbgWait + leftover;
-                    } else {
-                        if (isGround) lastGroundSpawnTime = elapsedTime;
-                        nextAdaptiveWait = dbgWait;
-                        SpawnEnemyOfType(dbgType, ticks);
+                        else {
+                //  a) if still spawning this wave:
+                if (!inWaveBreak && adaptiveSpawnCount < staticWaveCount) {
+                    if (ticks >= nextAdaptiveWait) {
+                        ticks -= nextAdaptiveWait;
+                        SpawnAdaptive();
+                        ++adaptiveSpawnCount;
                     }
-                    // === END DEBUG + SEPARATION from old logic ===
+                }
+                //  b) wave just finished (all spawns done + no live enemies)
+                else if (!inWaveBreak
+                        && adaptiveSpawnCount >= staticWaveCount
+                        && EnemyGroup->GetObjects().empty())
+                {
+                    inWaveBreak = true;
+                    nextAdaptiveWait = 10.0f;      // 10s pause
+                    ticks = 0;
+                }
+                //  c) during the 10s break
+                else if (inWaveBreak) {
+                    if (ticks >= nextAdaptiveWait) {
+                        // start next wave
+                        ++currentWave;
+                        adaptiveSpawnCount = 0;
+                        ticks = 0;
+                        nextAdaptiveWait = 0;
+                        inWaveBreak = false;
+                        // reset per-wave caps:
+                        // memset(strongSpawnCount, 0, sizeof(strongSpawnCount));
+                        memset(bossSpawnCount,   0, sizeof(bossSpawnCount));
+                    }
                 }
             }
         }
@@ -1393,72 +1395,136 @@ float PlayScene::CalculatePlayerPower() {
     return totalDPS;
 }
 
-std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
-    // 1) Count how many towers are placed:
-    int towerCount = static_cast<int>(TowerGroup->GetObjects().size());
+// std::pair<int, float> PlayScene::GenerateAdaptiveEnemy() {
+//     // 1) Count how many towers are placed:
+//     int towerCount = static_cast<int>(TowerGroup->GetObjects().size());
 
-    // 2) Sum up all turret DPS:
+//     // 2) Sum up all turret DPS:
+//     float totalDPS = CalculatePlayerPower();
+
+//     // 3) Combine (towerCount, totalDPS, elapsedTime) into a single difficulty score D:
+//     //
+//     //   – Let α tune “importance of tower‐count” (e.g. each tower → 0.5 difficulty points)
+//     //   – Let β tune “importance of total DPS”    (e.g. each 1 DPS → 1 difficulty point)
+//     //   – Let γ tune “importance of time”         (to slowly ramp even if no turrets)
+//     //
+//     const float α = 0.5f;       // each tower adds 0.5 difficulty
+//     const float β = 1.0f;       // each DPS point adds 1 difficulty
+//     const float γ = 0.2f;       // each second adds 0.2 difficulty
+//     float D = α * float(towerCount) + β * totalDPS + γ * elapsedTime;
+
+//     int   type;
+//     float wait;
+
+//     // ─── Phase 1: D < 5 → only Soldiers, spawn every 2.0 → 1.5 s ─────────────
+//     if (D < 5.0f) {
+//         type = 1; // Soldier
+//         wait = 2.0f - 0.1f * D;        // linearly 2.0 → 1.5 as D goes 0→5
+//         wait = std::clamp(wait, 1.5f, 2.0f);
+//     }
+//     // ─── Phase 2: 5 ≤ D < 12 → mix Soldiers & Tanks, spawn 1.5 → 1.0 s ─────────
+//     else if (D < 12.0f) {
+//         // As D climbs 5→12, tankChance goes 20%→60%
+//         int tankChance = static_cast<int>(20 + (D - 5.0f) * (40.0f / 7.0f));
+//         if ((rand() % 100) < tankChance) {
+//             type = 3; // Tank
+//         } else {
+//             type = 1; // Soldier
+//         }
+//         wait = 1.5f - 0.0714286f * (D - 5.0f);  // 1.5 → 1.0 as D goes 5→12
+//         wait = std::clamp(wait, 1.0f, 1.5f);
+//     }
+//     // ─── Phase 3: D ≥ 12 → Tanks/Planes/BigTanks, spawn 1.0 → 0.6 s ────────────
+//     else {
+//         static float lastBigTankTime = 0.0f;
+//         int r = rand() % 100;
+//         if (r < 40) {
+//             type = 3; // Tank (40%)
+//         }
+//         else if (r < 65) {
+//             type = 2; // Plane (25%)
+//         }
+//         else {
+//             // 35% chance for BigTank, but only once every 20 seconds
+//             if ((elapsedTime - lastBigTankTime) >= 20.0f) {
+//                 type = 4; // BigTank
+//                 lastBigTankTime = elapsedTime;
+//             } else {
+//                 type = 3; // fallback to Tank
+//             }
+//         }
+//         float rawWait = 1.0f - 0.025f * (D - 12.0f);  // 1.0 → 0.6 as D goes 12→28
+//         wait = std::clamp(rawWait, 0.6f, 1.0f);
+//     }
+
+//     // ─── Prevent overcrowding: if ≥ 8 enemies alive, add +1s delay ────────────
+//     if ((int)EnemyGroup->GetObjects().size() >= 8) {
+//         wait += 1.0f;
+//     }
+
+//     return { type, wait };
+// }
+
+std::pair<int,float> PlayScene::GenerateAdaptiveEnemy(float D) {
     float totalDPS = CalculatePlayerPower();
+    float wait = 1.0f;
+    int   type = 1;
 
-    // 3) Combine (towerCount, totalDPS, elapsedTime) into a single difficulty score D:
-    //
-    //   – Let α tune “importance of tower‐count” (e.g. each tower → 0.5 difficulty points)
-    //   – Let β tune “importance of total DPS”    (e.g. each 1 DPS → 1 difficulty point)
-    //   – Let γ tune “importance of time”         (to slowly ramp even if no turrets)
-    //
-    const float α = 0.5f;       // each tower adds 0.5 difficulty
-    const float β = 1.0f;       // each DPS point adds 1 difficulty
-    const float γ = 0.2f;       // each second adds 0.2 difficulty
-    float D = α * float(towerCount) + β * totalDPS + γ * elapsedTime;
-
-    int   type;
-    float wait;
-
-    // ─── Phase 1: D < 5 → only Soldiers, spawn every 2.0 → 1.5 s ─────────────
-    if (D < 5.0f) {
-        type = 1; // Soldier
-        wait = 2.0f - 0.1f * D;        // linearly 2.0 → 1.5 as D goes 0→5
-        wait = std::clamp(wait, 1.5f, 2.0f);
+    // ── A) Boss tier on every 5th wave ────────────────────────────────
+    if (currentWave % 5 == 0) {
+        int totalBosses = bossSpawnCount[7] + bossSpawnCount[8];
+        if (totalBosses < 2) {
+            // if neither spawned yet
+            if (totalBosses == 0) {
+                type = (rand()%2) ? 7 : 8;
+            }
+            else {
+                // if we already spawned 7 once, we can spawn 7 a second time
+                // or spawn 8 once, but never exceed per‐type caps
+                if (bossSpawnCount[7] < 2 && bossSpawnCount[8] == 0)
+                    type = (rand()%2)? 7:8;
+                else if (bossSpawnCount[8] < 2 && bossSpawnCount[7] == 0)
+                    type = (rand()%2)? 7:8;
+                else
+                    type = (bossSpawnCount[7]<2?7:8);
+            }
+            bossSpawnCount[type]++;
+            // boss wait can be longer if you like, e.g. 3s
+            wait = 2.0f;
+        }
     }
-    // ─── Phase 2: 5 ≤ D < 12 → mix Soldiers & Tanks, spawn 1.5 → 1.0 s ─────────
-    else if (D < 12.0f) {
-        // As D climbs 5→12, tankChance goes 20%→60%
-        int tankChance = static_cast<int>(20 + (D - 5.0f) * (40.0f / 7.0f));
-        if ((rand() % 100) < tankChance) {
-            type = 3; // Tank
-        } else {
-            type = 1; // Soldier
-        }
-        wait = 1.5f - 0.0714286f * (D - 5.0f);  // 1.5 → 1.0 as D goes 5→12
-        wait = std::clamp(wait, 1.0f, 1.5f);
-    }
-    // ─── Phase 3: D ≥ 12 → Tanks/Planes/BigTanks, spawn 1.0 → 0.6 s ────────────
-    else {
-        static float lastBigTankTime = 0.0f;
-        int r = rand() % 100;
-        if (r < 40) {
-            type = 3; // Tank (40%)
-        }
-        else if (r < 65) {
-            type = 2; // Plane (25%)
-        }
-        else {
-            // 35% chance for BigTank, but only once every 20 seconds
-            if ((elapsedTime - lastBigTankTime) >= 20.0f) {
-                type = 4; // BigTank
-                lastBigTankTime = elapsedTime;
-            } else {
-                type = 3; // fallback to Tank
+
+    // ── B) Strong tier (4–6) based on live count ──────────────────────────
+    if (type < 4) {
+        const float strongDPS = 200.0f;      // adjust to taste
+        if (totalDPS > strongDPS) {
+            // build list of 4,5,6 whose alive < 3
+            std::vector<int> avail;
+            for (int t = 4; t <= 6; ++t) {
+                if (CountAliveOfType(t) < 3) 
+                    avail.push_back(t);
+            }
+            // if any slot open, pick one at random
+            if (!avail.empty()) {
+                type = avail[rand() % avail.size()];
             }
         }
-        float rawWait = 1.0f - 0.025f * (D - 12.0f);  // 1.0 → 0.6 as D goes 12→28
-        wait = std::clamp(rawWait, 0.6f, 1.0f);
     }
 
-    // ─── Prevent overcrowding: if ≥ 8 enemies alive, add +1s delay ────────────
-    if ((int)EnemyGroup->GetObjects().size() >= 8) {
-        wait += 1.0f;
+    // ── C) Pawns fallback (1–3) ────────────────────────────────────────
+    if (type < 1 || type > 6) {
+        // (or if boss‐branch didn’t fire)
+        type = 1 + rand() % 3;
     }
+
+    // ── D) Compute a wait time that still scales with D ───────────────
+    // e.g. linearly 2.0→0.6 as D goes 0→maxD (say 50)
+    float raw = 2.0f - (D / 50.0f) * 1.4f;
+    wait = std::clamp(raw, 0.6f, 2.0f);
+
+    // ── E) Overcrowd throttle ──────────────────────────────────────────
+    if (EnemyGroup->GetObjects().size() >= 8)
+        wait += 1.0f;
 
     return { type, wait };
 }
@@ -1474,15 +1540,15 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
     float cy = g.y * BlockSize + BlockSize/2;
     Enemy* enemy = nullptr;
     switch (type) {
-      case 1: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx,cy)); break;
-      case 2: EnemyGroup->AddNewObject(enemy = new WolfEnemy  (cx, cy)); break;
-      case 3: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break;
-      case 4: EnemyGroup->AddNewObject(enemy = new SorcererEnemy(cx, cy)); break;
-      case 5: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break;
-      case 6: EnemyGroup->AddNewObject(enemy = new CaninaEnemy(cx, cy)); break;
-      case 7: EnemyGroup->AddNewObject(enemy = new SlimeEnemy(cx, cy)); break;
-      case 8: EnemyGroup->AddNewObject(enemy = new WolfEnemy(cx, cy)); break;
-      case 9: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx, cy)); break;
+      case 1: EnemyGroup->AddNewObject(enemy = new SlimeEnemy(cx, cy)); break;
+      case 2: EnemyGroup->AddNewObject(enemy = new WolfEnemy  (cx, cy)); break; // Skeleton
+      case 3: EnemyGroup->AddNewObject(enemy = new GolemEnemy(cx, cy)); break; // Robot
+      case 4: EnemyGroup->AddNewObject(enemy = new FlyEnemy(cx, cy)); break; // Mushroom
+      case 5: EnemyGroup->AddNewObject(enemy = new DemonEnemy(cx, cy)); break;
+      case 6: EnemyGroup->AddNewObject(enemy = new CaninaEnemy(cx, cy)); break; // Wolf
+      case 7: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx,cy)); break;
+      case 8: EnemyGroup->AddNewObject(enemy = new SorcererEnemy(cx, cy)); break; 
+    //   case 9: EnemyGroup->AddNewObject(enemy = new NecromancerEnemy(cx, cy)); break;
       default: return;
     }
 
@@ -1494,5 +1560,50 @@ void PlayScene::SpawnEnemyOfType(int type, float extraTicks) {
       }
 }
 
+int PlayScene::CountAliveOfType(int typeID) const {
+    int cnt = 0;
+    for (auto obj : EnemyGroup->GetObjects()) {
+        if (auto e = dynamic_cast<Enemy*>(obj)) {
+            // compare the integer value of the enum:
+            if (static_cast<int>(e->GetType()) == typeID) {
+                ++cnt;
+            }
+        }
+    }
+    return cnt;
+}
+ 
+void PlayScene::SpawnAdaptive() {
+    int towerCount = TowerGroup->GetObjects().size();
+    float totalDPS = CalculatePlayerPower();
+    float D = 0.5f * towerCount + 1.0f * totalDPS + 0.2f * elapsedTime;
 
-  
+    auto [type, wait] = GenerateAdaptiveEnemy(D);
+
+     // ——— SURVIVAL MODE DEBUG OUTPUT ———
+    if (DebugMode) {
+        printf(
+          "[SURVIVAL DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  "
+          "type=%d  wait=%.2f  alive=%zu  wave=%d\n",
+          towerCount,
+          totalDPS,
+          elapsedTime,
+          D,
+          type,
+          wait,
+          EnemyGroup->GetObjects().size(),
+          currentWave
+        );
+    }
+
+    // ground-gap logic unchanged…
+    bool isGround       = (type>=1 && type<=6);
+    float sinceLast     = elapsedTime - lastGroundSpawnTime;
+    if (isGround && sinceLast < minGroundGap) {
+        nextAdaptiveWait = wait + (minGroundGap - sinceLast);
+    } else {
+        if (isGround) lastGroundSpawnTime = elapsedTime;
+        nextAdaptiveWait = wait;
+        SpawnEnemyOfType(type, ticks);
+    }
+}

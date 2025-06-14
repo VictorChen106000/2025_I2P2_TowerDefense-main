@@ -11,6 +11,7 @@ public:
     void Update(float deltaTime) override;
     void Draw()   const  override;
     void Hit(float damage) override;
+    Type GetType() const override { return Type::Pawn2; }
 
 private:
     // ─── Dash & Enrage ───────────────────────────────────

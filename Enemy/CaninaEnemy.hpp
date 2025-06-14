@@ -18,6 +18,7 @@ public:
     const float healAmount   = 10.0f;
     const float healRadius   = 100.0f;
     float originalHP;
+    Type GetType() const override { return Type::Strong6; }
 
 private:
     // death-animation state
