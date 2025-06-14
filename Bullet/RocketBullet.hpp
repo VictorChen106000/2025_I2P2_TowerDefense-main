@@ -6,16 +6,24 @@
 
 class Enemy;
 class Turret;
+namespace Engine{struct Point;}
 
 class RocketBullet : public Bullet {
 public:
-    RocketBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret* parent, Enemy* target, std::string img = "play/bullet-3.png");
-    void OnExplode(Enemy* enemy) override;
+    // position, direction, turret owner
+    RocketBullet(Engine::Point position, Engine::Point forwardDirection, float rotation, Turret *parent);
+
+    //tambahan buat edit bulet jadi lebi banyak
+     RocketBullet(const std::string &spriteFile,Engine::Point position,Engine::Point forwardDirection,float rotation,Turret *parent);
+
+
     void Update(float deltaTime) override;
 
-private:
-    Enemy* _target;
-    float _turnRate;
+protected:
+
+    void OnExplode(Enemy *enemy)override;
+
+
 };
 
 #endif // ROCKETBULLET_HPP

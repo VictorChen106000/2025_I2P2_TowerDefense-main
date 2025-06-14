@@ -39,6 +39,8 @@ add_executable(2025_I2P2_TowerDefense
     Account/LoginOnlineScene.hpp
     Account/RegisterOnlineScene.cpp
     Account/RegisterOnlineScene.hpp
+    Account/ScoreboardOnline.cpp
+    Account/ScoreboardOnline.hpp
     
     Bullet/Bullet.cpp
     Bullet/Bullet.hpp
@@ -60,6 +62,25 @@ add_executable(2025_I2P2_TowerDefense
     Enemy/PlaneEnemy.hpp
     Enemy/BigTankEnemy.hpp
     Enemy/BigTankEnemy.cpp
+    Enemy/WolfEnemy.cpp
+    Enemy/WolfEnemy.hpp
+    Enemy/SlimeEnemy.cpp
+    Enemy/SlimeEnemy.hpp
+    Enemy/GolemEnemy.cpp
+    Enemy/GolemEnemy.hpp
+    Enemy/FlyEnemy.cpp
+    Enemy/FlyEnemy.hpp
+    Enemy/BatEnemy.cpp
+    Enemy/BatEnemy.hpp
+    Enemy/DemonEnemy.cpp
+    Enemy/DemonEnemy.hpp
+    Enemy/CaninaEnemy.cpp
+    Enemy/CaninaEnemy.hpp
+    Enemy/NecromancerEnemy.cpp
+    Enemy/NecromancerEnemy.hpp
+    Enemy/SorcererEnemy.cpp
+    Enemy/SorcererEnemy.hpp
+
 
     Engine/Allegro5Exception.cpp
     Engine/Allegro5Exception.hpp
@@ -101,6 +122,10 @@ add_executable(2025_I2P2_TowerDefense
     Scene/SettingsScene.hpp
     Scene/Scoreboard.hpp
     Scene/Scoreboard.cpp
+    Scene/ShopScene.cpp
+    Scene/ShopScene.hpp
+    Scene/ModeSelectionScene.hpp
+    Scene/ModeSelectionScene.cpp
 
     Turret/LaserTurret.cpp
     Turret/LaserTurret.hpp
@@ -112,8 +137,19 @@ add_executable(2025_I2P2_TowerDefense
     Turret/Turret.hpp
     Turret/TurretButton.cpp
     Turret/TurretButton.hpp
+    Turret/BombTurret.cpp
+    Turret/BombTurret.hpp
+    Turret/BallistaTurret.cpp
+    Turret/BallistaTurret.hpp
+    Turret/BowTurret.cpp
+    Turret/BowTurret.hpp
+    Turret/Hero.cpp
+    Turret/Hero.hpp
 
     Shovel/ShovelButton.hpp
+    
+    Tetris/TetrisBlock.cpp
+    Tetris/TetrisBlock.hpp
 
     UI/Animation/DirtyEffect.cpp
     UI/Animation/DirtyEffect.hpp
@@ -121,6 +157,8 @@ add_executable(2025_I2P2_TowerDefense
     UI/Animation/ExplosionEffect.hpp
     UI/Animation/Plane.cpp
     UI/Animation/Plane.hpp
+    UI/Animation/ParallaxBackground.hpp
+    UI/Animation/ParallaxBackground.cpp
 
     UI/Component/Image.cpp
     UI/Component/Image.hpp
@@ -207,7 +245,10 @@ endif()
 # Post‐build: copy your Resource folder next to the exe (lower-case “resource”)
 # -----------------------------------------------------------------------------
 add_custom_command(TARGET 2025_I2P2_TowerDefense POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E remove_directory
+          "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/Resource"
   COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/Resource"
-    "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/resource"
+          "${CMAKE_SOURCE_DIR}/Resource"
+          "$<TARGET_FILE_DIR:2025_I2P2_TowerDefense>/Resource"
+  COMMENT "Copying Resource folder"
 )

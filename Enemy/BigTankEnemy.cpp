@@ -7,7 +7,7 @@
 #include "Scene/PlayScene.hpp"
 
 BigTankEnemy::BigTankEnemy(int x, int y)
-    : Enemy("play/enemy-6.png", x, y, 40, 40, 200, 30) {}
+    : Enemy("play/enemy-6.png", x, y, 40, 25, 130, 50) {}
 
 // Override the base Hit to inject our spawn logic
 void BigTankEnemy::Hit(float damage) {

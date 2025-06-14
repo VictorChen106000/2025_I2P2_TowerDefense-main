@@ -5,302 +5,262 @@
 #include "Engine/GameEngine.hpp"
 #include "UI/Component/Label.hpp"
 #include "UI/Component/ImageButton.hpp"
+#include "Scene/StartScene.h"
+#include "UI/Animation/ParallaxBackground.hpp"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
-#include <allegro5/allegro_image.h>   // ensure the image addon is initialized
+#include <allegro5/allegro_image.h>
 #include <allegro5/allegro_ttf.h>
 #include <stdexcept>
-#include <string>
+#include <cmath>
 
 using namespace Engine;
 extern std::string CurrentUser;
 
-// ─────────────────────────────────────────────────────────────
-// FILE‐SCOPE STATICS FOR EYE ICONS & FONT
-// ─────────────────────────────────────────────────────────────
+// ─── static helpers for text‐fields ─────────────────────────────────
 
-// 1) 60px font (loaded once for Label/measurement)
-ALLEGRO_FONT* LoginScene::loginFont = nullptr;
+static void handleTextInput(LoginScene::TextField& f,
+                            int keycode, int unicode,
+                            ALLEGRO_FONT* font, float padding)
+{
+    // 1) insert or delete
+    if (unicode >= 32 && unicode < 127) {
+        f.text.insert(f.caretIndex, 1, static_cast<char>(unicode));
+        f.caretIndex++;
+    }
+    else if (keycode == ALLEGRO_KEY_BACKSPACE && f.caretIndex > 0) {
+        f.text.erase(f.caretIndex - 1, 1);
+        f.caretIndex--;
+    }
 
-// 2) Reveal‐password toggle
-bool LoginScene::loginRevealPassword = false;
+    // 2) measure
+    float visibleW = f.w - 2*padding;
+    // caret position in pixels
+    float caretPos = al_get_text_width(font,
+        f.text.substr(0, f.caretIndex).c_str());
+    // full text width
+    float fullW = al_get_text_width(font, f.text.c_str());
 
-// 3) Eye icon bitmaps (white “open”/“closed”)
-ALLEGRO_BITMAP* LoginScene::openEyeBmp  = nullptr;
-ALLEGRO_BITMAP* LoginScene::closeEyeBmp = nullptr;
+    // 3) first, keep caret in view (same as before)
+    if (caretPos < f.scrollX) {
+        f.scrollX = caretPos;
+    } else if (caretPos > f.scrollX + visibleW) {
+        f.scrollX = caretPos - visibleW;
+    }
 
-// 4) The eye ImageButton itself
-Engine::ImageButton* LoginScene::eyeButton = nullptr;
-// ─────────────────────────────────────────────────────────────
+    // 4) **new**: if you're typing at the very end, always scroll the tail fully into view
+    if (f.caretIndex == f.text.size() && fullW > visibleW) {
+        f.scrollX = fullW - visibleW;
+    }
+
+    // 5) clamp
+    f.scrollX = std::max(0.0f, std::min(f.scrollX, fullW - visibleW));
+}
+
+static void drawTextField(const LoginScene::TextField& f,
+                          ALLEGRO_FONT* font, float padding,
+                          bool isPassword = false)
+{
+    // 1) clip
+    al_set_clipping_rectangle(f.x, f.y, f.w, f.h);
+
+    // 2) frame
+    al_draw_rectangle(
+      f.x, f.y, f.x + f.w, f.y + f.h,
+      al_map_rgb(200,200,200), 2.0f
+    );
+
+    // 3) mask if needed
+    std::string disp = isPassword
+      ? std::string(f.text.size(), '*')
+      : f.text;
+
+    // 4) draw text shifted by scrollX
+    al_draw_text(
+      font,
+      al_map_rgb(255,255,255),
+      f.x + padding - f.scrollX,
+      f.y + (f.h - al_get_font_line_height(font)) * 0.5f,
+      0,
+      disp.c_str()
+    );
+
+    // 5) blinking caret
+    if (fmod(al_get_time(), 1.0) < 0.5) {
+        float cp = al_get_text_width(font, disp.substr(0, f.caretIndex).c_str());
+        float cx = f.x + padding - f.scrollX + cp;
+        al_draw_line(cx, f.y + 2, cx, f.y + f.h - 2,
+                     al_map_rgb(255,255,255), 1.0f);
+    }
+
+    // 6) reset clip
+    al_reset_clipping_rectangle();
+}
+
+// ─── static members ────────────────────────────────────────────────
+ALLEGRO_FONT*       LoginScene::loginFont            = nullptr;
+bool                LoginScene::loginRevealPassword = false;
+ALLEGRO_BITMAP*     LoginScene::openEyeBmp          = nullptr;
+ALLEGRO_BITMAP*     LoginScene::closeEyeBmp         = nullptr;
+Engine::ImageButton* LoginScene::eyeButton          = nullptr;
+
+// ─── ctor / dtor ─────────────────────────────────────────────────
 
 LoginScene::LoginScene()
-    : typedUsername()
-    , typedPassword()
-    , typingUsername(true)
-    , usernamePromptLabel(nullptr)
-    , usernameInputLabel(nullptr)
-    , passwordPromptLabel(nullptr)
-    , passwordInputLabel(nullptr)
-    , infoLabel(nullptr)
-    , loginButton(nullptr)
-    , registerButton(nullptr)
-    , guestButton(nullptr)
-    , errorMessage()
-    , usernameBoxX(0)
-    , usernameBoxY(0)
-    , usernameBoxW(0)
-    , usernameBoxH(0)
-    , passwordBoxX(0)
-    , passwordBoxY(0)
-    , passwordBoxW(0)
-    , passwordBoxH(0)
-    , backButton(nullptr)
-    , backLabel(nullptr)
-{ }
+  : typedUsername()
+  , typedPassword()
+  , typingUsername(true)
+  , usernamePromptLabel(nullptr)
+  , passwordPromptLabel(nullptr)
+  , infoLabel(nullptr)
+  , loginButton(nullptr)
+  , registerButton(nullptr)
+  , guestButton(nullptr)
+  , backButton(nullptr)
+  , backLabel(nullptr)
+  , errorMessage()
+{}
 
 LoginScene::~LoginScene() {
-    // Destroy the eye bitmaps and TTF font to avoid leaks:
     if (openEyeBmp)   { al_destroy_bitmap(openEyeBmp);   openEyeBmp   = nullptr; }
     if (closeEyeBmp)  { al_destroy_bitmap(closeEyeBmp);  closeEyeBmp  = nullptr; }
     if (loginFont)    { al_destroy_font(loginFont);      loginFont    = nullptr; }
 }
 
+// ─── Initialize ──────────────────────────────────────────────────
+
 void LoginScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     typedUsername.clear();
     typedPassword.clear();
     typingUsername = true;
     errorMessage.clear();
     loginRevealPassword = false;
 
-    int w = GameEngine::GetInstance().GetScreenSize().x;   // e.g. 1600
-    int h = GameEngine::GetInstance().GetScreenSize().y;   // e.g. 832
-    int halfW = w / 2;  // 800
-    int halfH = h / 2;  // 416
+    auto& eng = GameEngine::GetInstance();
+    int w = eng.GetScreenSize().x;
+    int h = eng.GetScreenSize().y;
+    int halfW = w/2, halfH = h/2;
 
-    // ─── 1) Load 60px font once (for labels & measuring) ───
+    // load font
     if (!loginFont) {
         loginFont = al_load_ttf_font("Resource/fonts/balatro.ttf", 60, 0);
-        if (!loginFont) {
-            throw std::runtime_error("Failed to load Resource/fonts/balatro.ttf");
-        }
+        if (!loginFont)
+            throw std::runtime_error("Failed to load balatro.ttf");
     }
 
-    // ─── 2) CREATE “BACK” BUTTON ─────────────────────────────────────
+    // Back button
     {
-        // Position the “Back” button in the top-left corner
-        int btnW = 200;
-        int btnH = 60;
-        int btnX = 50;
-        int btnY = 50;
-
-        backButton = new ImageButton(
-            "stage-select/dirt.png",   // normal/up image
-            "stage-select/floor.png",  // hover/down image
-            btnX,
-            btnY,
-            btnW,
-            btnH
-        );
-        backButton->SetOnClickCallback([&]() { OnBackClicked(); });
+        int btnW=200, btnH=60, btnX=50, btnY=50;
+        backButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                     btnX,btnY,btnW,btnH);
+        backButton->SetOnClickCallback([&](){ OnBackClicked(); });
+        backButton->EnableBreathing(0.05f, 2.0f);
+        backButton->EnableHoverScale(0.9f);
         AddNewControlObject(backButton);
 
-        backLabel = new Label(
-            "Back",
-            "balatro.ttf",   // use same font as other labels
-            60,
-            btnX + (btnW / 2),
-            btnY + (btnH / 2),  // slight vertical centering tweak
-            0, 0, 0, 255,     // white text
-            0.5f, 0.5f              // anchor centered
-        );
+        backLabel = new Label("Back","balatro.ttf",60,
+                              btnX+btnW/2,btnY+btnH/2,
+                              255,255,255,255,0.5f,0.5f);
         AddNewObject(backLabel);
     }
 
-    // ─── 3) “Username:” prompt + input box ───────────────────────────────
-    usernamePromptLabel = new Label(
-        "Username:",
-        "balatro.ttf",
-        60,
-        halfW - 200,
-        halfH - 100,
-        255, 255, 255, 255,
-        0.5f, 0.5f
-    );
+    // Username prompt + field
+    usernamePromptLabel = new Label("Username:","balatro.ttf",60,
+                                    halfW-200,halfH-100,
+                                    255,255,255,255,0.5f,0.5f);
     AddNewObject(usernamePromptLabel);
 
-    usernameBoxW = 500;   usernameBoxH = 80;
-    usernameBoxX = (halfW + 200) - (usernameBoxW / 2);
-    usernameBoxY = (halfH - 100) - (usernameBoxH / 2);
+    usernameBoxW = 500;  usernameBoxH = 80;
+    usernameBoxX = (halfW+200) - usernameBoxW/2;
+    usernameBoxY = (halfH-100) - usernameBoxH/2;
+    usernameField = { usernameBoxX, usernameBoxY,
+                      usernameBoxW, usernameBoxH,
+                      "", 0, 0 };
 
-    usernameInputLabel = new Label(
-        "",
-        "balatro.ttf",
-        60,
-        usernameBoxX + 15,                    // 15px inset from left edge
-        usernameBoxY + (usernameBoxH / 2),    // vertical center
-        255, 255, 255, 255,
-        0.0f, 0.5f
-    );
-    AddNewObject(usernameInputLabel);
-
-    // ─── 4) “Password:” prompt + input box ───────────────────────────────
-    passwordPromptLabel = new Label(
-        "Password:",
-        "balatro.ttf",
-        60,
-        halfW - 200,
-        halfH + 0,
-        255, 255, 255, 255,
-        0.5f, 0.5f
-    );
+    // Password prompt + field
+    passwordPromptLabel = new Label("Password:","balatro.ttf",60,
+                                    halfW-200,halfH+0,
+                                    255,255,255,255,0.5f,0.5f);
     AddNewObject(passwordPromptLabel);
 
-    passwordBoxW = 500;   passwordBoxH = 80;
-    passwordBoxX = (halfW + 200) - (passwordBoxW / 2);
-    passwordBoxY = (halfH + 0) - (passwordBoxH / 2);
+    passwordBoxW = 500;  passwordBoxH = 80;
+    passwordBoxX = (halfW+200) - passwordBoxW/2;
+    passwordBoxY = (halfH+0 ) - passwordBoxH/2;
+    passwordField = { passwordBoxX, passwordBoxY,
+                      passwordBoxW, passwordBoxH,
+                      "", 0, 0 };
 
-    passwordInputLabel = new Label(
-        "",
-        "balatro.ttf",
-        60,
-        passwordBoxX + 15,
-        passwordBoxY + (passwordBoxH / 2),
-        255, 255, 255, 255,
-        0.0f, 0.5f
-    );
-    AddNewObject(passwordInputLabel);
-
-    // ─── 5) Load eye icons (white PNGs) once ─────────────────────────────
+    // eye icons
     if (!openEyeBmp) {
-        openEyeBmp = al_load_bitmap("Resource/images/openeyewhite.png");
-        if (!openEyeBmp) {
-            throw std::runtime_error("Failed to load images/openeyewhite.png");
-        }
-    }
-    if (!closeEyeBmp) {
+        openEyeBmp  = al_load_bitmap("Resource/images/openeyewhite.png");
         closeEyeBmp = al_load_bitmap("Resource/images/closeeyewhite.png");
-        if (!closeEyeBmp) {
-            throw std::runtime_error("Failed to load images/closeeyewhite.png");
-        }
     }
-
-    // ─── 6) Create the eye ImageButton to the right of the password box ──
     {
         float eyeX = passwordBoxX + passwordBoxW + 20;
-        float eyeY = passwordBoxY + (passwordBoxH / 2) - 60;
-
-        eyeButton = new ImageButton(
-            "closeeyewhite.png",   // “closed eye” as default
-            "openeyewhite.png",    // “open eye” when pressed
-            eyeX,
-            eyeY,
-            80, 130      // width=80, height=130 (adjust as needed)
-        );
-        // Hide the eye until the user types something:
+        float eyeY = passwordBoxY + passwordBoxH/2 - 60;
+        eyeButton = new ImageButton("closeeyewhite.png","openeyewhite.png",
+                                    eyeX, eyeY, 80, 130);
         eyeButton->Visible = false;
-
-        eyeButton->SetOnClickCallback([&]() {
+        eyeButton->SetOnClickCallback([&](){
             loginRevealPassword = !loginRevealPassword;
-
-            if (loginRevealPassword) {
-                // “Revealed” state: out=open, in=close
-                eyeButton->SetImage(
-                    "openeyewhite.png",   // out image
-                    "closeeyewhite.png"   // in (hover) image
-                );
-                passwordInputLabel->Text = typedPassword;
-            } else {
-                // “Masked” state: out=close, in=open
-                eyeButton->SetImage(
-                    "closeeyewhite.png",  // out image
-                    "openeyewhite.png"    // in (hover) image
-                );
-                passwordInputLabel->Text = std::string(typedPassword.size(), '*');
-            }
+            if (loginRevealPassword)
+                eyeButton->SetImage("openeyewhite.png","closeeyewhite.png");
+            else
+                eyeButton->SetImage("closeeyewhite.png","openeyewhite.png");
         });
-
         AddNewControlObject(eyeButton);
     }
 
-    // ─── 7) Info label (red) under the fields ───────────────────────────
-    infoLabel = new Label(
-        "",
-        "balatro.ttf",
-        40,
-        halfW,
-        halfH + 100,
-        255, 0, 0, 255,
-        0.5f, 0.5f
-    );
+    // Info label
+    infoLabel = new Label("","balatro.ttf",40,
+                          halfW,halfH+100,
+                          255,0,0,255,0.5f,0.5f);
     AddNewObject(infoLabel);
 
-    // ─── 8) Login + Register buttons ───────────────────────────────────
-    loginButton = new ImageButton(
-        "stage-select/dirt.png",
-        "stage-select/floor.png",
-        halfW - 150,
-        halfH + 180,
-        300,
-        80
-    );
-    loginButton->SetOnClickCallback([this]() { OnLoginClicked(); });
+    // Login / Register / Guest
+    loginButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                  halfW-150,halfH+180,300,80);
+    loginButton->SetOnClickCallback([&](){ OnLoginClicked(); });
+    loginButton->EnableBreathing();
+    loginButton->EnableHoverScale(0.9f);
     AddNewControlObject(loginButton);
-    AddNewObject(new Label(
-        "Login",
-        "balatro.ttf",
-        60,
-        halfW,
-        halfH + 180 + 40,
-        0, 0, 0, 255,
-        0.5f, 0.5f
-    ));
+    AddNewObject(new Label("Login","balatro.ttf",60,
+                           halfW,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    registerButton = new ImageButton(
-        "stage-select/dirt.png",
-        "stage-select/floor.png",
-        halfW + 200,
-        halfH + 180,
-        300,
-        80
-    );
-    registerButton->SetOnClickCallback([this]() { OnRegisterClicked(); });
+    registerButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                     halfW+200,halfH+180,300,80);
+    registerButton->SetOnClickCallback([&](){ OnRegisterClicked(); });
+    registerButton->EnableBreathing();
+    registerButton->EnableHoverScale(0.9f);
     AddNewControlObject(registerButton);
-    AddNewObject(new Label(
-        "Register",
-        "balatro.ttf",
-        60,
-        halfW + 200 + 150,
-        halfH + 180 + 40,
-        0, 0, 0, 255,
-        0.5f, 0.5f
-    ));
+    AddNewObject(new Label("Register","balatro.ttf",60,
+                           halfW+200+160,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 
-    // ─── 9) “Play as Guest” button ─────────────────────────────────────
-    guestButton = new ImageButton(
-        "stage-select/dirt.png",
-        "stage-select/floor.png",
-        halfW - 500,
-        halfH + 180,
-        300,
-        80
-    );
-    guestButton->SetOnClickCallback([this]() {
+    guestButton = new ImageButton("stage-select/button1.png","stage-select/floor.png",
+                                  halfW-600,halfH+180,400,80);
+    guestButton->SetOnClickCallback([&](){
         CurrentUser = "Guest";
         GameEngine::GetInstance().ChangeScene("start");
     });
+    guestButton->EnableBreathing();
+    guestButton->EnableHoverScale(0.9f);
     AddNewControlObject(guestButton);
-    AddNewObject(new Label(
-        "Play as Guest",
-        "balatro.ttf",
-        60,
-        halfW - 500 + 150,
-        halfH + 180 + 40,
-        0, 0, 0, 255,
-        0.5f, 0.5f
-    ));
+    AddNewObject(new Label("Play as Guest","balatro.ttf",60,
+                           halfW-550+150,halfH+180+40,
+                           255,255,255,255,0.5f,0.5f));
 }
 
 void LoginScene::Terminate() {
+    parallax.Unload();
     IScene::Terminate();
 }
 
@@ -310,10 +270,21 @@ void LoginScene::Update(float dt) {
 }
 
 void LoginScene::Draw() const {
-    IScene::Draw();
-    // Draw a highlight rectangle around focused field
-    ALLEGRO_COLOR focusColor = typingUsername ? al_map_rgb(0,255,0)
-                                              : al_map_rgb(255,0,0);
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
+
+    ALLEGRO_COLOR focusColor = typingUsername
+      ? al_map_rgb(0,255,0)
+      : al_map_rgb(255,0,0);
+
     if (typingUsername) {
         al_draw_rectangle(
             usernameBoxX, usernameBoxY,
@@ -327,13 +298,18 @@ void LoginScene::Draw() const {
             focusColor, 4.0f
         );
     }
+
+    // draw both fields via our helper
+    drawTextField(usernameField, loginFont, 5.0f, /*password=*/false);
+    drawTextField(passwordField, loginFont, 5.0f,
+                  /*password=*/!loginRevealPassword);
 }
 
 void LoginScene::OnKeyChar(int unicode) {
-    // Handle Enter/Tab
+    // Enter/Tab logic
     if (unicode == '\r') {
         if (typingUsername) ToggleInputFocus();
-        else                OnLoginClicked();
+        else OnLoginClicked();
         return;
     }
     if (unicode == '\t') {
@@ -341,59 +317,26 @@ void LoginScene::OnKeyChar(int unicode) {
         return;
     }
 
-    // Backspace:
-    if (unicode == '\b') {
-        if (typingUsername && !typedUsername.empty()) {
-            typedUsername.pop_back();
-        } else if (!typingUsername && !typedPassword.empty()) {
-            typedPassword.pop_back();
-        }
-    }
-    // Printable ASCII:
-    else if (unicode >= 32 && unicode < 127) {
-        char c = static_cast<char>(unicode);
-        if (typingUsername) {
-            if (typedUsername.size() < 12) {
-                typedUsername.push_back(c);
-            }
-        } else {
-            if (typedPassword.size() < 12) {
-                typedPassword.push_back(c);
-            }
-        }
-    }
+    // handle editing
+    int kc = (unicode == '\b') ? ALLEGRO_KEY_BACKSPACE : 0;
+    if (typingUsername)
+        handleTextInput(usernameField, kc, unicode, loginFont, 5.0f);
+    else
+        handleTextInput(passwordField, kc, unicode, loginFont, 5.0f);
 
-    // 1) Update username label text:
-    usernameInputLabel->Text = typedUsername;
+    // sync for login logic
+    typedUsername = usernameField.text;
+    typedPassword = passwordField.text;
 
-    // 2) Show or hide the eye based on typedPassword:
-    if (!typedPassword.empty()) {
-        // If password has at least one char, show the eye:
-        if (!eyeButton->Visible) {
-            eyeButton->Visible = true;
-            // Ensure it starts in “closed” state:
-            loginRevealPassword = false;
-            eyeButton->SetImage("closeeyewhite.png",
-                                "openeyewhite.png");
-        }
-    } else {
-        // If password is now empty, hide the eye and reset reveal:
-        if (eyeButton->Visible) {
-            eyeButton->Visible = false;
-            loginRevealPassword = false;
-        }
-    }
+    // eye‐icon visibility
+    eyeButton->Visible = !passwordField.text.empty();
+    if (!eyeButton->Visible) loginRevealPassword = false;
 
-    // 3) Update password label based on reveal flag:
-    if (loginRevealPassword) {
-        passwordInputLabel->Text = typedPassword;
-    } else {
-        passwordInputLabel->Text = std::string(typedPassword.size(), '*');
-        // Keep the eye icon “closed” if masking is on:
-        if (eyeButton->Visible) {
-            eyeButton->SetImage("closeeyewhite.png",
-                                "openeyewhite.png");
-        }
+    if (eyeButton->Visible) {
+        if (loginRevealPassword)
+            eyeButton->SetImage("openeyewhite.png","closeeyewhite.png");
+        else
+            eyeButton->SetImage("closeeyewhite.png","openeyewhite.png");
     }
 }
 
@@ -408,8 +351,14 @@ void LoginScene::OnLoginClicked() {
     }
     if (AccountManager::VerifyPassword(typedUsername, typedPassword)) {
         CurrentUser = typedUsername;
+        if (auto* s = dynamic_cast<StartScene*>(
+              GameEngine::GetInstance().GetScene("start")))
+        {
+            s->SetPreviousScene("login");
+        }
         GameEngine::GetInstance().ChangeScene("start");
-    } else {
+    }
+    else {
         errorMessage = "Invalid username or password.";
     }
 }
@@ -419,23 +368,20 @@ void LoginScene::OnRegisterClicked() {
 }
 
 void LoginScene::OnBackClicked() {
-    // Go back to the LocalAndOnlineScene
     GameEngine::GetInstance().ChangeScene("local-online");
 }
 
 void LoginScene::OnMouseDown(int button, int x, int y) {
-    if (button == 1) { // left click
+    if (button == 1) {
         if (x >= usernameBoxX && x <= usernameBoxX + usernameBoxW &&
             y >= usernameBoxY && y <= usernameBoxY + usernameBoxH)
         {
-            typingUsername = true;
-            return;
+            typingUsername = true; return;
         }
         if (x >= passwordBoxX && x <= passwordBoxX + passwordBoxW &&
             y >= passwordBoxY && y <= passwordBoxY + passwordBoxH)
         {
-            typingUsername = false;
-            return;
+            typingUsername = false; return;
         }
     }
     IScene::OnMouseDown(button, x, y);

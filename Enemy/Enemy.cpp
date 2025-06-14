@@ -17,6 +17,23 @@
 #include "UI/Animation/DirtyEffect.hpp"
 #include "UI/Animation/ExplosionEffect.hpp"
 
+#include "Enemy/SoldierEnemy.hpp"
+#include "Enemy/TankEnemy.hpp"
+#include "Enemy/BigTankEnemy.hpp"
+#include "Enemy/CaninaEnemy.hpp"
+#include "Enemy/DemonEnemy.hpp"
+#include "Enemy/NecromancerEnemy.hpp"
+#include "Enemy/FlyEnemy.hpp"
+#include "Enemy/GolemEnemy.hpp"
+#include "Enemy/PlaneEnemy.hpp"
+#include "Enemy/SlimeEnemy.hpp"
+#include "Enemy/WolfEnemy.hpp"
+#include "Enemy/BatEnemy.hpp"
+#include "Enemy/SorcererEnemy.hpp"
+
+
+std::vector<Enemy*> g_enemies;
+
 PlayScene *Enemy::getPlayScene() {
     return dynamic_cast<PlayScene *>(Engine::GameEngine::GetInstance().GetActiveScene());
 }
@@ -36,20 +53,62 @@ Enemy::Enemy(std::string img, float x, float y, float radius, float speed, float
     reachEndTime = 0;
 }
 void Enemy::Hit(float damage) {
+
+    if (damage > 0 && !dynamic_cast<CaninaEnemy*>(this)) {
+        auto scene = getPlayScene();
+        for (auto obj : scene->EnemyGroup->GetObjects()) {
+            auto *c = dynamic_cast<CaninaEnemy*>(obj);
+            if (!c || c == this)     // skip non-Caninas and skip self
+                continue;
+
+            float dx = Position.x - c->Position.x;
+            float dy = Position.y - c->Position.y;
+            if (dx*dx + dy*dy <= c->healRadius * c->healRadius)
+                return;  // inside someone else's Canina aura → ignore damage
+        }
+    }
+
     hp -= damage;
     if (hp <= 0) {
-        OnExplode();
-        getPlayScene()->AddKill();
-        // Remove all turret's reference to target.
-        for (auto &it : lockedTurrets)
-            it->Target = nullptr;
-        for (auto &it : lockedBullets)
-            it->Target = nullptr;
-        getPlayScene()->EarnMoney(money);
-        getPlayScene()->EnemyGroup->RemoveObject(objectIterator);
+        // 1) Explosion
+        
+
+        // 2) Scene bookkeeping
+        auto scene = getPlayScene();
+        scene->AddKill();
+        scene->EarnMoney(money);
+
+        // 3) Coin logic
+        if (auto s = dynamic_cast<SlimeEnemy*>(this)) {
+    // only advance the mission while we're below the goal
+    if (scene->soldierkillcount < PlayScene::KILLS_PER_COIN) {
+        scene->soldierkillcount++;
+        scene->UpdateKillBar();
+        // only give the one coin, when you *just* reached 3
+        if (scene->soldierkillcount == PlayScene::KILLS_PER_COIN) {
+            scene->EarnCoin(1);
+        }
+    }
+}
+        else if (auto w = dynamic_cast<WolfEnemy*>(this)) {
+        if (scene->wolfKillCount < PlayScene::KILLS_PER_COIN) {
+            scene->wolfKillCount++;
+            scene->UpdateWolfBar();
+            if (scene->wolfKillCount == PlayScene::KILLS_PER_COIN) {
+            scene->EarnCoin(1);
+        }
+        }
+    }
+
+        // 4) Cleanup
+        for (auto &it : lockedTurrets) it->Target = nullptr;
+        for (auto &it : lockedBullets) it->Target = nullptr;
+    
+        scene->EnemyGroup->RemoveObject(objectIterator);
         AudioHelper::PlayAudio("explosion.wav");
     }
 }
+
 void Enemy::UpdatePath(const std::vector<std::vector<int>> &mapDistance) {
     int x = static_cast<int>(floor(Position.x / PlayScene::BlockSize));
     int y = static_cast<int>(floor(Position.y / PlayScene::BlockSize));
@@ -81,7 +140,8 @@ void Enemy::UpdatePath(const std::vector<std::vector<int>> &mapDistance) {
         path[num] = pos;
         num--;
     }
-    path[0] = PlayScene::EndGridPoint;
+    path[0] = getPlayScene()->EndGridPoints.front();
+
 }
 void Enemy::Update(float deltaTime) {
     // Pre-calculate the velocity.
