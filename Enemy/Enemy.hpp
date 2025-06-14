@@ -21,6 +21,15 @@ protected:
     virtual void OnExplode();
 
 public:
+     // ── NEW: a strongly-typed ID for each enemy kind ────────────────
+   enum class Type : int {
+     Pawn1 = 1, Pawn2 = 2, Pawn3 = 3,
+     Strong4 = 4, Strong5 = 5, Strong6 = 6,
+     Boss7  = 7, Boss8  = 8, soldier = 9, bigtank = 10, bat = 11
+   };
+
+   // ask any Enemy what kind it is
+   virtual Type GetType() const = 0;
     float reachEndTime;
     std::list<Turret *> lockedTurrets;
     std::list<Bullet *> lockedBullets;
@@ -29,7 +38,6 @@ public:
     void UpdatePath(const std::vector<std::vector<int>> &mapDistance);
     void Update(float deltaTime) override;
     void Draw() const override;
-
     float GetHP()  const { return hp; }
     void  SetHP(float v) { hp = v; }
 };
