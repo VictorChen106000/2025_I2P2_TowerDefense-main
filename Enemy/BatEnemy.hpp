@@ -12,7 +12,6 @@ public:
     void Hit(float damage) override;
     void Update(float deltaTime) override;
     void Draw()   const override;
-    Type GetType() const override { return Type::bat; }
 
 private:
     // ——— death-animation state ———

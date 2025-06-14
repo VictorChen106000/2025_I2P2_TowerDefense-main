@@ -10,6 +10,5 @@ public:
     private:
     float _boostRemaining  = 0.0f;  // seconds left on the boost
     float _pendingBonus    = 0.0f;  // how much we've added to 'speed'
-    Type GetType() const override { return Type::soldier; }
 };
 #endif   // SOLDIERENEMY_HPP

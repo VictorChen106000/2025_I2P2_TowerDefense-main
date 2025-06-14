@@ -10,7 +10,6 @@ public:
     void Hit(float damage) override;       // intercept dying
     void Update(float deltaTime) override;
     void Draw()   const override;
-    Type GetType() const override { return Type::Boss7; }
 
 private:
     // ─── Aura animation ────────────────────────────────

@@ -10,7 +10,6 @@ public:
     void Update(float deltaTime) override;
     void Draw()   const override;
     void Hit(float damage) override;
-    Type GetType() const override { return Type::Strong5; }
 
 private:
     // spawn bats while alive

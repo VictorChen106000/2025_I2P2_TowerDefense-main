@@ -13,7 +13,6 @@ public:
     void Hit(float damage)          override;
     void Update(float deltaTime)    override;
     void Draw()            const    override;
-    Type GetType() const override { return Type::Boss8; }
 
 private:
     // ─── Aura animation settings ─────────────────────────
