@@ -3,7 +3,6 @@
 #define SHOPSCENE_HPP
 
 #include <allegro5/allegro_audio.h>
-#include <allegro5/allegro.h>
 #include <memory>
 #include "Engine/IScene.hpp"
 
@@ -14,40 +13,40 @@ namespace Engine {
 }
 
 class ShopScene final : public Engine::IScene {
-private:
-    std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
-
-    // ── ninja‐idle animation (8×1 @ 8 FPS) ─────
-    ALLEGRO_BITMAP* idleBmp       = nullptr;
-    int             idleCols      = 8;
-    int             idleFrameW    = 0;
-    int             idleFrameH    = 0;
-    int             idleCurFrame  = 0;
-    float           idleTimer     = 0.0f;
-    float           idleFrameTime = 1.0f / 8.0f;
-    float           idleX         = 0.0f;
-    float           idleY         = 0.0f;
-
-    // UI pointers
-    Engine::Label*       crystalCountLbl = nullptr;
-    Engine::Label*       memek = nullptr;
-    Engine::ImageButton* buyBtn          = nullptr;
-    Engine::Image*       buyCostIcon     = nullptr;
-    Engine::Image*       meki = nullptr;
-    Engine::Label*       buyCostLabel    = nullptr;
-    Engine::ImageButton* crystalBtn      = nullptr;  // ← New crystal button
-
 public:
     void Initialize() override;
+    void Update(float dt) override;
+    void Draw()   const override;
     void Terminate() override;
+
+    void BackOnClick(int);
     void PlayOnClick(int stage);
     void ScoreboardOnClick();
-    void BackOnClick(int stage);
 
-    // drive our ninja sprite
-    void Update(float deltaTime) override;
-    void Draw()   const override;
+private:
+    // buttons & cost
+    int                           buyCost      = 1;
+    Engine::ImageButton*          buyBtn       = nullptr;
+    Engine::ImageButton*          backBtn      = nullptr;
+
+    // audio
+    std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE> bgmInstance;
+
+    // UI pointers
+    Engine::Label*                crystalCountLbl = nullptr;
+    Engine::Image*                buyCostIcon     = nullptr;
+    Engine::Label*                buyCostLabel    = nullptr;
+
+    // ninja animation
+    ALLEGRO_BITMAP*               idleBmp      = nullptr;
+    int                           idleCols     = 0;
+    int                           idleFrameW   = 0;
+    int                           idleFrameH   = 0;
+    float                         idleFrameTime= 0.2f;
+    float                         idleTimer    = 0.0f;
+    int                           idleCurFrame = 0;
+    float                         idleX        = 0.0f;
+    float                         idleY        = 0.0f;
 };
 
 #endif // SHOPSCENE_HPP
- 
