@@ -14,7 +14,15 @@
 #include "UI/Component/Label.hpp"
 #include "UI/Component/Slider.hpp"
 StartScene s;
+using namespace Engine;
 void SettingsScene::Initialize() {
+    parallax.Load({
+      "Resource/images/background/wl5.png",
+      "Resource/images/background/wl4.png",
+      "Resource/images/background/wl3.png",
+      "Resource/images/background/wl2.png",
+      "Resource/images/background/wl1.png"
+    });
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
     int halfW = w / 2;
@@ -45,9 +53,22 @@ void SettingsScene::Initialize() {
     sliderSFX->SetValue(AudioHelper::SFXVolume);
 }
 void SettingsScene::Terminate() {
+    parallax.Unload();
     AudioHelper::StopSample(bgmInstance);
     bgmInstance = std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE>();
     IScene::Terminate();
+}
+void SettingsScene::Draw() const {
+    auto& eng = GameEngine::GetInstance();
+    int  w   = eng.GetScreenSize().x,
+         h   = eng.GetScreenSize().y;
+    double t = al_get_time();
+
+    // 1) Draw parallax background
+    parallax.Draw(w, h, t);
+
+    // 2) Draw this scene’s buttons / sprites / UI
+    Group::Draw();
 }
 void SettingsScene::BackOnClick(int stage) {
     Engine::GameEngine::GetInstance().ChangeScene("start");
