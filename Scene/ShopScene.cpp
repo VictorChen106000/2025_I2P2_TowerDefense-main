@@ -20,7 +20,7 @@ static const float idleScale = 7.0f;
 void ShopScene::Initialize() {
     // ------------------------------------------------
     // 1) background music
-    bgmInstance = AudioHelper::PlaySample("leveup.ogg", true, AudioHelper::BGMVolume);
+    bgmInstance = AudioHelper::PlaySample("levelup.ogg", true, AudioHelper::BGMVolume);
 
 
     // 2) screen size
@@ -87,8 +87,8 @@ void ShopScene::Initialize() {
     int by = podiumY + podiumH + 20;
 
     buyBtn = new Engine::ImageButton(
-      "ui/buy_up.png",
-      "ui/buy_down.png",
+      "play/crystal.png",
+      "play/crystal.png",
       bx, by, btnW, btnH
     );
     // hook up callback
@@ -118,6 +118,7 @@ void ShopScene::Initialize() {
       ix, iy,
       costIconSize, costIconSize
     );
+    
     AddNewObject(buyCostIcon);
 
     buyCostLabel = new Engine::Label(
