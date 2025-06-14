@@ -10,7 +10,7 @@ extern std::vector<Enemy*> g_enemies;
 
 SorcererEnemy::SorcererEnemy(int x, int y)
   : Enemy("play/sorcerer.png", x, y,
-          /*radius=*/20, /*speed=*/70, /*hp=*/150, /*money=*/30)
+          /*radius=*/20, /*speed=*/70, /*hp=*/400, /*money=*/30)
 {
     // walking sheet: 10×1 @6fps
     SetAnimation(10, 1, 6.0f);
