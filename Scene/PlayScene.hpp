@@ -192,7 +192,7 @@ public:
 
     int coins;
     int soldierkillcount;
-
+  int wolfKillCount ;
     static constexpr int KILLS_PER_COIN = 3;
 
     // UI elements:
@@ -202,7 +202,27 @@ public:
 
     // helper to refresh the bar
     void UpdateKillBar();
+    void UpdateWolfBar();
+    void UpdateSurviveBar();
+
     Engine::Image* UICoinIcon   = nullptr;
     Engine::Label* UICoinCount  = nullptr;
+    Engine::Label* UIWolfCount  = nullptr;
+    Engine::Label* UITimeCount = nullptr;
+
+
+        // Wolf‐kill bar UI
+    PanelRect*     wolfBarBg     = nullptr;
+    PanelRect*     wolfBarFill   = nullptr;
+    Engine::Label* wolfBarLabel  = nullptr;
+
+    PanelRect*     surviveBarBg     = nullptr;
+    PanelRect*     surviveBarFill   = nullptr;
+    Engine::Label* surviveBarLabel  = nullptr;
+    float surviveTimer = 0.0f;
+    static constexpr float SURVIVE_GOAL = 50.0f;
+
+
+  
 };
 #endif   // PLAYSCENE_HPP

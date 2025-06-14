@@ -79,7 +79,7 @@ void Enemy::Hit(float damage) {
         scene->EarnMoney(money);
 
         // 3) Coin logic
-        if (auto s = dynamic_cast<SoldierEnemy*>(this)) {
+        if (auto s = dynamic_cast<SlimeEnemy*>(this)) {
     // only advance the mission while we're below the goal
     if (scene->soldierkillcount < PlayScene::KILLS_PER_COIN) {
         scene->soldierkillcount++;
@@ -90,10 +90,15 @@ void Enemy::Hit(float damage) {
         }
     }
 }
-        else if (auto t = dynamic_cast<TankEnemy*>(this)) {
-            // every tank kill → +1 coin
+        else if (auto w = dynamic_cast<WolfEnemy*>(this)) {
+        if (scene->wolfKillCount < PlayScene::KILLS_PER_COIN) {
+            scene->wolfKillCount++;
+            scene->UpdateWolfBar();
+            if (scene->wolfKillCount == PlayScene::KILLS_PER_COIN) {
             scene->EarnCoin(1);
         }
+        }
+    }
 
         // 4) Cleanup
         for (auto &it : lockedTurrets) it->Target = nullptr;
