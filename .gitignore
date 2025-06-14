@@ -1,0 +1,18 @@
+# IDEs
+.idea
+.vscode
+
+# Linked files
+# But keep allegro for convenience
+*.dll
+!allegro_monolith-5.2.dll
+build
+
+# MacOS
+.DS_Store
+
+# Others
+log.txt
+/Resource/scoreboard.txt
+/Resource/enemy1.txt
+/Resource/enemy2.txt
