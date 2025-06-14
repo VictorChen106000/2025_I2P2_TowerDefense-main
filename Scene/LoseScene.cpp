@@ -27,7 +27,7 @@ void LoseScene::Initialize() {
     // bgmInstance = AudioHelper::PlaySample("lose-sound2.mp3", false, AudioHelper::BGMVolume, PlayScene::DangerTime);
     // play the losing sound from the very start, no countdown cue
     bgmInstance = AudioHelper::PlaySample(
-        "lose-sound2.mp3",
+        "lose-sound2.ogg",
         false,
         AudioHelper::BGMVolume,
         0.0f
