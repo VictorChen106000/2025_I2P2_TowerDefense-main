@@ -391,13 +391,13 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         return;   // …but skip all the rest (turret/shovel logic)
     }
 
-    if ((button & 1) && !placing) {
+    if ((button & 1) && !placing && !shovelMode) {
         int gx = mx / BlockSize;
         int gy = my / BlockSize;
         if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
             // find the turret instance at this cell
             for (auto obj : TowerGroup->GetObjects()) {
-                Turret* turret = dynamic_cast<Turret*>(obj);
+                BowTurret* turret = dynamic_cast<BowTurret*>(obj);
                 if (!turret) continue;
                 int tx = int(turret->Position.x) / BlockSize;
                 int ty = int(turret->Position.y) / BlockSize;
@@ -650,7 +650,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         if (mapState[y][x] == TILE_OCCUPIED ) {
             // Iterate over the TowerGroup to find the turret clicked
             for (auto obj : TowerGroup->GetObjects()) {
-                Turret* turret = dynamic_cast<Turret*>(obj);
+                Turret* turret    = dynamic_cast<Turret*>(obj);
                 if (!turret) continue;
 
                 // Check if the mouse click was on the turret
@@ -704,7 +704,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
                 // 3b) remove turret & clear tile
                 turret->GetObjectIterator()->first = false;
                 TowerGroup->RemoveObject(turret->GetObjectIterator());
-                mapState[gy][gx] = TILE_DIRT;
+                mapState[gy][gx] = TILE_TETRIS;
                 break;
             }
         }
