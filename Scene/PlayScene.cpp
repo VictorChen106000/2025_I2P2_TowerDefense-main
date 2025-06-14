@@ -1558,26 +1558,49 @@ std::pair<int,float> PlayScene::GenerateAdaptiveEnemy(float D) {
     int   type = 1;
 
     // ── A) Boss tier on every 5th wave ────────────────────────────────
+    // Any two
+    // if (currentWave % 5 == 0) {
+    //     int totalBosses = bossSpawnCount[7] + bossSpawnCount[8];
+    //     if (totalBosses < 2) {
+    //         // if neither spawned yet
+    //         if (totalBosses == 0) {
+    //             type = (rand()%2) ? 7 : 8;
+    //         }
+    //         else {
+    //             // if we already spawned 7 once, we can spawn 7 a second time
+    //             // or spawn 8 once, but never exceed per‐type caps
+    //             if (bossSpawnCount[7] < 2 && bossSpawnCount[8] == 0)
+    //                 type = (rand()%2)? 7:8;
+    //             else if (bossSpawnCount[8] < 2 && bossSpawnCount[7] == 0)
+    //                 type = (rand()%2)? 7:8;
+    //             else
+    //                 type = (bossSpawnCount[7]<2?7:8);
+    //         }
+    //         bossSpawnCount[type]++;
+    //         // boss wait can be longer if you like, e.g. 3s
+    //         wait = 2.0f;
+    //     }
+    // }
+
+    // Both boss types
     if (currentWave % 5 == 0) {
-        int totalBosses = bossSpawnCount[7] + bossSpawnCount[8];
+        int c7 = bossSpawnCount[7];
+        int c8 = bossSpawnCount[8];
+        int totalBosses = c7 + c8;
+
         if (totalBosses < 2) {
-            // if neither spawned yet
             if (totalBosses == 0) {
-                type = (rand()%2) ? 7 : 8;
+                // first boss: randomly choose 7 or 8
+                type = (rand() % 2) ? 7 : 8;
             }
             else {
-                // if we already spawned 7 once, we can spawn 7 a second time
-                // or spawn 8 once, but never exceed per‐type caps
-                if (bossSpawnCount[7] < 2 && bossSpawnCount[8] == 0)
-                    type = (rand()%2)? 7:8;
-                else if (bossSpawnCount[8] < 2 && bossSpawnCount[7] == 0)
-                    type = (rand()%2)? 7:8;
-                else
-                    type = (bossSpawnCount[7]<2?7:8);
+                // second boss: pick whichever one hasn’t spawned yet
+                // if c7==1 and c8==0 => spawn 8; else spawn 7
+                type = (c7 == 1 ? 8 : 7);
             }
+
             bossSpawnCount[type]++;
-            // boss wait can be longer if you like, e.g. 3s
-            wait = 2.0f;
+            wait = 2.0f;   // or whatever boss‐specific delay you like
         }
     }
 
@@ -1599,8 +1622,7 @@ std::pair<int,float> PlayScene::GenerateAdaptiveEnemy(float D) {
     }
 
     // ── C) Pawns fallback (1–3) ────────────────────────────────────────
-    if (type < 1 || type > 6) {
-        // (or if boss‐branch didn’t fire)
+    if (type < 1 || type > 8) {
         type = 1 + rand() % 3;
     }
 
@@ -1668,7 +1690,7 @@ void PlayScene::SpawnAdaptive() {
     auto [type, wait] = GenerateAdaptiveEnemy(D);
 
      // ——— SURVIVAL MODE DEBUG OUTPUT ———
-    if (DebugMode) {
+    // if (DebugMode) {
         printf(
           "[SURVIVAL DEBUG] count=%d  totalDPS=%.2f  time=%.1f  D=%.2f  "
           "type=%d  wait=%.2f  alive=%zu  wave=%d\n",
@@ -1681,7 +1703,7 @@ void PlayScene::SpawnAdaptive() {
           EnemyGroup->GetObjects().size(),
           currentWave
         );
-    }
+    // }
 
     // ground-gap logic unchanged…
     bool isGround       = (type>=1 && type<=6);
