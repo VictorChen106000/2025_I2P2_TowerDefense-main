@@ -29,5 +29,8 @@ public:
     void UpdatePath(const std::vector<std::vector<int>> &mapDistance);
     void Update(float deltaTime) override;
     void Draw() const override;
+
+    float GetHP()  const { return hp; }
+    void  SetHP(float v) { hp = v; }
 };
 #endif   // ENEMY_HPP

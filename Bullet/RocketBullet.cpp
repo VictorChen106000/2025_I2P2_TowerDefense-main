@@ -13,7 +13,7 @@ RocketBullet::RocketBullet(const std::string &spriteFile,
     : Bullet(
         spriteFile,       // ← now parameterized
         600.0f,
-        3.0f,
+        1.3f,
         position,
         forwardDirection,
         rotation + ALLEGRO_PI / 2,
@@ -25,7 +25,7 @@ RocketBullet::RocketBullet(Engine::Point position, Engine::Point forwardDirectio
     : Bullet(
         "play/bullet-3.png",      // Rocket sprite
         600.0f,                    // speed (faster than machine gun)
-        3.0f,                     // damage (higher than fire)
+        1.3f,                     // damage (higher than fire)
         position,
         forwardDirection,
         rotation + ALLEGRO_PI / 2,   // align sprite

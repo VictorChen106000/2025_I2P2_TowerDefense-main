@@ -62,6 +62,25 @@ add_executable(2025_I2P2_TowerDefense
     Enemy/PlaneEnemy.hpp
     Enemy/BigTankEnemy.hpp
     Enemy/BigTankEnemy.cpp
+    Enemy/WolfEnemy.cpp
+    Enemy/WolfEnemy.hpp
+    Enemy/SlimeEnemy.cpp
+    Enemy/SlimeEnemy.hpp
+    Enemy/GolemEnemy.cpp
+    Enemy/GolemEnemy.hpp
+    Enemy/FlyEnemy.cpp
+    Enemy/FlyEnemy.hpp
+    Enemy/BatEnemy.cpp
+    Enemy/BatEnemy.hpp
+    Enemy/DemonEnemy.cpp
+    Enemy/DemonEnemy.hpp
+    Enemy/CaninaEnemy.cpp
+    Enemy/CaninaEnemy.hpp
+    Enemy/NecromancerEnemy.cpp
+    Enemy/NecromancerEnemy.hpp
+    Enemy/SorcererEnemy.cpp
+    Enemy/SorcererEnemy.hpp
+
 
     Engine/Allegro5Exception.cpp
     Engine/Allegro5Exception.hpp
@@ -105,6 +124,8 @@ add_executable(2025_I2P2_TowerDefense
     Scene/Scoreboard.cpp
     Scene/ShopScene.cpp
     Scene/ShopScene.hpp
+    Scene/ModeSelectionScene.hpp
+    Scene/ModeSelectionScene.cpp
 
     Turret/LaserTurret.cpp
     Turret/LaserTurret.hpp
@@ -124,6 +145,9 @@ add_executable(2025_I2P2_TowerDefense
     Turret/BowTurret.hpp
 
     Shovel/ShovelButton.hpp
+    
+    Tetris/TetrisBlock.cpp
+    Tetris/TetrisBlock.hpp
 
     UI/Animation/DirtyEffect.cpp
     UI/Animation/DirtyEffect.hpp
