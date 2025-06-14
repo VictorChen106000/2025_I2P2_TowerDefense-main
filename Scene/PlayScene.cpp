@@ -650,7 +650,7 @@ void PlayScene::OnMouseUp(int button, int mx, int my) {
         if (mapState[y][x] == TILE_OCCUPIED ) {
             // Iterate over the TowerGroup to find the turret clicked
             for (auto obj : TowerGroup->GetObjects()) {
-                BowTurret* turret = dynamic_cast<BowTurret*>(obj);
+                Turret* turret    = dynamic_cast<Turret*>(obj);
                 if (!turret) continue;
 
                 // Check if the mouse click was on the turret
