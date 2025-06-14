@@ -397,7 +397,7 @@ void PlayScene::OnMouseDown(int button, int mx, int my) {
         if (gx >= 0 && gx < MapWidth && gy >= 0 && gy < MapHeight && mapState[gy][gx] == TILE_OCCUPIED) {
             // find the turret instance at this cell
             for (auto obj : TowerGroup->GetObjects()) {
-                Turret* turret = dynamic_cast<Turret*>(obj);
+                BowTurret* turret = dynamic_cast<BowTurret*>(obj);
                 if (!turret) continue;
                 int tx = int(turret->Position.x) / BlockSize;
                 int ty = int(turret->Position.y) / BlockSize;
