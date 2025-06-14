@@ -18,6 +18,7 @@
 static const float idleScale = 7.0f;
 
 void ShopScene::Initialize() {
+    
     // ------------------------------------------------
     // 1) background music
     bgmInstance = AudioHelper::PlaySample("levelup.ogg", true, AudioHelper::BGMVolume);
@@ -26,6 +27,11 @@ void ShopScene::Initialize() {
     // 2) screen size
     int w = Engine::GameEngine::GetInstance().GetScreenSize().x;
     int h = Engine::GameEngine::GetInstance().GetScreenSize().y;
+    AddNewObject(new Engine::Image(
+        "background/dirty_2.png",  // e.g. Resource/images/background/bg.png
+        0, 0,
+        w, h
+    ));
 
     // --- fetch current crystal count from PlayScene
     auto play = dynamic_cast<PlayScene*>(
