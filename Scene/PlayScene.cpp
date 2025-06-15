@@ -134,6 +134,8 @@ void PlayScene::Terminate() {
     AudioHelper::StopSample(deathBGMInstance);
     deathBGMInstance = std::shared_ptr<ALLEGRO_SAMPLE_INSTANCE>();
     IScene::Terminate();
+    UICoins  = nullptr;
+     UIMoney  = nullptr;
 }
 void PlayScene::Update(float deltaTime) {
         // -- survival timer
@@ -863,11 +865,13 @@ int PlayScene::GetMoney() const {
 }
 void PlayScene::EarnCoin(int c) {
   coins += c;
-  UICoins->Text = std::to_string(coins);
+  if (UICoins) 
+       UICoins->Text = std::to_string(coins);
 }
 void PlayScene::EarnMoney(int money) {
     this->money += money;
-    UIMoney->Text = std::string("$") + std::to_string(this->money);
+    if (UIMoney)
+        UIMoney->Text = std::string("$") + std::to_string(money);
 }
 void PlayScene::UpdateKillBar() {
     // make sure count never exceeds the goal
